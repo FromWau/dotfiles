@@ -1,3 +1,6 @@
 .zcompdump
+<<<<<<< HEAD
 .zsh_history
+=======
+>>>>>>> d92cc60 (First commit)
 plugins
