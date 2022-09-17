@@ -1,3 +1,5 @@
-# TEST2
-## hi there
-### afmaf
+# My dotfiles
+* Kitty
+* tmux
+* NeoVim
+NeoVim is 100% made with lua.
