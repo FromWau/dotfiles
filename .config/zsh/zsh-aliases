@@ -5,9 +5,12 @@
 alias config='/usr/bin/git --git-dir=$HOME/dotfiles/ --work-tree=$HOME'
 
 # aliases
-alias bed='xrandr --output HDMI-0 --mode 4096x2160 --scale 0.5x0.5'
-alias desk='xrandr --output HDMI-0 --mode 4096x2160 --scale 1x1'
+alias bed='xrandr --output HDMI-0 --mode 4096x2160 --scale 0.5x0.5 && echo "awesome.restart()" | awesome-client'
+alias desk='xrandr --output HDMI-0 --mode 4096x2160 --scale 1x1 && echo "awesome.restart()" | awesome-client'
 alias yeet='yay -Rns'
+mkcd() {
+    mkdir -p $1 && cd $1
+}
 
 # ssh for kitty terminal
 #if [[ $TERM == "xterm-kitty" ]]; then

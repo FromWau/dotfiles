@@ -56,3 +56,6 @@ bindkey  "\C-h"     backward-kill-word
 export EDITOR="nvim"
 export TERMINAL="kitty"
 export BROWSER="firefox"
+
+# Startup script
+nerdfetch
