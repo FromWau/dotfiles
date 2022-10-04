@@ -56,6 +56,12 @@ bindkey  "\C-h"     backward-kill-word
 export EDITOR="nvim"
 export TERMINAL="kitty"
 export BROWSER="firefox"
+export EXPLORER="ranger"
 
 # Startup script
-nerdfetch
+cow_styles=( $( ls --no-icons /usr/share/cows/ ) )
+cow_style=${cow_styles[$RANDOM % ${#cow_styles[@]-1}+1]}
+
+art=('neofetch | lolcat' 'nerdfetch | lolcat' 'cowsay -f $cow_style HI $USER | lolcat')
+rand=${art[$RANDOM % ${#art[@]-1}+1]}
+eval " $rand"

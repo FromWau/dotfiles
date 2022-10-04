@@ -12,10 +12,16 @@ mkcd() {
     mkdir -p $1 && cd $1
 }
 
+i_am_boared() {
+    boared_cmds=('pipes.sh -p 5 -t 1 -r 0' 'cmatrix' 'cbonsai -li' 'tty-clock -s -c -B -C 3 -f "%a. %d %B %Y"')
+    rand=${boared_cmds[$RANDOM % ${#boared_cmds[@]-1}+1]}
+    eval " $rand"
+}
+
 # ssh for kitty terminal
-#if [[ $TERM == "xterm-kitty" ]]; then
-#  alias ssh="kitty +kitten ssh"
-#fi
+if [[ $TERM == "xterm-kitty" ]]; then
+    alias ssh="kitty +kitten ssh"
+fi
 
 # get fastest mirrors
 alias mirror='sudo reflector -f 30 -l 30 --number 10 --verbose --save /etc/pacman.d/mirrorlist'
@@ -24,7 +30,7 @@ alias mirrors='sudo reflector --latest 50 --number 20 --sort score --save /etc/p
 alias mirrora='sudo reflector --latest 50 --number 20 --sort age --save /etc/pacman.d/mirrorlist'
 
 # modern replacment (exa) for ls
-alias ls='exa --long --all --git --header'
+alias ls='exa --icons -a'
 
 # Colorize ls output
 #alias ls='ls --color=auto'
