@@ -36,7 +36,7 @@ alias ls='exa --icons -a'
 #alias ls='ls --color=auto'
 
 alias ps='procs'
-alias grep='rg'
+#alias grep='rg'
 alias vim='nvim'
 alias ...='cd ../..'
 alias ....='cd ../../..'

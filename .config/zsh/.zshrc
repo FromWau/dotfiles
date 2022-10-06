@@ -59,9 +59,9 @@ export BROWSER="firefox"
 export EXPLORER="ranger"
 
 # Startup script
-cow_styles=( $( ls --no-icons /usr/share/cows/ ) )
+cow_styles=( $( ls --no-icons /usr/share/cows/*.cow ) )
 cow_style=${cow_styles[$RANDOM % ${#cow_styles[@]-1}+1]}
 
-art=('neofetch | lolcat' 'nerdfetch | lolcat' 'cowsay -f $cow_style HI $USER | lolcat')
+art=('neofetch | lolcat' 'nerdfetch' 'cowsay -f $cow_style HI $USER | lolcat' 'colorscript -r')
 rand=${art[$RANDOM % ${#art[@]-1}+1]}
 eval " $rand"
