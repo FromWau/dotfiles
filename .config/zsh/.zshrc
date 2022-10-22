@@ -57,6 +57,7 @@ export EDITOR="nvim"
 export TERMINAL="kitty"
 export BROWSER="firefox"
 export EXPLORER="ranger"
+export RANGER_LOAD_DEFAULT_RC="FALSE"
 
 # Startup script
 cow_styles=( $( ls --no-icons /usr/share/cows/*.cow ) )
@@ -65,3 +66,5 @@ cow_style=${cow_styles[$RANDOM % ${#cow_styles[@]-1}+1]}
 art=('neofetch | lolcat' 'nerdfetch' 'cowsay -f $cow_style HI $USER | lolcat' 'colorscript -r')
 rand=${art[$RANDOM % ${#art[@]-1}+1]}
 eval " $rand"
+
+
