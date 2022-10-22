@@ -33,6 +33,8 @@ naughty.connect_signal("request::display_error", function(message, startup)
 end)
 -- }}}
 
+
+
 -- {{{ Variable definitions
 -- Themes define colours, icons, font and wallpapers.
 beautiful.init("~/.config/awesome/theme.lua")
@@ -51,6 +53,7 @@ explorer    = os.getenv("EXPLORER") or "ranger"
 -- However, you can use another modifier like Mod1, but it may interact with others.
 modkey = "Mod4"
 -- }}}
+
 
 
 -- {{{ Menu
@@ -74,6 +77,8 @@ mymainmenu = awful.menu({ items = { { "Awesome", myawesomemenu, beautiful.awesom
 menubar.utils.terminal = terminal -- Set the terminal for applications that require it
 -- }}}
 
+
+
 -- {{{ Tag layout
 -- Table of layouts to cover with awful.layout.inc, order matters.
 tag.connect_signal("request::default_layouts", function()
@@ -95,6 +100,8 @@ tag.connect_signal("request::default_layouts", function()
 end)
 -- }}}
 
+
+
 -- {{{ Wallpaper
 screen.connect_signal("request::wallpaper", function(s)
     awful.wallpaper {
@@ -115,8 +122,9 @@ screen.connect_signal("request::wallpaper", function(s)
 end)
 -- }}}
 
--- {{{ Wibar
 
+
+-- {{{ Wibar
 screen.connect_signal("request::desktop_decoration", function(s)
     -- Each screen has its own tag table.
     awful.tag({ "1", "2", "3", "4", "5", "6", "7", "8", "9" }, s, awful.layout.layouts[1])
@@ -124,7 +132,6 @@ screen.connect_signal("request::desktop_decoration", function(s)
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
 end)
-
 -- }}}
 
 
@@ -132,13 +139,12 @@ end)
 -- {{{ Mouse bindings
 awful.mouse.append_global_mousebindings({
     awful.button({ }, 3, function () mymainmenu:toggle() end),
-    awful.button({ }, 4, awful.tag.viewprev),
-    awful.button({ }, 5, awful.tag.viewnext),
 })
 -- }}}
 
--- {{{ Key bindings
 
+
+-- {{{ Key bindings
 -- General Awesome keys
 awful.keyboard.append_global_keybindings({
     awful.key({ modkey,           }, "s",      hotkeys_popup.show_help,
@@ -147,16 +153,6 @@ awful.keyboard.append_global_keybindings({
               {description = "reload awesome", group = "awesome"}),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit,
               {description = "quit awesome", group = "awesome"}),
---    awful.key({ modkey }, "x",
---              function ()
---                  awful.prompt.run {
---                    prompt       = "Run Lua code: ",
---                    textbox      = awful.screen.focused().mypromptbox.widget,
---                    exe_callback = awful.util.eval,
---                    history_path = awful.util.get_cache_dir() .. "/history_eval"
---                  }
---              end,
---              {description = "lua execute prompt", group = "awesome"}),
     awful.key({ modkey }, "Return", function () awful.spawn(terminal) end,
               {description = "Open Kitty", group = "launcher"}),
     awful.key({ modkey }, "r",     function () awful.util.spawn("rofi -show drun -show-icons") end,
@@ -370,8 +366,9 @@ client.connect_signal("request::default_keybindings", function()
             {description = "(un)maximize horizontally", group = "client"}),
     })
 end)
-
 -- }}}
+
+
 
 -- {{{ Rules
 -- Rules to apply to new clients.
@@ -418,16 +415,12 @@ ruled.client.connect_signal("request::rules", function()
         properties = { titlebars_enabled = false }
     }
 
-    -- Set Firefox to always map on the tag named "2" on screen 1.
-    -- ruled.client.append_rule {
-    --     rule       = { class = "Firefox"     },
-    --     properties = { screen = 1, tag = "2" }
-    -- }
 end)
 -- }}}
 
--- {{{ Notifications
 
+
+-- {{{ Notifications
 ruled.notification.connect_signal('request::rules', function()
     -- All notifications will match this rule.
     ruled.notification.append_rule {
@@ -442,8 +435,9 @@ end)
 naughty.connect_signal("request::display", function(n)
     naughty.layout.box { notification = n }
 end)
-
 -- }}}
+
+
 
 -- Enable sloppy focus, so that focus follows mouse.
 --client.connect_signal("mouse::enter", function(c)
@@ -451,9 +445,10 @@ end)
 --end)
 
 
+
 -- Autostart
-awful.spawn.with_shell("killall polybar; polybar")
-awful.spawn.with_shell("killall picom; DISPLAY=':0' picom -b")
+awful.spawn.with_shell("killall polybar; sleep 1 && polybar")
+awful.spawn.with_shell("killall picom; sleep 1 && DISPLAY=':0' picom -b")
 awful.spawn.with_shell("feh --no-fehbg --bg-scale --randomize --recursive ~/Pictures/wallpaper")
 awful.spawn.with_shell("bluetoothctl connect 38:18:4C:BF:15:A0")
 awful.spawn.with_shell("kdeconnect-indicator")
