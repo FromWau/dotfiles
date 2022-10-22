@@ -76,6 +76,14 @@ return packer.startup(function(use)
         run = ":TSUpdate",
     }
 
+    -- rasi syntax for rofi
+    use {
+        'Fymyte/rasi.vim',
+        ft = { 'rasi' },
+        run = ':TSInstall rasi',
+        requires = { 'nvim-treesitter/nvim-treesitter' },
+    }
+
     -- TS Addons
     use "JoosepAlviste/nvim-ts-context-commentstring"   -- Context aware commentting
     use "p00f/nvim-ts-rainbow"                          -- Rainbow parentheses
@@ -105,3 +113,10 @@ return packer.startup(function(use)
         require("packer").sync()
     end
 end)
+
+
+
+
+
+
+
