@@ -1,6 +1,9 @@
 #!/bin/sh
 
 
+LOCATION_CODE='38d35340a098212bc3ae7aa6ff89ce95a7eed769997999f8ad0804d2f3ccd560'
+
+
 info_to_icon() {    
     case $1 in
         'Sunny')
@@ -28,7 +31,7 @@ info_to_icon() {
         esac
 }
 
-json=$(python weather_scraper.py 5d3ac36b50e4aa01e9916508005d45eab1dffb15cb59d5b38cce3ca54d24c65d)
+json=$(python weather_scraper.py "$LOCATION_CODE")
 weather=$(echo "$json" | jq '.location.forecasts' | jq '.[0].weather')
 
 
