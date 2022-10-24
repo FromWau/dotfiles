@@ -1,0 +1,67 @@
+
+# ===========================
+# == Media Control
+# ===========================
+XF86AudioMute
+    playerctl volume 0%
+
+XF86AudioLowerVolume 
+    playerctl volume 0.05%-
+
+XF86AudioRaiseVolume
+    playerctl volume 0.05%+
+
+XF86AudioStop
+    playerctl shuffle Toggle 
+
+XF86AudioPrev
+    playerctl previous
+
+XF86AudioPlay
+    playerctl play-pause Toggle
+
+XF86AudioPause
+    playerctl play-pause Toggle
+
+XF86AudioNext
+    playerctl next
+
+
+
+# ===========================
+# == Default Apps
+# ===========================
+super + Return
+    kitty
+
+super + r
+    rofi -show drun -show-icons
+
+super + c
+    rofi -show calc -modi calc -no-show-match -no-sort
+
+super + b
+    firefox
+
+super + e
+    kitty ranger
+
+super + s
+    kitty nc_spot
+
+# ===========================
+# == 
+# ===========================
+
+
+# ===========================
+# ==
+# ===========================
+
+# ===========================
+# ==
+# ===========================
+
+# ===========================
+# ==
+# ===========================

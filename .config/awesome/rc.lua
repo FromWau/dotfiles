@@ -153,14 +153,6 @@ awful.keyboard.append_global_keybindings({
               {description = "reload awesome", group = "awesome"}),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit,
               {description = "quit awesome", group = "awesome"}),
-    awful.key({ modkey }, "Return", function () awful.spawn(terminal) end,
-              {description = "Open Kitty", group = "launcher"}),
-    awful.key({ modkey }, "r",     function () awful.util.spawn("rofi -show drun -show-icons") end,
-              {description = "Open Rofi", group = "launcher"}),
-    awful.key({ modkey }, "b", function () awful.util.spawn(browser) end,
-              {description = "Open Firefox", group = "launcher"}),
-    awful.key({ modkey }, "e", function () awful.util.spawn(terminal .." ".. explorer) end,
-              {description = "Open Ranger", group = "launcher"})
 
 })
 
@@ -453,4 +445,4 @@ awful.spawn.with_shell("feh --no-fehbg --bg-scale --randomize --recursive ~/Pict
 awful.spawn.with_shell("bluetoothctl connect 38:18:4C:BF:15:A0")
 awful.spawn.with_shell("kdeconnect-indicator")
 awful.spawn.with_shell("echo 'Xcursor.size: 24' | xrdb")
-
+awful.spawn.with_shell("killall sxhkd; sleep 1 && sxhkd")

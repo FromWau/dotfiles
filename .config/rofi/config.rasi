@@ -1,5 +1,5 @@
 configuration {
-	modes: "run,drun,combi";
+	modes: "run,drun,combi,calc";
     font: "Fira Code 14";
 /*	location: 0;*/
 /*	yoffset: 0;*/

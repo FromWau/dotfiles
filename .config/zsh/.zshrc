@@ -1,5 +1,4 @@
 #!/bin/sh
-export ZDOTDIR=$HOME/.config/zsh
 HISTFILE=$HOME/.zsh_history
 setopt appendhistory
 
@@ -51,13 +50,6 @@ bindkey  ";5C"	    forward-word
 bindkey  ";5D"      backward-word
 bindkey  "5~"       kill-word
 bindkey  "\C-h"     backward-kill-word
-
-# Environment variables set everywhere
-export EDITOR="nvim"
-export TERMINAL="kitty"
-export BROWSER="firefox"
-export EXPLORER="ranger"
-export RANGER_LOAD_DEFAULT_RC="FALSE"
 
 # Startup script
 cow_styles=( $( ls --no-icons /usr/share/cows/*.cow ) )
