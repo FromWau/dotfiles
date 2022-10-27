@@ -43,7 +43,17 @@ icon1=$(info_to_icon "$info1")
 
 # forecast 2
 tmp2=$(echo "$weather" | jq -r '.[1].temperature')
-info2=$(echo "$weather" | jq -r '.[1].info')
+if [ "$tmp2" = "null" ]
+then
+    # its 23:00 and the second weather is on the next day
+    weather=$(echo "$json" | jq '.location.forecasts' | jq '.[1].weather')
+    tmp2=$(echo "$weather" | jq -r '.[0].temperature')
+    info2=$(echo "$weather" | jq -r '.[0].info')
+
+else
+    info2=$(echo "$weather" | jq -r '.[1].info')
+fi
+
 tmp2_num=$(echo "$tmp2" | tr -d '°')
 icon2=$(info_to_icon "$info2")
 

@@ -47,7 +47,7 @@ super + e
     kitty ranger
 
 super + s
-    kitty nc_spot
+    nc_spot
 
 # ===========================
 # == 
