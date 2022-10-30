@@ -5,3 +5,19 @@ end
 
 require("user.lsp.lsp-installer")
 require("user.lsp.handlers").setup()
+require('lspconfig').texlab.setup{
+    cmd = {"texlab"},
+    filetypes = {"tex", "bib"},
+    settings = {
+        texlab = {
+            rootDirectory = nil,
+            build = {
+                onSave = true
+            },
+            forwardSearch = {
+                executable = "firefox",
+                args = {"%p"}
+            }
+        }
+    }
+}
