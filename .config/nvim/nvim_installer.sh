@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# check java installled
+# check java is installed
 if ! command -v java &> /dev/null
 then
     echo "Please install Java (and add to path) first!!" 
     exit 1;
 fi
-# check if npm and node installed
+
+# check if npm is installed
 if ! command -v npm &> /dev/null 
 then
     echo "Please install npm first!!" 
@@ -38,6 +39,7 @@ cd ~/.config/nvim/vscode-java-test &&
         echo "Failed installing vscode-java-test" 
         exit 1
     fi
+
 
 echo "Installed java-debug and vscode-java-test"
 exit 0
