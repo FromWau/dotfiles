@@ -8,6 +8,8 @@ info_to_icon() {
     case $1 in
         'Sunny')
             echo '☀ ';;
+        'Mostly Clear Night')
+            echo '  ';;
         'Clear Night')
             echo ' ';;
         'Mostly Sunny')
