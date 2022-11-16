@@ -62,7 +62,7 @@ return packer.startup(function(use)
     use "folke/tokyonight.nvim" -- nice colorscheme
 
     -- Alpha
-    use 'goolord/alpha-nvim'
+    use "goolord/alpha-nvim"
     use "antoinemadec/FixCursorHold.nvim" -- This is needed to fix lsp doc highlight
 
     -- cmp plugins
@@ -77,34 +77,29 @@ return packer.startup(function(use)
     -- snippets
     use "L3MON4D3/LuaSnip" -- Snippet engine
     use "rafamadriz/friendly-snippets" -- a bunch of snippets to use
-
-    -- LSP (TODO port to mason)
     use "neovim/nvim-lspconfig" -- enable LSP
-    use "williamboman/nvim-lsp-installer" -- simple to use language server installer
+
+    -- mason
+    use "williamboman/mason.nvim"
+    use "WhoIsSethDaniel/mason-tool-installer.nvim"
+    use "williamboman/mason-lspconfig.nvim"
     use "jose-elias-alvarez/null-ls.nvim" -- for formatters and linters
-    use "RRethy/vim-illuminate"
+    use "RRethy/vim-illuminate" -- highlight same words as hovered word
 
     -- Telescope
     use "nvim-telescope/telescope.nvim"
-    use 'nvim-telescope/telescope-media-files.nvim'
+    use "nvim-telescope/telescope-media-files.nvim"
 
     -- TreeSitter
-    use {
-        "nvim-treesitter/nvim-treesitter",
-        run = ":TSUpdate",
+    use "nvim-treesitter/nvim-treesitter"
+    use { 
+        "JoosepAlviste/nvim-ts-context-commentstring", -- Context aware commentting
+        after = "nvim-treesitter"
     }
-
-    -- rasi syntax for rofi
     use {
-        'Fymyte/rasi.vim',
-        ft = { 'rasi' },
-        run = ':TSInstall rasi',
-        requires = { 'nvim-treesitter/nvim-treesitter' },
+        "p00f/nvim-ts-rainbow", -- Rainbow parentheses
+        after = "nvim-treesitter"
     }
-
-    -- TS Addons
-    use "JoosepAlviste/nvim-ts-context-commentstring" -- Context aware commentting
-    use "p00f/nvim-ts-rainbow" -- Rainbow parentheses
 
     -- DAP
     use "mfussenegger/nvim-dap"

@@ -67,6 +67,12 @@ dapui.setup({
 
 local icons = require("user.icons")
 
+local function configure_debuggers()
+  require("user.dap.kotlin").setup()
+end
+
+configure_debuggers()
+
 vim.fn.sign_define("DapBreakpoint", { text = icons.ui.Bug, texthl = "DiagnosticSignError", linehl = "", numhl = "" })
 
 dap.listeners.after.event_initialized["dapui_config"] = function()
