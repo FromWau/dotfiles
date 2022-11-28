@@ -438,8 +438,8 @@ end)
 
 -- Autostart
 awful.spawn.with_shell("killall polybar; sleep 1 && polybar")
-awful.spawn.with_shell("killall picom; sleep 1 && DISPLAY=':0' picom -b")
-awful.spawn.with_shell("feh --no-fehbg --bg-scale --randomize --recursive ~/Pictures/wallpaper")
+awful.spawn.with_shell("killall picom; sleep 1 && DISPLAY=':0' picom --experimental-backends")
+awful.spawn.with_shell("feh --no-fehbg --bg-max --randomize --recursive ~/Pictures/wallpapers")
 awful.spawn.with_shell("bluetoothctl connect 38:18:4C:BF:15:A0")
 awful.spawn.with_shell("kdeconnect-indicator")
 awful.spawn.with_shell("echo 'Xcursor.size: 24' | xrdb")

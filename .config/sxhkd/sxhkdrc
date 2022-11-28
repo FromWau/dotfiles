@@ -64,3 +64,9 @@ control + space
 super + p
     rofi -show power-menu -modi power-menu:rofi-power-menu 
 
+
+# ===========================
+# == next feh background
+# ===========================
+super + d
+    feh --no-fehbg --recursive --randomize --bg-max ~/Pictures/wallpapers/reddits
