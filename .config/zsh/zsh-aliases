@@ -25,7 +25,6 @@ fi
 alias icat='kitty +kitten icat'
 
 
-
 # get fastest mirrors
 alias mirror=' sudo reflector --country AT --latest 50 --sort rate --save /etc/pacman.d/mirrorlist'
 

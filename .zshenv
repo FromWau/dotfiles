@@ -14,11 +14,11 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XINITRC="$XDG_CONFIG_HOME"/X11/xinitrc
 export LESSHISTFILE="-"
-export WGETRC="${XDG_CONFIG_HOME:-$HOME/.config}/wget/wgetrc"
-export PASSWORD_STORE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/password-store"
-export GOPATH="${XDG_DATA_HOME:-$HOME/.local/share}/go"
-export CARGO_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/cargo"
-export ZDOTDIR="$HOME/.config/zsh"
+export WGETRC="$XDG_CONFIG_HOME"/wget/wgetrc
+export PASSWORD_STORE_DIR="$XDG_DATA_HOME"/password-store
+export GOPATH="$XDG_DATA_HOME"/go
+export CARGO_HOME="$XDG_DATA_HOME"/cargo
+export ZDOTDIR="$XDG_CONFIG_HOME"/zsh
 export WINEPREFIX="$XDG_DATA_HOME"/wineprefixes/default
-
+export FEHBG_PATH="$XDG_CONFIG_HOME"/feh
 
