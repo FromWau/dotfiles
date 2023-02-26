@@ -22,8 +22,9 @@ case "$1" in
         rofi-wifi-menu
     ;;
     *)
-        connected=$(nmcli device status | grep -w connected)
+            connected=$(nmcli device status | grep -w connected | grep -v "loopback")
         dev="$( echo "$connected" | awk '{print $1}' )"
+
 
         case "$( echo "$connected" | awk '{print $2}')" in
             "wifi")
@@ -51,6 +52,7 @@ case "$1" in
 
         printf "$dev_icon   %6i KB/s   %6i KB/s \n" $(($INSPEED/1024)) $(($OUTSPEED/1024)) ;
     ;;
+
 esac
 
 
