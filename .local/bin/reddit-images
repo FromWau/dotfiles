@@ -57,7 +57,6 @@ do
 
     done
 
-    feh --no-fehbg --recursive --randomize --bg-max ~/Pictures/wallpapers/reddits
 done
 
 
