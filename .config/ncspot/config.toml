@@ -1,0 +1,58 @@
+command_key = ":"
+initial_screen = "library"
+use_nerdfont = true
+flip_status_indicators = false
+# backend = <String>
+# backend_device = <String>
+audio_cache = true
+# audio_cache_size = <Number>
+volnorm = false
+volnorm_pregain = 0.0
+default_keybindings = true
+notify = false
+bitrate = 320
+gapless = true
+shuffle = true
+repeat = "playlist"
+playback_state = "Paused"
+library_tabs = ["tracks", "albums", "artists", "playlists", "podcasts", "browse"]
+cover_max_scale = 2
+hide_display_names = false
+statusbar_format = "%title - %artists"
+
+
+[track_format]
+left = "[%saved] %title "
+center = "%artists "
+right = "%duration"
+
+
+[notification_format]
+title = "%title"
+body = "%artists"
+
+
+[theme]
+background = "default"
+primary = "#c0caf5"
+secondary = "#1a1b26"
+title = "#e0af68"
+playing = "#7dcfff"
+playing_selected = "#73daca"
+playing_bg = "#1a1b26"
+highlight = "#73daca"
+highlight_bg = "#1a1b26"
+error = "#c0caf5"
+error_bg = "#f7768e"
+statusbar = "#24283b"
+statusbar_progress = "#73daca"
+statusbar_bg = "#7dcfff"
+
+cmdline_bg = "#24283b"
+search_match = "#bb9af7"
+
+
+[keybindings]
+"Shift+q" = "quit"
+"q" = "noop"
+
