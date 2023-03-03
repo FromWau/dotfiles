@@ -16,7 +16,7 @@ shuffle = true
 repeat = "playlist"
 playback_state = "Paused"
 library_tabs = ["tracks", "albums", "artists", "playlists", "podcasts", "browse"]
-cover_max_scale = 2
+cover_max_scale = 1.5
 hide_display_names = false
 statusbar_format = "%title - %artists"
 
