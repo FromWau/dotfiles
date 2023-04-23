@@ -1,0 +1,1 @@
+/home/fromml/.local/share/omf/themes/rider/fish_prompt.fish
