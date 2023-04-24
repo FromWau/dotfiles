@@ -29,7 +29,7 @@ alias icat='kitty +kitten icat'
 alias mirror=' sudo reflector --country AT --latest 50 --sort rate --save /etc/pacman.d/mirrorlist'
 
 # modern replacment (exa) for ls
-alias ls='exa --icons -a'
+alias ls='exa --icons --all --group-directories-first'
 
 # Colorize ls output
 #alias ls='ls --color=auto'
