@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# get random wallpaper
+wallpaper=$(fd ".png|.jpg" ~/Pictures/wallpapers | shuf -n1)
+
+# You can create a function for this in your shellrc (.bashrc, .zshrc).
+wal-tile() {
+	wal -n -q -i "$@"
+	feh --bg-max --no-fehbg "$(<"${HOME}/.cache/wal/wal")"
+}
+
+# Usage:
+wal-tile "$wallpaper"
