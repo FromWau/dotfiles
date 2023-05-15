@@ -27,10 +27,12 @@ set -x WINEPREFIX "$XDG_DATA_HOME"/wineprefixes/default
 set -x TERMINFO "$XDG_DATA_HOME"/terminfo
 set -x TERMINFO_DIRS "$XDG_DATA_HOME"/terminfo:/usr/share/terminfo
 
+set -x NPM_CONFIG_USERCONFIG "$XDG_CONFIG_HOME"/npm/npmrc
 set -x XINITRC "$XDG_CONFIG_HOME"/X11/xinitrc
 set -x WGETRC "$XDG_CONFIG_HOME"/wget/wgetrc
 set -x ZDOTDIR "$XDG_CONFIG_HOME"/zsh
 set -x GTK2_RC_FILES "$XDG_CONFIG_HOME"/gtk-2.0/gtkrc
+set -x _JAVA_OPTIONS=-Djava.util.prefs.userRoot "$XDG_CONFIG_HOME"/java
 
 set -x HISTFILE "$XDG_STATE_HOME"/bash/history
 
