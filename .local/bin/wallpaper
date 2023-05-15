@@ -1,0 +1,7 @@
+#!/bin/bash
+
+wallpaper=$(fd ".png|.jpg" Pictures/wallpapers/ | shuf -n1)
+
+printf "preload = $wallpaper\nwallpaper = ,$wallpaper" >~/.config/hypr/hyprpaper.conf
+
+hyprpaper &
