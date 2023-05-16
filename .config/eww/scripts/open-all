@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ $1 == '--restart' ]; then
+	eww kill
+fi
+
+monitors=$(hyprctl monitors -j | jq '.[] | .id' | awk -F, 'BEGIN {ORS=" "} {print "bar"$1}')
+
+eww open-many $monitors
