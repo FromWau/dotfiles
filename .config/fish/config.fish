@@ -40,11 +40,16 @@ set -x XAUTHORITY "$XDG_RUNTIME_DIR"/Xauthority
 
 set -x MANPAGER "sh -c 'col -bx | bat -l man -p'"
 set -x LESSHISTFILE -
+set -x FZF_DEFAULT_COMMAND "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
 
 # Append dirs to path
 fish_add_path ~/.local/bin
 
 # wal -R -e -n -q
+
+# start zoxide
+zoxide init fish | source
+alias cd='z'
 
 # start starship
 starship init fish | source
