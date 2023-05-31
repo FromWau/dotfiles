@@ -11,7 +11,7 @@ alias yeet='yay -Rns'
 alias bed='hyprctl keyword monitor HDMI-A-1,3840x2160@60,0x0,2'
 alias desk='hyprctl keyword monitor HDMI-A-1,3840x2160@60,0x0,1'
 
-alias ff='fzf --preview "bat --color always {}"'
+alias ff='fzf --preview "bat --color always {}"--cycle -i --bind "enter:execute(vim {1} < /dev/tty)" --exact --prompt "Open in nvim: "'
 alias fp='fzf-cat'
 
 # Env variables
