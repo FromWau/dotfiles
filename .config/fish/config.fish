@@ -59,20 +59,25 @@ abbr reload 'source ~/.config/fish/config.fish'
 
 # functions
 function fdir -d "Jump to selected zoxide dir"
-    set -l selected_dir $(zoxide query -l | fzf --preview "ls -lah {}" --cycle -i -d "|" --exact --prompt "z into dir: ")
-    z $selected_dir
-    echo "Jumped to $selected_dir"
-    ls
+    set -l selected_dir (zoxide query -l | fzf --preview "exa -lah --color always --group-directories-first {}" --cycle -i -d "|" --exact --prompt "z into dir: ")
+    if count $selected_dir >/dev/null
+        z $selected_dir
+        echo "Jumped to $selected_dir"
+        exa --icons --all --group-directories-first --color always
+    end
 end
 
 function mcd -d "Creates and enters dir"
     mkdir -p -- $argv && z $argv
 end
 
-function rm-fzf -d "Delete muliple selected files"
-    fzf-previewer -m | xargs rm
+function rm-fzf -d "Delete multiple selected files"
+    set -l selected_files (fzf-previewer -m)
+    if count $selected_files >/dev/null
+        echo $selected_files | xargs rm
+    end
 end
 
 function ff -d "Search for files and open in nvim"
-    fzf-previewer --cycle -i -d "|" --bind "enter:execute(nvim {1} < /dev/tty)" --exact --prompt "Open in nvim: "
+    fzf-previewer --bind "enter:execute(nvim {1} < /dev/tty)" --cycle -i -d "|" --exact --prompt "Open in nvim: "
 end
