@@ -4,15 +4,16 @@ alias mirror='sudo reflector --country AT --latest 50 --sort rate --save /etc/pa
 alias ls='exa --icons --all --group-directories-first'
 alias ps='procs'
 alias grep='rg'
+alias fzf="fzf -d '|' --cycle -i"
 alias vim='nvim'
-alias cat='bat -p'
+alias v='nvim'
+alias cat='bat -p --color always'
 alias yeet='yay -Rns'
 
 alias bed='hyprctl keyword monitor HDMI-A-1,3840x2160@60,0x0,2'
 alias desk='hyprctl keyword monitor HDMI-A-1,3840x2160@60,0x0,1'
 
-alias ff='fzf --preview "bat --color always {}"--cycle -i --bind "enter:execute(vim {1} < /dev/tty)" --exact --prompt "Open in nvim: "'
-alias fp='fzf-cat'
+alias reload='source ~/.config/fish/config.fish'
 
 # Env variables
 set -x XDG_CONFIG_HOME "$HOME/.config"
@@ -43,16 +44,31 @@ set -x XAUTHORITY "$XDG_RUNTIME_DIR"/Xauthority
 
 set -x MANPAGER "sh -c 'col -bx | bat -l man -p'"
 set -x LESSHISTFILE -
-set -x FZF_DEFAULT_COMMAND "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
+set -x FZF_DEFAULT_COMMAND "command fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
 
-# Append dirs to path
+fish_vi_key_bindings insert
+
+fzf_key_bindings
+
 fish_add_path ~/.local/bin
 
-# wal -R -e -n -q
+starship init fish | source
 
-# start zoxide
 zoxide init fish | source
 alias cd='z'
 
-# start starship
-starship init fish | source
+function fdir -d "Jump to selected zoxide dir"
+    set -l selected_dir $(zoxide query -l | command fzf --preview "ls -lah {}" --cycle -i --exact --prompt "z into dir: ")
+    z $selected_dir
+    echo "Jumped to $selected_dir"
+    ls
+end
+
+function rm-pics -d "Delete muliple selected pictures"
+    set -l selected_files $(fzf-cat -m -q '.png | .jpg | .jpeg Pictures')
+    rm "$selected_files" 2>/dev/null
+end
+
+
+alias ff='command fzf --preview "bat --color always {}" --cycle -i --bind "enter:execute(nvim {1} < /dev/tty)" --exact --prompt "Open in nvim: "'
+alias fp='fzf-cat'
