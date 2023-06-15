@@ -51,6 +51,7 @@ abbr ps procs
 abbr grep rg
 abbr fzf 'fzf -d "|" --cycle -i'
 abbr cd z
+abbr zz 'z -'
 abbr vim nvim
 abbr v nvim
 abbr cat 'bat -p --color always'
