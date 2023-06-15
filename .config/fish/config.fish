@@ -1,4 +1,7 @@
 # Env variables
+set -x EDITOR nvim
+set -x BROWSER firefox
+
 set -x XDG_CONFIG_HOME "$HOME/.config"
 set -x XDG_DATA_HOME "$HOME/.local/share"
 set -x XDG_STATE_HOME "$HOME/.local/state"
@@ -80,4 +83,22 @@ end
 
 function ff -d "Search for files and open in nvim"
     fzf-previewer --bind "enter:execute(nvim {1} < /dev/tty)" --cycle -i -d "|" --exact --prompt "Open in nvim: "
+end
+
+function fp -d "Search for git repos and jump to selected repo"
+    set -l repo (fd --type d --color always --strip-cwd-prefix --exec find {} -type d -name .git | sort -u | sed 's/\/.git$//' | fzf -d "|" --cycle -i)
+    if count $repo >/dev/null
+        z $repo
+        echo "Jumped to repo $repo"
+    end
+end
+
+function fpl -d "Search for git repos and open repo in lazygit"
+    set -l dir (pwd)
+    set -l repo (fd --type d --color always --strip-cwd-prefix --exec find {} -type d -name .git | sort -u | sed 's/\/.git$//' | fzf -d "|" --cycle -i)
+    if count $repo >/dev/null
+        z $repo
+        lazygit
+        z $dir
+    end
 end
