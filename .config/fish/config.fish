@@ -27,6 +27,7 @@ set -x _JAVA_OPTIONS -Djava.util.prefs.userRoot="$XDG_CONFIG_HOME"/java
 set -x HISTFILE "$XDG_STATE_HOME"/bash/history
 
 set -x XAUTHORITY "$XDG_RUNTIME_DIR"/Xauthority
+set -x SSH_AUTH_SOCK "$XDG_RUNTIME_DIR"/ssh-agent.socket
 
 set -x MANPAGER "sh -c 'col -bx | bat -l man -p'"
 set -x LESSHISTFILE -
@@ -37,6 +38,7 @@ fish_vi_key_bindings insert
 fzf_key_bindings
 
 fish_add_path ~/.local/bin
+fish_add_path ~/.nix-profile/bin
 
 starship init fish | source
 
@@ -47,6 +49,7 @@ zoxide init fish | source
 abbr icat 'kitty +kitten icat'
 abbr mirror 'sudo reflector --country AT --latest 50 --sort rate --save /etc/pacman.d/mirrorlist'
 abbr ls 'exa --icons --all --group-directories-first --color always'
+abbr ll 'exa --icons --all --group-directories-first --color always --long'
 abbr ps procs
 abbr grep rg
 abbr fzf 'fzf -d "|" --cycle -i'
@@ -59,6 +62,7 @@ abbr yeet 'yay -Rns'
 abbr bed 'hyprctl keyword monitor HDMI-A-1,3840x2160@60,0x0,2'
 abbr desk 'hyprctl keyword monitor HDMI-A-1,3840x2160@60,0x0,1'
 abbr reload 'source ~/.config/fish/config.fish'
+abbr lg lazygit
 
 
 # functions
