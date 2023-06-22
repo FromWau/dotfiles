@@ -119,3 +119,6 @@ symbol = ' '
 
 [lua]
 symbol = ' '
+
+[python]
+symbol = ' '
