@@ -29,6 +29,8 @@ set -x HISTFILE "$XDG_STATE_HOME"/bash/history
 set -x XAUTHORITY "$XDG_RUNTIME_DIR"/Xauthority
 set -x SSH_AUTH_SOCK "$XDG_RUNTIME_DIR"/ssh-agent.socket
 
+set -x MPD_HOST "$XDG_RUNTIME_DIR"/mpd/socket
+
 set -x MANPAGER "sh -c 'col -bx | bat -l man -p'"
 set -x LESSHISTFILE -
 set -x FZF_DEFAULT_COMMAND "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
@@ -63,6 +65,7 @@ abbr bed 'hyprctl keyword monitor HDMI-A-1,3840x2160@60,0x0,2'
 abbr desk 'hyprctl keyword monitor HDMI-A-1,3840x2160@60,0x0,1'
 abbr reload 'source ~/.config/fish/config.fish'
 abbr lg lazygit
+abbr sc systemctl
 
 
 # functions
