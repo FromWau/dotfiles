@@ -1,0 +1,25 @@
+#!/bin/sh
+
+playerctl stop
+
+pic=$(fd ".png|.jpg|.jpeg" ~/Pictures/wallpapers/ | shuf -n1)
+
+swaylock --image "$pic" &
+swaylock_pid=$!
+
+sleep 0.5 &&
+	nwg-wrapper \
+		--script swaylock-display.sh \
+		--refresh 20000 \
+		--css swaylock-display.css \
+		--position right \
+		--margin_right 50 \
+		--alignment start \
+		--margin_top 0 \
+		--justify right \
+		--layer 3 \
+		--sig_quit 31 &
+
+wait "$swaylock_pid"
+
+pkill -f -31 nwg-wrapper
