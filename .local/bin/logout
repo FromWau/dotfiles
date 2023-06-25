@@ -1,6 +1,6 @@
 #!/bin/sh
 
-playerctl stop
+playerctl --all-players pause
 
 pic=$(fd ".png|.jpg|.jpeg" ~/Pictures/wallpapers/ | shuf -n1)
 
