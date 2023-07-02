@@ -122,3 +122,6 @@ symbol = ' '
 
 [python]
 symbol = ' '
+
+[package]
+symbol = ' '
