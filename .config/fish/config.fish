@@ -52,6 +52,7 @@ abbr icat 'kitty +kitten icat'
 abbr mirror 'sudo reflector --country AT --latest 50 --sort rate --save /etc/pacman.d/mirrorlist'
 abbr ls 'exa --icons --all --group-directories-first --color always'
 abbr ll 'exa --icons --all --group-directories-first --color always --long'
+abbr tree 'exa --icons --all --group-directories-first --color always --tree'
 abbr ps procs
 abbr grep rg
 abbr fzf 'fzf -d "|" --cycle -i'
@@ -83,14 +84,17 @@ function mcd -d "Creates and enters dir"
 end
 
 function rm-fzf -d "Delete multiple selected files"
-    set -l selected_files (fzf-previewer -m)
+    set -l selected_files (fzf-previewer -m --reverse --cycle -i -d "|" --prompt "Select files to delete: ")
     if count $selected_files >/dev/null
-        echo $selected_files | xargs rm
+        echo $selected_files | xargs rm -v
     end
 end
 
 function ff -d "Search for files and open in nvim"
-    fzf-previewer --bind "enter:execute(nvim {1} < /dev/tty)" --cycle -i -d "|" --exact --prompt "Open in nvim: "
+    set -l selected_files (fzf-previewer --cycle -i -d "|" --exact --prompt "Open in nvim: ")
+    if count $selected_files >/dev/null
+        echo "$selected_files" | xargs nvim
+    end
 end
 
 function fp -d "Search for git repos and jump to selected repo"
@@ -108,5 +112,16 @@ function fpl -d "Search for git repos and open repo in lazygit"
         z $repo
         lazygit
         z $dir
+    end
+end
+
+function cp-to-dot -d "copies the given item to ~/Projects/dotfiles"
+    set -l selected_files (fzf-previewer -m --reverse --cycle -i -d "|" --prompt "Select files to cp to dotfiles repo: ")
+    if count $selected_files >/dev/null
+        set -l origin_files (echo $selected_files | xargs realpath --relative-to=$HOME)
+        for file in $origin_files
+            mkdir -p ~/Projects/dotfiles/(dirname $file)
+            cp -pr ~/$file ~/Projects/dotfiles/$file
+        end
     end
 end
