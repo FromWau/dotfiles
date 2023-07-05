@@ -91,7 +91,7 @@ function rm-fzf -d "Delete multiple selected files"
 end
 
 function ff -d "Search for files and open in nvim"
-    set -l selected_files (fzf-previewer --cycle -i -d "|" --exact --prompt "Open in nvim: ")
+    set -l selected_files (fzf-previewer --cycle -i -d "|" --prompt "Open in nvim: ")
     if count $selected_files >/dev/null
         echo "$selected_files" | xargs nvim
     end
