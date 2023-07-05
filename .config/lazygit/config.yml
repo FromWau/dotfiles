@@ -9,26 +9,26 @@ gui:
   language: 'auto' # one of 'auto' | 'en' | 'zh' | 'pl' | 'nl' | 'ja' | 'ko'
   timeFormat: '02 Jan 06' # https://pkg.go.dev/time#Time.Format
   shortTimeFormat: '13:04'
+  # use the mocha catppuccin theme
   theme:
+    lightTheme: false
     activeBorderColor:
-      - green
+      - "#a6e3a1" # Green
       - bold
     inactiveBorderColor:
-      - white
+      - "#cdd6f4" # Text
     optionsTextColor:
-      - blue
+      - "#89b4fa" # Blue
     selectedLineBgColor:
-      - blue # set to `default` to have no background colour
+      - "#313244" # Surface0
     selectedRangeBgColor:
-      - blue
+      - "#313244" # Surface0
     cherryPickedCommitBgColor:
-      - cyan
+      - "#94e2d5" # Teal
     cherryPickedCommitFgColor:
-      - blue
+      - "#89b4fa" # Blue
     unstagedChangesColor:
-      - red
-    defaultFgColor:
-      - default
+      - red # Red
   commitLength:
     show: true
   mouseEvents: true
