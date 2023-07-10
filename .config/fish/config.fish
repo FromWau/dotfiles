@@ -52,7 +52,7 @@ abbr icat 'kitty +kitten icat'
 abbr mirror 'sudo reflector --country AT --latest 50 --sort rate --save /etc/pacman.d/mirrorlist'
 abbr ls 'exa --icons --all --group-directories-first --color always'
 abbr ll 'exa --icons --all --group-directories-first --color always --long'
-abbr tree 'exa --icons --all --group-directories-first --color always --tree'
+abbr tree 'exa --icons --all --group-directories-first --color always --tree --ignore-glob ".git*"'
 abbr ps procs
 abbr grep rg
 abbr fzf 'fzf -d "|" --cycle -i'
