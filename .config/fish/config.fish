@@ -7,8 +7,9 @@ set -x XDG_DATA_HOME "$HOME/.local/share"
 set -x XDG_STATE_HOME "$HOME/.local/state"
 set -x XDG_CACHE_HOME "$HOME/.cache"
 
-set -x ANDROID_HOME "$XDG_DATA_HOME"/android
-set -x GRADLE_USER_HOME "$XDG_DATA_HOME"/gradle
+# set -x ANDROID_HOME "$XDG_DATA_HOME"/android
+# set -x GRADLE_USER_HOME "$XDG_DATA_HOME"/gradle
+# set -x ANDROID_NDK_HOME "$ANDROID_HOME"/sdk/ndk
 set -x PASSWORD_STORE_DIR "$XDG_DATA_HOME"/password-store
 set -x GOPATH "$XDG_DATA_HOME"/go
 set -x GNUPGHOME "$XDG_DATA_HOME"/gnupg
@@ -30,6 +31,8 @@ set -x XAUTHORITY "$XDG_RUNTIME_DIR"/Xauthority
 set -x SSH_AUTH_SOCK "$XDG_RUNTIME_DIR"/ssh-agent.socket
 
 set -x MPD_HOST "$XDG_RUNTIME_DIR"/mpd/socket
+
+set -x CUDA_CACHE_PATH "$XDG_CACHE_HOME"/nv
 
 set -x MANPAGER "sh -c 'col -bx | bat -l man -p'"
 set -x LESSHISTFILE -
@@ -67,6 +70,7 @@ abbr desk 'hyprctl keyword monitor HDMI-A-1,3840x2160@60,0x0,1'
 abbr reload 'source ~/.config/fish/config.fish'
 abbr lg lazygit
 abbr sc systemctl
+abbr chx 'chmod +x'
 
 
 # functions
