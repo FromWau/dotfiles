@@ -14,5 +14,8 @@ for i in "${!monitors[@]}"; do
 
 	# Set the wallpaper for the current monitor
 	swww img -o "$monitor" "$random_picture" \
-		--sync --transition-step 255 --transition-fps 90 --transition-type=any --transition-bezier .4,.04,.2,1
+		--transition-step 255 \
+        --transition-fps 90 \
+        --transition-type=any \
+        --transition-bezier .4,.04,.2,1
 done
