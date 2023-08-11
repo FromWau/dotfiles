@@ -29,7 +29,7 @@ right = "%duration"
 
 [notification_format]
 title = "%title"
-body = "%artists"
+body = "%artists - %duration"
 
 
 [theme]
