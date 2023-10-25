@@ -34,7 +34,7 @@ set -x MPD_HOST "$XDG_RUNTIME_DIR"/mpd/socket
 
 set -x CUDA_CACHE_PATH "$XDG_CACHE_HOME"/nv
 
-set -x MANPAGER "sh -c 'col -bx | bat -l man -p'"
+set -x MANPAGER "sh -c 'bat -l man -p'"
 set -x LESSHISTFILE -
 set -x FZF_DEFAULT_COMMAND "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
 
@@ -54,7 +54,8 @@ zoxide init fish | source
 abbr icat 'kitty +kitten icat'
 abbr mirror 'sudo reflector --country AT --latest 50 --sort rate --save /etc/pacman.d/mirrorlist'
 abbr ls 'exa --icons --all --group-directories-first --color always'
-abbr la 'exa --icons --all --group-directories-first --color always --long'
+abbr ll 'exa --icons --all --group-directories-first --color always --long'
+abbr llh 'exa --icons --all --group-directories-first --color always --long | head -10'
 abbr tree 'exa --icons --all --group-directories-first --color always --tree --ignore-glob ".git*"'
 abbr ps procs
 abbr grep rg
@@ -102,7 +103,7 @@ function ff -d "Search for files and open in nvim"
 end
 
 function fp -d "Search for git repos and jump to selected repo"
-    set -l repo (fd --type d --color always --strip-cwd-prefix --exec find {} -type d -name .git | sort -u | sed 's/\/.git$//' | fzf -d "|" --cycle -i)
+    set -l repo (fd -H -g '.git' --type d | rg -v ".cache" | rg -v ".local" | sed 's/\/\.git\///' | fzf -d "|" --cycle -i)
     if count $repo >/dev/null
         z $repo
         echo "Jumped to repo $repo"
@@ -111,7 +112,7 @@ end
 
 function fpl -d "Search for git repos and open repo in lazygit"
     set -l dir (pwd)
-    set -l repo (fd --type d --color always --strip-cwd-prefix --exec find {} -type d -name .git | sort -u | sed 's/\/.git$//' | fzf -d "|" --cycle -i)
+    set -l repo (fd -H -g '.git' --type d | rg -v ".cache" | rg -v ".local" | sed 's/\/\.git\///' | fzf -d "|" --cycle -i)
     if count $repo >/dev/null
         z $repo
         lazygit
