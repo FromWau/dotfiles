@@ -7,9 +7,6 @@ set -x XDG_DATA_HOME "$HOME/.local/share"
 set -x XDG_STATE_HOME "$HOME/.local/state"
 set -x XDG_CACHE_HOME "$HOME/.cache"
 
-# set -x ANDROID_HOME "$XDG_DATA_HOME"/android
-# set -x GRADLE_USER_HOME "$XDG_DATA_HOME"/gradle
-# set -x ANDROID_NDK_HOME "$ANDROID_HOME"/sdk/ndk
 set -x PASSWORD_STORE_DIR "$XDG_DATA_HOME"/password-store
 set -x GOPATH "$XDG_DATA_HOME"/go
 set -x GNUPGHOME "$XDG_DATA_HOME"/gnupg
@@ -37,6 +34,7 @@ set -x CUDA_CACHE_PATH "$XDG_CACHE_HOME"/nv
 set -x MANPAGER "sh -c 'bat -l man -p'"
 set -x LESSHISTFILE -
 set -x FZF_DEFAULT_COMMAND "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
+set -x DELTA_FEATURES "+side-by-side +dark +syntax-theme base16-256 +true-color +navigate"
 
 fish_vi_key_bindings insert
 
