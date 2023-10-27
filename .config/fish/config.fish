@@ -7,9 +7,6 @@ set -x XDG_DATA_HOME "$HOME/.local/share"
 set -x XDG_STATE_HOME "$HOME/.local/state"
 set -x XDG_CACHE_HOME "$HOME/.cache"
 
-# set -x ANDROID_HOME "$XDG_DATA_HOME"/android
-# set -x GRADLE_USER_HOME "$XDG_DATA_HOME"/gradle
-# set -x ANDROID_NDK_HOME "$ANDROID_HOME"/sdk/ndk
 set -x PASSWORD_STORE_DIR "$XDG_DATA_HOME"/password-store
 set -x GOPATH "$XDG_DATA_HOME"/go
 set -x GNUPGHOME "$XDG_DATA_HOME"/gnupg
@@ -34,9 +31,10 @@ set -x MPD_HOST "$XDG_RUNTIME_DIR"/mpd/socket
 
 set -x CUDA_CACHE_PATH "$XDG_CACHE_HOME"/nv
 
-set -x MANPAGER "sh -c 'col -bx | bat -l man -p'"
+set -x MANPAGER "sh -c 'bat -l man -p'"
 set -x LESSHISTFILE -
 set -x FZF_DEFAULT_COMMAND "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
+set -x DELTA_FEATURES "+side-by-side +dark +syntax-theme base16-256 +true-color +navigate"
 
 fish_vi_key_bindings insert
 
@@ -54,7 +52,8 @@ zoxide init fish | source
 abbr icat 'kitty +kitten icat'
 abbr mirror 'sudo reflector --country AT --latest 50 --sort rate --save /etc/pacman.d/mirrorlist'
 abbr ls 'exa --icons --all --group-directories-first --color always'
-abbr la 'exa --icons --all --group-directories-first --color always --long'
+abbr ll 'exa --icons --all --group-directories-first --color always --long'
+abbr llh 'exa --icons --all --group-directories-first --color always --long | head -10'
 abbr tree 'exa --icons --all --group-directories-first --color always --tree --ignore-glob ".git*"'
 abbr ps procs
 abbr grep rg
@@ -102,7 +101,7 @@ function ff -d "Search for files and open in nvim"
 end
 
 function fp -d "Search for git repos and jump to selected repo"
-    set -l repo (fd --type d --color always --strip-cwd-prefix --exec find {} -type d -name .git | sort -u | sed 's/\/.git$//' | fzf -d "|" --cycle -i)
+    set -l repo (fd -H -g '.git' --type d | rg -v ".cache" | rg -v ".local" | sed 's/\/\.git\///' | fzf -d "|" --cycle -i)
     if count $repo >/dev/null
         z $repo
         echo "Jumped to repo $repo"
@@ -111,7 +110,7 @@ end
 
 function fpl -d "Search for git repos and open repo in lazygit"
     set -l dir (pwd)
-    set -l repo (fd --type d --color always --strip-cwd-prefix --exec find {} -type d -name .git | sort -u | sed 's/\/.git$//' | fzf -d "|" --cycle -i)
+    set -l repo (fd -H -g '.git' --type d | rg -v ".cache" | rg -v ".local" | sed 's/\/\.git\///' | fzf -d "|" --cycle -i)
     if count $repo >/dev/null
         z $repo
         lazygit
