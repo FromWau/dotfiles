@@ -49,7 +49,7 @@ gui:
 git:
     paging:
         colorArg: always
-        pager: delta --paging=never 
+        pager: export DELTA_FEATURES=+''; delta --paging=never 
     commit:
         signOff: false
         verbose: default # one of 'default' | 'always' | 'never'
@@ -82,7 +82,7 @@ git:
     parseEmoji: true
     diffContextSize: 3 # how many lines of context are shown around a change in diffs
 os:
-    editPreset: '' # see 'Configuring File Editing' section
+    editPreset: 'nvim' # see 'Configuring File Editing' section
     edit: ''
     editAtLine: ''
     editAtLineAndWait: ''
