@@ -21,20 +21,11 @@ return {
 					{
 						icon = "󰊳 ",
 						icon_hl = "Title",
-						desc = "Update",
+						desc = "Lazy",
 						desc_hl = "String",
 						group = "Label",
-						key = "u",
-						action = "Lazy update",
-					},
-					{
-						icon = " ",
-						icon_hl = "Title",
-						desc = "Sync",
-						desc_hl = "String",
-						group = "Label",
-						key = "s",
-						action = "Lazy sync",
+						key = "l",
+						action = "Lazy",
 					},
 					{
 						icon = " ",
