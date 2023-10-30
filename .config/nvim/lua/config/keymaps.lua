@@ -28,5 +28,9 @@ keymap("v", "<", "<gv", opts) -- Shift Indentation to Left
 keymap("v", ">", ">gv", opts) -- Shift Indentation to Right
 
 -- Comments
-keymap("n", "<C-/>", "gcc", { noremap = false })
+keymap("n", "<C-/>", "gcc j", { noremap = false })
 keymap("v", "<C-/>", "gcc", { noremap = false })
+keymap("n", "<C-kdivide>", "gcc j", { noremap = false })
+keymap("v", "<C-kdivide>", "gcc", { noremap = false })
+
+keymap("n", "<leader>l", "<cmd>Lazy<CR>", opts)
