@@ -52,7 +52,7 @@ return {
 						desc_hl = "String",
 						group = "Label",
 						key = "e",
-						action = "NvimTreeToggle",
+						action = "Neotree toggle"
 					},
 					{
 						icon = "󰩈 ",

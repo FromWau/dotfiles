@@ -9,8 +9,8 @@ keymap("n", "<leader>bb", "<cmd>e #<CR>", opts) -- Switch to Other Buffer
 keymap("n", "<leader>`", "<cmd>e #<CR>", opts) -- Switch to Other Buffer
 
 -- Directory Naviagtion
-keymap("n", "<leader>E", ":NvimTreeFocus<CR>", opts)
-keymap("n", "<leader>e", ":NvimTreeToggle<CR>", opts)
+keymap("n", "<leader>E", ":Neotree show<CR>", opts)
+keymap("n", "<leader>e", ":Neotree toggle<CR>", opts)
 
 -- Pane and Window Navigation
 keymap("n", "<C-h>", "<C-w>h", opts) -- Navigate Left
