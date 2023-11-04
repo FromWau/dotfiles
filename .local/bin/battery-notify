@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+while true; do
+
+	sleep 1m
+
+	battery_cap=$(cat /sys/class/power_supply/BAT0/capacity)
+	battery_status=$(cat /sys/class/power_supply/BAT0/status)
+
+	if [[ $battery_cap -lt 10 && $battery_status != "Charging" ]]; then
+		notify-send "Battery Warning" "Battery at $battery_cap%" \
+			-u critical -i "/usr/share/icons/Dracula/22/panel/xfce4-battery-critical.svg"
+	fi
+done
