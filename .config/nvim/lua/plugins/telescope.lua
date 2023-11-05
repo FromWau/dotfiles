@@ -3,6 +3,7 @@ local keymap = vim.keymap
 local config = function()
 	require("telescope").setup({
 		defaults = {
+			focusable = true,
 			layout_config = {
 				horizontal = {
 					prompt_position = "bottom",
@@ -14,10 +15,14 @@ local config = function()
 				i = {
 					["<C-j>"] = "move_selection_next",
 					["<C-k>"] = "move_selection_previous",
+
+					["<ScrollWheelUp>"] = "preview_scrolling_up",
+					["<ScrollWheelDown>"] = "preview_scrolling_down",
 				},
 			},
 		},
 		pickers = {
+			previewer = true,
 			find_files = {
 				previewer = true,
 				hidden = true,
@@ -26,7 +31,7 @@ local config = function()
 				previewer = true,
 			},
 			buffers = {
-				previewer = false,
+				previewer = true,
 			},
 		},
 		extensions = {},
