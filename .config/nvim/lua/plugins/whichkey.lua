@@ -62,6 +62,12 @@ local config = function()
 
 		-- Clear search with <esc>
 		["<esc>"] = { "<cmd>noh<cr><esc>", "Escape and clear hlsearch" },
+
+		-- UI
+		u = {
+			name = "UI",
+			d = { ":Noice dismiss<CR>", "Dismiss noice" },
+		},
 	}, { mode = "n", prefix = "<leader>" })
 end
 
