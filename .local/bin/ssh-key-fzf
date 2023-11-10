@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+systemctl restart --user ssh-agent.service
+
+key=$(command exa -f "$HOME"/.ssh | rg -v .pub  | rg -v hosts | rg -v config | fzf -d "|" --cycle -i -1)
+
+ssh-add "$HOME"/.ssh/"$key"
+
