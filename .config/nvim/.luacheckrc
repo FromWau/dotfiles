@@ -1,4 +1,4 @@
----@diagnostic disable: lowercase-global
+--@diagnostic disable: lowercase-global
 
 ignore = {
     "111", -- setting non-standard global variable
