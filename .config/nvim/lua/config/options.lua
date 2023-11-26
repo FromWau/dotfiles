@@ -53,6 +53,10 @@ vim.cmd [[
   augroup END
 ]]
 
+-- Disbale netrw
+vim.g.loaded_netrwPlugin = 1
+vim.g.loaded_netrw = 1
+
 -- Edgy.nvim
 opt.laststatus = 3
 opt.splitkeep = "screen"

@@ -8,23 +8,22 @@ return {
         wk.register({
             -- Pane and Window Navigation
             ["<C-h>"] = { "<C-w>h", "Navigate Left" },
+            ["<C-Left>"] = { "<C-w>h", "Navigate Left" },
             ["<C-j>"] = { "<C-w>j", "Navigate Down" },
+            ["<C-Down>"] = { "<C-w>j", "Navigate Down" },
             ["<C-k>"] = { "<C-w>k", "Navigate Up" },
+            ["<C-Up>"] = { "<C-w>k", "Navigate Up" },
             ["<C-l>"] = { "<C-w>l", "Navigate Right" },
+            ["<C-Right>"] = { "<C-w>l", "Navigate Right" },
 
-            -- Comments
-            ["<C-/>"] = { "<Plug>(comment_toggle_linewise_current) j", "Comment Line" },
-            ["<C-kdivide>"] = { "<Plug>(comment_toggle_linewise_current) j", "Comment Line" },
+            -- Clear search with <esc>
+            ["<esc>"] = { "<cmd>noh<cr><esc>", "Escape and clear hlsearch" },
         }, { mode = "n", prefix = "" })
 
         wk.register({
             -- Indenting
             ["<"] = { "<gv", "Shift Indentation to Left" },
             [">"] = { ">gv", "Shift Indentation to Right" },
-
-            -- Comments
-            ["<C-/>"] = { "<Plug>(comment_toggle_linewise_visual)", "Comment Line" },
-            ["<C-kdivide>"] = { "<Plug>(comment_toggle_linewise_visual)", "Comment Line" },
         }, { mode = "v", prefix = "" })
 
         wk.register({
@@ -49,18 +48,11 @@ return {
             -- Lazy
             l = { "<cmd>Lazy<CR>", "[L]azy" },
 
-            -- Clear search with <esc>
-            ["<esc>"] = { "<cmd>noh<cr><esc>", "Escape and clear hlsearch" },
-
             -- UI
             u = {
                 name = "UI",
                 d = { "<cmd>Noice dismiss<CR>", "Dismiss noice" },
             },
-
-            -- Code Actions
-
-
         }, { mode = "n", prefix = "<leader>" })
     end,
     opts = {
