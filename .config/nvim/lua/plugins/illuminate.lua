@@ -10,7 +10,10 @@ return {
         filetypes_denylist = {
             "dirbuf",
             "dirvish",
-            "fugitive",
+            "lazygit",
+            "toggleterm",
+            "Neotree",
+            "dashboard",
         },
         under_cursor = true,
         large_file_cutoff = nil,
