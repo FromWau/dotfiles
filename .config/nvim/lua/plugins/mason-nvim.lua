@@ -21,6 +21,11 @@ return {
 			"typescript-language-server", --Lsp
 			"prettier", --Format
 			"prettierd", --Format Daemon
+            -- Css / Scss
+            "css-lsp", --Lsp
+            "stylelint", --Linter
+			"prettier", --Format
+			"prettierd", --Format Daemon
 		},
 	},
 	config = function(_, opts)

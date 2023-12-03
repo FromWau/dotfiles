@@ -13,6 +13,7 @@ return {
 	},
 	config = function()
 		local lspconfig = require("lspconfig")
+		-- All Servers: https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
 		lspconfig.pyright.setup({})
 		lspconfig.lua_ls.setup({})
 		lspconfig.bashls.setup({})
@@ -65,5 +66,6 @@ return {
 				desc = "Remove Unused Imports",
 			},
 		})
+		lspconfig.cssls.setup({})
 	end,
 }

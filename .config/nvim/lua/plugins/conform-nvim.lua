@@ -9,6 +9,8 @@ return {
 			python = { "black" },
 			bash = { "shfmt" },
 			javascript = { "prettierd", "prettier" },
+            css = { "prettierd", "prettier" },
+            scss = { "prettierd", "prettier" },
 		},
 	},
 	keys = {
