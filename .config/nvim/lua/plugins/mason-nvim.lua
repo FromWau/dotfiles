@@ -26,6 +26,10 @@ return {
             "stylelint", --Linter
 			"prettier", --Format
 			"prettierd", --Format Daemon
+            -- Kotlin
+            "kotlin-language-server", --Lsp
+            "ktlint", --Linter
+            "ktlint", --Format
 		},
 	},
 	config = function(_, opts)

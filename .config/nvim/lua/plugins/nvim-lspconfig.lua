@@ -10,6 +10,7 @@ return {
 		{ "folke/neodev.nvim", opts = {} },
 		"williamboman/mason.nvim",
 		"williamboman/mason-lspconfig.nvim",
+		"kevinhwang91/nvim-ufo",
 	},
 	config = function()
 		local lspconfig = require("lspconfig")
@@ -67,5 +68,13 @@ return {
 			},
 		})
 		lspconfig.cssls.setup({})
+		lspconfig.kotlin_language_server.setup({})
+
+		-- Setup required for ufo
+		local capabilities = require("cmp_nvim_lsp").default_capabilities(vim.lsp.protocol.make_client_capabilities())
+		capabilities.textDocument.foldingRange = {
+			dynamicRegistration = false,
+			lineFoldingOnly = true,
+		}
 	end,
 }
