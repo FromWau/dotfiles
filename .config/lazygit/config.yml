@@ -46,6 +46,7 @@ gui:
     splitDiff: 'auto' # one of 'auto' | 'always'
     skipRewordInEditorWarning: false # for skipping the confirmation before launching the reword editor
     border: 'rounded' # one of 'single' | 'double' | 'rounded' | 'hidden'
+    nerdFontsVersion: "3"
 git:
     paging:
         colorArg: always
@@ -65,7 +66,7 @@ git:
         order: 'topo-order'
         # one of always, never, when-maximised
         # this determines whether the git graph is rendered in the commits panel
-        showGraph: 'when-maximised'
+        showGraph: 'always'
         # displays the whole git graph by default in the commits panel (equivalent to passing the `--all` argument to `git log`)
         showWholeGraph: false
     skipHookPrefix: wip
@@ -75,7 +76,7 @@ git:
     autoFetch: true
     autoRefresh: true
     fetchAll: true # Pass --all flag when running git fetch. Set to false to fetch only origin (or the current branch's upstream remote if there is one)
-    branchLogCmd: 'git log --graph --color=always --abbrev-commit --decorate --date=relative --pretty=medium {{branchName}} --'
+    branchLogCmd: 'git log --graph --color=always --abbrev-commit --oneline {{branchName}} --'
     allBranchesLogCmd: 'git log --graph --all --color=always --abbrev-commit --decorate --date=relative  --pretty=medium'
     overrideGpg: false # prevents lazygit from spawning a separate process when using GPG
     disableForcePushing: false
