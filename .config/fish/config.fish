@@ -77,7 +77,6 @@ function fdir -d "Jump to selected zoxide dir"
     set -l selected_dir (zoxide query -l | fzf --preview "exa -lah --color always --group-directories-first {}" --cycle -i -d "|" --exact --prompt "z into dir: ")
     if count $selected_dir >/dev/null
         z $selected_dir
-        echo "Jumped to $selected_dir"
         exa --icons --all --group-directories-first --color always
     end
 end
@@ -101,16 +100,15 @@ function ff -d "Search for files and open in nvim"
 end
 
 function fp -d "Search for git repos and jump to selected repo"
-    set -l repo (fd -H -g '.git' --type d | rg -v ".cache" | rg -v ".local" | sed 's/\/\.git\///' | fzf -d "|" --cycle -i)
+    set -l repo (fd -u -g '.git' -E '.local' -E '.cache' --base-directory ~ | sed 's/\/\.git\///' | fzf -d "|" --cycle -i)
     if count $repo >/dev/null
         z $repo
-        echo "Jumped to repo $repo"
     end
 end
 
 function fpl -d "Search for git repos and open repo in lazygit"
     set -l dir (pwd)
-    set -l repo (fd -H -g '.git' --type d | rg -v ".cache" | rg -v ".local" | sed 's/\/\.git\///' | fzf -d "|" --cycle -i)
+    set -l repo (fd -u -g '.git' -E '.local' -E '.cache' --base-directory ~ | sed 's/\/\.git\///' | fzf -d "|" --cycle -i)
     if count $repo >/dev/null
         z $repo
         lazygit
