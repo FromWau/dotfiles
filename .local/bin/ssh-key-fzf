@@ -2,7 +2,32 @@
 
 systemctl restart --user ssh-agent.service
 
-key=$(command exa -f "$HOME"/.ssh | rg -v .pub  | rg -v hosts | rg -v config | fzf -d "|" --cycle -i -1)
+setup-ssh-key() {
+    echo "Setting up ssh key."
+    read -p "Enter your email: " -r email
+
+    ssh-keygen -q -t ed25519 -C "$email"
+    ##  If you are using a legacy system that doesn't support the Ed25519 algorithm, use:
+    # ssh-keygen -q  -t rsa -b 4096 -C "$email"
+
+    wl-copy < "$HOME"/.ssh/id_ed25519.pub
+    echo "Copied newly generated public key to clipboard."
+
+    xdg-open https://github.com/settings/keys &
+
+    echo "1) Click 'New SSH Key'"
+    echo "2) Enter a title for the key in the 'Title' field, maybe the hostname: $HOSTNAME"
+    echo "3) Key type: 'Authentication key'"
+    echo "4) Paste the key from your clipboard in the 'Key' field"
+}
+
+if [ ! "$(fd . "$HOME"/.ssh/ 2>/dev/null | wc -l)" -ge 2 ]; then
+    setup-ssh-key
+    chmod 600 "$HOME"/.ssh/*
+    echo "SSH key setup complete."
+fi
+
+key=$(fd . --base-directory "$HOME"/.ssh/ -e .pub | cut -d . -f1 | fzf -d "|" --cycle -i -1)
 
 ssh-add "$HOME"/.ssh/"$key"
 
