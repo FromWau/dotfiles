@@ -30,6 +30,8 @@ return {
             "kotlin-language-server", --Lsp
             "ktlint", --Linter
             "ktlint", --Format
+            -- Rust
+            "rust-analyzer", --Lsp
 		},
 	},
 	config = function(_, opts)

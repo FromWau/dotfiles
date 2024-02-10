@@ -20,7 +20,19 @@ local config = function()
                         return package.loaded["nvim-navic"] and require("nvim-navic").is_available()
                     end,
                 }
-            }
+            },
+
+            lualine_y = {
+                {
+                    'location'
+                }
+            },
+            lualine_z = {
+                {
+                    'datetime',
+                    style = '%H:%M',
+                }
+            },
         },
     })
 end

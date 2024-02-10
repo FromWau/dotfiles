@@ -3,10 +3,23 @@ return {
     event = "InsertEnter",
     dependencies = {
         -- Further sources: https://github.com/hrsh7th/nvim-cmp/wiki/List-of-sources
-        "hrsh7th/cmp-nvim-lsp",
-        "hrsh7th/cmp-buffer",
-        "hrsh7th/cmp-path",
+        -- Snippets
         "saadparwaiz1/cmp_luasnip",
+
+        -- Buffer  / Vim-built-in functiality
+        "hrsh7th/cmp-buffer",
+        "hrsh7th/cmp-calc",
+
+        -- LSP
+        "hrsh7th/cmp-nvim-lsp",
+        "hrsh7th/cmp-nvim-lsp-document-symbol",
+        "hrsh7th/cmp-nvim-lsp-signature-help",
+        "JMarkin/cmp-diag-codes",
+
+        -- Filesystem paths
+        "FelipeLema/cmp-async-path",
+
+        -- AI
         {
             "zbirenbaum/copilot-cmp",
             dependencies = "copilot.lua",
@@ -16,6 +29,9 @@ return {
                 copilot_cmp.setup(opts)
             end,
         },
+
+        -- Miscellanous
+        "hrsh7th/cmp-nvim-lua",
     },
     opts = function()
         vim.api.nvim_set_hl(0, "CmpGhostText", { link = "Comment", default = true })
@@ -50,7 +66,8 @@ return {
             sources = cmp.config.sources({
                 { name = "nvim_lsp" },
                 { name = "luasnip" },
-                { name = "path" },
+                { name = "async_path" },
+                { name = "copilot" },
             }, {
                 { name = "buffer" },
             }),
