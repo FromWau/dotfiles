@@ -30,6 +30,8 @@ return {
             "kotlin-language-server", --Lsp
             "ktlint", --Linter
             "ktlint", --Format
+            -- Java
+            "jdtls", --Lsp
             -- Rust
             "rust-analyzer", --Lsp
 		},

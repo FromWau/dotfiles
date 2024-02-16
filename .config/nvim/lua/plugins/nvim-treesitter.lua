@@ -9,15 +9,7 @@ return {
     cmd = { "TSUpdateSync", "TSUpdate", "TSInstall" },
     config = function()
         require("nvim-treesitter.configs").setup {
-            ensure_installed = {
-                "lua",
-                "python",
-                "bash",
-                "javascript",
-                "vim",
-                "regex",
-                "markdown"
-            },
+            auto_install = true,
             indent = {
                 enable = true,
             },

@@ -1,5 +1,6 @@
 return {
 	"stevearc/conform.nvim",
+	event = { "BufWritePre" },
 	dependencies = { "mason.nvim" },
 	lazy = true,
 	cmd = "ConformInfo",
@@ -11,7 +12,7 @@ return {
 			javascript = { "prettierd", "prettier" },
 			css = { "prettierd", "prettier" },
 			scss = { "prettierd", "prettier" },
-			kotlin = { "klint" },
+			kotlin = { "ktlint" },
 		},
 	},
 	keys = {
