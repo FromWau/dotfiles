@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+parent="$(git log --oneline | rg Merge | head -1 | cut -d ' ' -f4 | tr -d "'")"
+files="$(git diff "$(git merge-base --fork-point "$parent")" --name-only)"
+
+selected_files=$(echo "$files" | fzf -d "|" --cycle -i -m --reverse)
+
+# |
+# --preview "
+#
+# set parent_file \"\$(git show $parent:{} 2>/dev/null)\"
+# if test -z \$parent_file
+    # set parent_file \"\"
+# end
+#
+# echo \"p: \$parent_file\"
+#
+# if test -f {}
+#
+    # echo  \"c: \$(cat \$parent_file)\"
+    # cat \$parent_file | git diff --no-index - {}
+# else 
+#
+    # echo  \"c: \$(cat \$parent_file)\"
+    # cat \$parent_file | git diff --no-index - {}
+# end
+# "
+
+if [ -n "$selected_files" ]; then
+    for file in $selected_files; do
+        git checkout "$parent" -- "$file"
+        # echo "Reset $file to its parent version."
+    done
+else
+    echo "No files selected."
+fi
