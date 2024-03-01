@@ -1,5 +1,8 @@
 return {
     "stevearc/conform.nvim",
+    event = { "BufWritePre" },
+    dependencies = { "mason.nvim" },
+    lazy = true,
     cmd = "ConformInfo",
     opts = {
         formatters_by_ft = {

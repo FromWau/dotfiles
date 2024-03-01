@@ -32,3 +32,6 @@ keymap.set("n", "<C-Right>", "<C-w>l", { desc = "Navigate Right" })
 -- Keep indent
 keymap.set("n", "<", "<gv", { desc = "Indent Left" })
 keymap.set("n", ">", ">gv", { desc = "Indent Right" })
+
+-- Select all
+keymap.set("n", "<C-a>", "ggVG", { desc = "Select all" })

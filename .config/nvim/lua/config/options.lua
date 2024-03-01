@@ -1,8 +1,15 @@
+-- Map leader
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
+-- Disbale netrw
+vim.g.loaded_netrwPlugin = 1
+vim.g.loaded_netrw = 1
+
 -- [[ Setting options ]]
 local opt = vim.opt
+-- Disable line wrap
+opt.wrap = false
 
 -- Make line numbers default
 opt.number = true
@@ -57,3 +64,6 @@ opt.hlsearch = true
 -- No backup
 opt.swapfile = false
 opt.backup = false
+
+-- Enable termguicolors
+opt.termguicolors = true

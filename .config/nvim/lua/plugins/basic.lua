@@ -1,99 +1,57 @@
--- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
 return {
     "tpope/vim-sleuth", -- Detect tabstop and shiftwidth automatically
-
+    {
+        "folke/todo-comments.nvim", -- Highlight todo, notes, etc in comments
+        dependencies = { "nvim-lua/plenary.nvim" },
+    },
     {
         "numToStr/Comment.nvim",
-        opts = {},
         keys = {
-            {
-                "<C-/>",
-                "<Plug>(comment_toggle_linewise_current) j",
-                desc = "Comment Line",
-                mode = { "n" },
+            { "<C-/>", "<Plug>(comment_toggle_linewise_current) j", desc = "Comment Line", mode = { "n" } },
+            { "<C-kdivide>", "<Plug>(comment_toggle_linewise_current) j", desc = "Comment Line", mode = { "n" } },
+            { "<C-/>", "<Plug>(comment_toggle_linewise_visual)", desc = "Comment Line", mode = { "v" } },
+            { "<C-kdivide>", "<Plug>(comment_toggle_linewise_visual)", desc = "Comment Line", mode = { "v" } },
+        },
+    },
+    {
+        "lewis6991/gitsigns.nvim",
+        opts = {
+            signs = {
+                add = { text = "󰐗" },
+                change = { text = "" },
+                delete = { text = "󰍶" },
+                topdelete = { text = "‾" },
+                changedelete = { text = "󰏯" },
+                untracked = { text = "?" },
             },
-            {
-                "<C-kdivide>",
-                "<Plug>(comment_toggle_linewise_current) j",
-                desc = "Comment Line",
-                mode = { "n" },
-            },
-            {
-                "<C-/>",
-                "<Plug>(comment_toggle_linewise_visual)",
-                desc = "Comment Line",
-                mode = { "v" },
-            },
-            {
-                "<C-kdivide>",
-                "<Plug>(comment_toggle_linewise_visual)",
-                desc = "Comment Line",
-                mode = { "v" },
-            },
+            on_attach = function(bufnr)
+                local gs = package.loaded.gitsigns
+
+                vim.keymap.set("n", "<leader>tb", gs.toggle_current_line_blame, { buffer = bufnr })
+            end,
         },
     },
 
-    {
-        "lewis6991/gitsigns.nvim",
+    { -- Collection of various small independent plugins/modules
+        "echasnovski/mini.nvim",
         config = function()
-            require("gitsigns").setup {
-                on_attach = function(bufnr)
-                    local gs = package.loaded.gitsigns
+            -- Better Around/Inside textobjects
+            --
+            -- Examples:
+            --  - va)  - [V]isually select [A]round [)]parenthen
+            --  - yinq - [Y]ank [I]nside [N]ext [']quote
+            --  - ci'  - [C]hange [I]nside [']quote
+            require("mini.ai").setup { n_lines = 500 }
 
-                    local function map(mode, l, r, opts)
-                        opts = opts or {}
-                        opts.buffer = bufnr
-                        vim.keymap.set(mode, l, r, opts)
-                    end
+            -- Add/delete/replace surroundings (brackets, quotes, etc.)
+            --
+            -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
+            -- - sd'   - [S]urround [D]elete [']quotes
+            -- - sr)'  - [S]urround [R]eplace [)] [']
+            require("mini.surround").setup()
 
-                    -- Navigation
-                    map("n", "]c", function()
-                        if vim.wo.diff then
-                            return "]c"
-                        end
-                        vim.schedule(function()
-                            gs.next_hunk()
-                        end)
-                        return "<Ignore>"
-                    end, { expr = true })
-
-                    map("n", "[c", function()
-                        if vim.wo.diff then
-                            return "[c"
-                        end
-                        vim.schedule(function()
-                            gs.prev_hunk()
-                        end)
-                        return "<Ignore>"
-                    end, { expr = true })
-
-                    -- Actions
-                    map("n", "<leader>hs", gs.stage_hunk)
-                    map("n", "<leader>hr", gs.reset_hunk)
-                    map("v", "<leader>hs", function()
-                        gs.stage_hunk { vim.fn.line ".", vim.fn.line "v" }
-                    end)
-                    map("v", "<leader>hr", function()
-                        gs.reset_hunk { vim.fn.line ".", vim.fn.line "v" }
-                    end)
-                    map("n", "<leader>hS", gs.stage_buffer)
-                    map("n", "<leader>hu", gs.undo_stage_hunk)
-                    map("n", "<leader>hR", gs.reset_buffer)
-                    map("n", "<leader>hp", gs.preview_hunk)
-                    map("n", "<leader>hb", function()
-                        gs.blame_line { full = true }
-                    end)
-                    map("n", "<leader>tb", gs.toggle_current_line_blame)
-                    map("n", "<leader>hd", gs.diffthis)
-                    map("n", "<leader>hD", function()
-                        gs.diffthis "~"
-                    end)
-                    map("n", "<leader>td", gs.toggle_deleted)
-
-                    -- Text object
-                    map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>")
-                end,
-            }
+            -- ... and there is more!
+            --  Check out: https://github.com/echasnovski/mini.nvim
         end,
     },
 }
