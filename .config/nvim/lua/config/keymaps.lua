@@ -1,6 +1,8 @@
--- [[ Basic Keymaps ]]
-local keymap = vim.keymap
+local nmap = require("utils.keymaps").nmap
+local vmap = require("utils.keymaps").vmap
+local tmap = require("utils.keymaps").tmap
 
+-- [[ Basic Keymaps ]]
 -- TIP: Disable arrow keys in normal mode -- I am sry, I suck to much. Aaaah THATS WHAT SHE SAID.
 -- keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
 -- keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
@@ -8,40 +10,39 @@ local keymap = vim.keymap
 -- keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
 -- Clear highlight on pressing <Esc> in normal mode
-keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
+nmap("<ESC>", "<cmd>nohlsearch<CR>")
 
 -- Diagnostic keymaps
-keymap.set("n", "dN", vim.diagnostic.goto_prev, { desc = "Go to previous [D]iagnostic message" })
-keymap.set("n", "dn", vim.diagnostic.goto_next, { desc = "Go to next [D]iagnostic message" })
-keymap.set("n", "de", vim.diagnostic.open_float, { desc = "Show diagnostic [E]rror messages" })
-keymap.set("n", "dq", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
+nmap("dN", vim.diagnostic.goto_prev, { desc = "Go to previous [D]iagnostic message" })
+nmap("dn", vim.diagnostic.goto_next, { desc = "Go to next [D]iagnostic message" })
+nmap("de", vim.diagnostic.open_float, { desc = "Show diagnostic [E]rror messages" })
+nmap("dq", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
 
 -- Exit terminal mode in the builtin terminal
-keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+tmap("<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
 --
 --  See `:help wincmd` for a list of all window commands
 -- Pane and Window Navigation
-keymap.set("n", "<C-Left>", "<C-w>h", { desc = "Navigate Left" })
-keymap.set("n", "<C-Down>", "<C-w>j", { desc = "Navigate Down" })
-keymap.set("n", "<C-Up>", "<C-w>k", { desc = "Navigate Up" })
-keymap.set("n", "<C-Right>", "<C-w>l", { desc = "Navigate Right" })
+nmap("<C-Left>", "<C-w>h", { desc = "Navigate Left" })
+nmap("<C-Down>", "<C-w>j", { desc = "Navigate Down" })
+nmap("<C-Up>", "<C-w>k", { desc = "Navigate Up" })
+nmap("<C-Right>", "<C-w>l", { desc = "Navigate Right" })
 
--- Keep indent
-keymap.set("n", "<", "<<", { desc = "Indent Left" })
-keymap.set("n", ">", ">>", { desc = "Indent Right" })
-keymap.set("v", "<", "<gv", { desc = "Indent Block Left" })
-keymap.set("v", ">", ">gv", { desc = "Indent Block Right" })
+-- Keep indenting
+nmap("<", "<<", { desc = "Indent Left" })
+nmap(">", ">>", { desc = "Indent Right" })
+vmap("<", "<gv", { desc = "Indent Block Left" })
+vmap(">", ">gv", { desc = "Indent Block Right" })
 
 -- Select all
-keymap.set("n", "<C-a>", "ggVG", { desc = "Select all" })
+nmap("<C-a>", "ggVG", { desc = "Select all" })
 
 -- Show Lazy
-keymap.set("n", "<leader>ul", function() require("lazy").show() end, { desc = "Lazy" })
+nmap("<leader>ul", function() require("lazy").show() end, { desc = "Show Lazy" })
 
 -- Window management
-keymap.set("n", "<leader>sv", "<cmd>vsplit<CR>", { desc = "Split vertically" })
-keymap.set("n", "<leader>sh", "<cmd>split<CR>", { desc = "Split horizontally" })
-keymap.set("n", "<leader>sm", "<cmd>MaximizerToggle<CR>", { desc = "Maximise" })
+nmap("<leader>sv", "<cmd>vsplit<CR>", { desc = "Split vertically" })
+nmap("<leader>sh", "<cmd>split<CR>", { desc = "Split horizontally" })

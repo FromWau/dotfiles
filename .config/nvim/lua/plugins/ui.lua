@@ -1,8 +1,9 @@
 return {
     {
         "nvim-lualine/lualine.nvim",
-        dependencies = { "nvim-tree/nvim-web-devicons" },
+        dependencies = "nvim-tree/nvim-web-devicons",
         config = function()
+            local navic = require "nvim-navic"
             local theme = require "lualine.themes.tokyonight"
             theme.normal.c.bg = nil
 
@@ -15,7 +16,16 @@ return {
                     },
                 },
                 sections = {
-                    lualine_y = { { "location" } },
+                    lualine_a = { "mode" },
+                    lualine_b = { "branch", "diff", "diagnostics" },
+                    lualine_c = {
+                        "filename",
+                        {
+                            function() return navic.get_location() end,
+                            cond = function() return navic.is_available() end,
+                        },
+                    },
+                    lualine_y = { "progress", "location" },
                     lualine_z = { { "datetime", style = "%H:%M" } },
                 },
             }
@@ -28,7 +38,7 @@ return {
             require("harpoon").setup()
             require("telescope").load_extension "harpoon"
         end,
-        dependencies = { "nvim-lua/plenary.nvim" },
+        dependencies = "nvim-lua/plenary.nvim",
         keys = {
             { "<leader>hm", function() require("harpoon.mark").add_file() end, desc = "mark" },
             { "<leader>hu", function() require("harpoon.mark").rm_file() end, desc = "unmark" },

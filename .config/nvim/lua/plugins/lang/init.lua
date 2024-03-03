@@ -1,117 +1,17 @@
--- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
-local tools = {
-    python = {
-        lsp = { pyright = {} },
-        formatter = { "black" },
-        linter = { "pylint" },
-    },
-    lua = {
-        lsp = {
-            lua_ls = {
-                settings = {
-                    Lua = {
-                        runtime = { version = "LuaJIT" },
-                        workspace = {
-                            checkThirdParty = false,
-                            library = { "${3rd}/luv/library", unpack(vim.api.nvim_get_runtime_file("", true)) },
-                        },
-                        completion = { callSnippet = "Replace" },
-                    },
-                },
-            },
-        },
-        formatter = { "stylua" },
-        linter = { "luacheck" },
-    },
-    rust = {
-        lsp = { rust_analyzer = {} },
-        formatter = {}, -- use plugin instead
-        linter = {}, -- use plugin instead
-    },
-    typescript = {
-        lsp = { tsserver = {} },
-        formatter = { { "prettierd", "prettier" } },
-        linter = {},
-    },
-    javascript = {
-        lsp = { tsserver = {} },
-        formatter = { { "prettierd", "prettier" } },
-        linter = {},
-    },
-    bash = {
-        lsp = { bashls = {} },
-        formatter = { "shfmt" },
-        linter = { "shellcheck" },
-    },
-    css = {
-        lsp = { cssls = {} },
-        formatter = { { "prettierd", "prettier" } },
-        linter = { "stylelint" },
-    },
-    scss = {
-        lsp = { cssls = {} },
-        formatter = { { "prettierd", "prettier" } },
-        linter = { "stylelint" },
-    },
-    java = {
-        lsp = { jdtls = {} },
-        formatter = {},
-        linter = {},
-    },
-    kotlin = {
-        lsp = { kotlin_language_server = {} },
-        formatter = { "ktlint" },
-        linter = { "ktlint" },
-    },
-}
+local tools = require("utils.lang").getTables()
 
-local ensure_installed = {}
-local formatters = {}
-local linters = {}
-local language_servers = {}
-
-local function populateTables()
-    local toolSet = {}
-
-    local function insertEnsure(tbl)
-        for _, tool_table in ipairs(tbl) do
-            if type(tool_table) == "string" then
-                if not toolSet[tool_table] then toolSet[tool_table] = true end
-            elseif next(tool_table) ~= nil then
-                for _, tool in ipairs(tool_table) do
-                    if not toolSet[tool] then toolSet[tool] = true end
-                end
-            end
-        end
-    end
-
-    for lang, langTools in pairs(tools) do
-        if langTools.formatter then
-            formatters[lang] = langTools.formatter
-            insertEnsure(langTools.formatter)
-        end
-        if langTools.linter then
-            linters[lang] = langTools.linter
-            insertEnsure(langTools.linter)
-        end
-        if langTools.lsp then
-            for server, config in pairs(langTools.lsp) do
-                language_servers[server] = config
-                if not toolSet[server] then toolSet[server] = true end
-            end
-        end
-    end
-
-    for k, _ in pairs(toolSet) do
-        table.insert(ensure_installed, k)
-    end
-end
-populateTables()
+local language_servers = tools.language_servers
+local formatters = tools.formatters
+local linters = tools.linters
+local ensure_installed = tools.ensure_installed
 
 return { -- LSP Configuration & Plugins
     "neovim/nvim-lspconfig",
     dependencies = {
-        "williamboman/mason.nvim",
+        {
+            "williamboman/mason.nvim",
+            keys = { { "<leader>um", "<CMD>Mason<CR>", { desc = "Show Mason" } } },
+        },
         "williamboman/mason-lspconfig.nvim",
         "WhoIsSethDaniel/mason-tool-installer.nvim",
         "j-hui/fidget.nvim",
@@ -119,10 +19,16 @@ return { -- LSP Configuration & Plugins
             "stevearc/conform.nvim",
             cmd = "ConformInfo",
             event = "BufWritePre",
-            dependencies = { "mason.nvim" },
+            dependencies = "mason.nvim",
             lazy = true,
+            opts = { formatters_by_ft = formatters },
+        },
+        {
+            "SmiteshP/nvim-navic", -- Lualine show context
             opts = {
-                formatters_by_ft = formatters,
+                highlight = true,
+                click = true,
+                use_diagnostic_signs = true,
             },
         },
     },
@@ -130,41 +36,48 @@ return { -- LSP Configuration & Plugins
         vim.api.nvim_create_autocmd("LspAttach", {
             group = vim.api.nvim_create_augroup("lsp-attach", { clear = true }),
             callback = function(event)
-                -- Format
-                vim.keymap.set(
-                    "n",
-                    "<leader>cf",
-                    function() require("conform").format { async = true, lsp_fallback = true } end,
-                    { buffer = event.buf, desc = "Format buffer" }
-                )
+                local nmap = require("utils.keymaps").nmap
 
-                local map = function(keys, func, desc)
-                    vim.keymap.set("n", keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
+                local nmap_buffer = function(keys, func, opts)
+                    local options = { buffer = event.buf }
+                    if opts then options = vim.tbl_extend("force", options, opts) end
+                    nmap(keys, func, options)
                 end
 
-                --  To jump back, press <C-T>.
-                map("gd", require("telescope.builtin").lsp_definitions, "[G]oto [D]efinition")
-                map("gr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
-                map("gi", require("telescope.builtin").lsp_implementations, "[G]oto [I]mplementation")
+                -- Format
+                nmap_buffer(
+                    "<leader>cf",
+                    function() require("conform").format { async = true, lsp_fallback = true } end,
+                    { desc = "Format buffer" }
+                )
 
-                map("<leader>D", require("telescope.builtin").lsp_type_definitions, "Type [D]efinition")
+                --  To jump back, press <C-T>.
+                nmap_buffer("gd", require("telescope.builtin").lsp_definitions, { desc = "[G]oto [D]efinition" })
+                nmap_buffer("gr", require("telescope.builtin").lsp_references, { desc = "[G]oto [R]eferences" })
+                nmap_buffer("gi", require("telescope.builtin").lsp_implementations, { desc = "[G]oto [I]mplementation" })
+
+                nmap_buffer("<leader>D", require("telescope.builtin").lsp_type_definitions, { desc = "Type [D]efinition" })
 
                 -- Fuzzy find all the symbols in your current document.
                 --  Symbols are things like variables, functions, types, etc.
-                map("<leader>ds", require("telescope.builtin").lsp_document_symbols, "[D]ocument [S]ymbols")
+                nmap_buffer("<leader>ds", require("telescope.builtin").lsp_document_symbols, { desc = "[D]ocument [S]ymbols" })
 
                 -- Fuzzy find all the symbols in your current workspace
                 --  Similar to document symbols, except searches over your whole project.
-                map("<leader>ws", require("telescope.builtin").lsp_dynamic_workspace_symbols, "[W]orkspace [S]ymbols")
-                map("<leader>rn", vim.lsp.buf.rename, "[R]e[n]ame")
+                nmap_buffer(
+                    "<leader>ws",
+                    require("telescope.builtin").lsp_dynamic_workspace_symbols,
+                    { desc = "[W]orkspace [S]ymbols" }
+                )
+                nmap_buffer("<leader>rn", vim.lsp.buf.rename, { desc = "[R]e[n]ame" })
 
-                map("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction")
+                nmap_buffer("<leader>ca", vim.lsp.buf.code_action, { desc = "[C]ode [A]ction" })
 
-                map("K", vim.lsp.buf.hover, "Hover Documentation")
+                nmap_buffer("K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
 
                 -- WARN: This is not Goto Definition, this is Goto Declaration.
                 --  For example, in C this would take you to the header
-                map("gD", vim.lsp.buf.declaration, "[G]oto [D]eclaration")
+                nmap_buffer("gD", vim.lsp.buf.declaration, { desc = "[G]oto [D]eclaration" })
 
                 -- The following two autocommands are used to highlight references of the
                 -- word under your cursor when your cursor rests there for a little while.
@@ -182,6 +95,12 @@ return { -- LSP Configuration & Plugins
                         buffer = event.buf,
                         callback = vim.lsp.buf.clear_references,
                     })
+                end
+
+                -- Show context in lualine
+                if client and client.server_capabilities.documentSymbolProvider then
+                    local navic = require "nvim-navic"
+                    navic.attach(client, event.buf)
                 end
             end,
         })

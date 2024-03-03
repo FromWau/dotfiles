@@ -42,7 +42,8 @@ local opts = {
             { icon = "󱄽 ", desc = "Find Word", action = "Telescope live_grep", key = "g" },
             { icon = " ", desc = "Recently Used Files", action = "Telescope oldfiles", key = "r" },
             { icon = "󰙅 ", desc = "File Browser", action = "Neotree toggle", key = "e" },
-            { icon = "󰊳 ", desc = "Lazy", action = "Lazy", key = "l" },
+            { icon = "󰊳 ", desc = "Open Lazy", action = "Lazy", key = "l" },
+            { icon = "󰺾 ", desc = "Open Mason", action = "Mason", key = "m" },
             { icon = "󰩈 ", desc = "Quit", action = "qa", key = "q" },
         },
         footer = {},
@@ -69,7 +70,7 @@ return {
     "nvimdev/dashboard-nvim",
     event = "VimEnter",
     opts = opts,
-    dependencies = { "nvim-tree/nvim-web-devicons" },
+    dependencies = "nvim-tree/nvim-web-devicons",
     init = function()
         if vim.fn.argc(-1) == 1 then
             local stat = vim.loop.fs_stat(vim.fn.argv(0))

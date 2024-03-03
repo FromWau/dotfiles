@@ -39,29 +39,25 @@ return { -- Autocompletion
         --  into multiple repos for maintenance purposes.
         "hrsh7th/cmp-nvim-lsp",
         "hrsh7th/cmp-path",
+        "onsails/lspkind.nvim", -- Adds icons to completion menu
 
         -- AI
         {
             "zbirenbaum/copilot-cmp",
             dependencies = "copilot.lua",
-            opts = {},
-            config = function(_, opts)
-                local copilot_cmp = require "copilot_cmp"
-                copilot_cmp.setup(opts)
-            end,
         },
     },
     config = function()
         -- See `:help cmp`
-        vim.api.nvim_set_hl(0, "CmpGhostText", { link = "Comment", default = true })
+        local lspkind = require "lspkind"
         local cmp = require "cmp"
         local luasnip = require "luasnip"
         luasnip.config.setup {}
 
+        vim.api.nvim_set_hl(0, "CmpGhostText", { link = "Comment", default = true })
+
         cmp.setup {
-            snippet = {
-                expand = function(args) luasnip.lsp_expand(args.body) end,
-            },
+            snippet = { expand = function(args) luasnip.lsp_expand(args.body) end },
             completion = { completeopt = "menu,menuone,noinsert" },
 
             -- For an understanding of why these mappings were
@@ -98,9 +94,22 @@ return { -- Autocompletion
                 { name = "path" },
                 { name = "copilot" },
             },
-            experimental = {
-                ghost_text = {
-                    hl_group = "CmpGhostText",
+            experimental = { ghost_text = { hl_group = "CmpGhostText" } },
+            formatting = {
+                fields = {
+                    cmp.ItemField.Kind,
+                    cmp.ItemField.Abbr,
+                    cmp.ItemField.Menu,
+                },
+                format = lspkind.cmp_format {
+                    -- options: 'text', 'text_symbol', 'symbol_text', 'symbol'
+                    mode = "symbol_text", -- show only symbol annotations
+                    maxwidth = function() return math.floor(0.45 * vim.o.columns) end,
+                    ellipsis_char = "...", -- when popup menu exceed maxwidth, the truncated part would show ellipsis_char instead (must define maxwidth first)
+                    show_labelDetails = true, -- show labelDetails in menu. Disabled by default
+
+                    -- so that you can provide more controls on popup customization. (See [#30](https://github.com/onsails/lspkind-nvim/pull/30))
+                    before = function(_, vim_item) return vim_item end,
                 },
             },
         }

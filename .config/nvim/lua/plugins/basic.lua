@@ -2,7 +2,7 @@ return {
     "tpope/vim-sleuth", -- Detect tabstop and shiftwidth automatically
     {
         "folke/todo-comments.nvim", -- Highlight todo, notes, etc in comments
-        dependencies = { "nvim-lua/plenary.nvim" },
+        dependencies = "nvim-lua/plenary.nvim",
     },
 
     {
