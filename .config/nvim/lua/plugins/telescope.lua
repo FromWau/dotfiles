@@ -43,35 +43,30 @@ return {
         pcall(require("telescope").load_extension, "noice")
 
         local builtin = require "telescope.builtin"
-        local keymap = vim.keymap
+        local nmap = require("utils.keymaps").nmap
 
-        keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "[F]ind [H]elp" })
-        keymap.set("n", "<leader>fk", builtin.keymaps, { desc = "[F]ind [K]eymaps" })
-        keymap.set("n", "<leader>ff", builtin.find_files, { desc = "[F]ind [F]iles" })
-        keymap.set("n", "<leader>fw", builtin.grep_string, { desc = "[F]ind current [W]ord" })
-        keymap.set("n", "<leader>fg", builtin.live_grep, { desc = "[F]ind by [G]rep" })
-        keymap.set("n", "<leader>fd", builtin.diagnostics, { desc = "[F]ind [D]iagnostics" })
-        keymap.set("n", "<leader>fr", builtin.oldfiles, { desc = "[F]ind Recent Files" })
-        keymap.set("n", "<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
+        nmap("<leader>fh", builtin.help_tags, { desc = "[F]ind [H]elp" })
+        nmap("<leader>fk", builtin.keymaps, { desc = "[F]ind [K]eymaps" })
+        nmap("<leader>ff", builtin.find_files, { desc = "[F]ind [F]iles" })
+        nmap("<leader>fw", builtin.grep_string, { desc = "[F]ind current [W]ord" })
+        nmap("<leader>fg", builtin.live_grep, { desc = "[F]ind by [G]rep" })
+        nmap("<leader>fd", builtin.diagnostics, { desc = "[F]ind [D]iagnostics" })
+        nmap("<leader>fr", builtin.oldfiles, { desc = "[F]ind Recent Files" })
+        nmap("<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
 
-        keymap.set(
-            "n",
+        nmap(
             "<leader>/",
             function()
                 builtin.current_buffer_fuzzy_find {
                     layout_strategy = "vertical",
-                    layout_config = {
-                        width = 0.8,
-                        height = 0.7,
-                    },
+                    layout_config = { width = 0.8, height = 0.7 },
                     previewer = false,
                 }
             end,
             { desc = "[/] Fuzzily search in current buffer" }
         )
 
-        keymap.set(
-            "n",
+        nmap(
             "<leader>f/",
             function()
                 builtin.live_grep {

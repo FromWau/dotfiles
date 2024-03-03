@@ -30,8 +30,7 @@ return {
             },
             on_attach = function(bufnr)
                 local gs = package.loaded.gitsigns
-
-                vim.keymap.set("n", "<leader>tb", gs.toggle_current_line_blame, { buffer = bufnr })
+                require("utils.keymaps").nmap("<leader>tb", gs.toggle_current_line_blame, { buffer = bufnr })
             end,
         },
     },
