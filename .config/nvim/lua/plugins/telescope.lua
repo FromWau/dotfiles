@@ -18,9 +18,9 @@ return {
                 layout_strategy = "vertical",
                 layout_config = {
                     vertical = {
-                        prompt_position = "bottom",
-                        -- width = 0.8,
-                        -- preview_height = 0.6,
+                        prompt_position = "top",
+                        width = 0.8,
+                        preview_height = 0.6,
                     },
                 },
                 mappings = {
@@ -32,7 +32,10 @@ return {
                     },
                 },
             },
-            pickers = { find_files = { hidden = true } },
+            pickers = {
+                find_files = { hidden = true },
+                current_buffer_fuzzy_find = { sorting_strategy = "ascending" },
+            },
         }
 
         -- Enable telescope extensions, if they are installed
@@ -56,7 +59,7 @@ return {
             "<leader>/",
             function()
                 builtin.current_buffer_fuzzy_find {
-                    layout_strategy = "center",
+                    layout_strategy = "vertical",
                     layout_config = {
                         width = 0.8,
                         height = 0.7,
