@@ -13,13 +13,12 @@ return { -- Autocompletion
             config = function(_, opts)
                 local snip = require "luasnip"
 
-                if opts then
-                    snip.config.setup(opts)
-                end
+                if opts then snip.config.setup(opts) end
 
-                vim.tbl_map(function(type)
-                    require("luasnip.loaders.from_" .. type).lazy_load()
-                end, { "vscode", "snipmate", "lua" })
+                vim.tbl_map(
+                    function(type) require("luasnip.loaders.from_" .. type).lazy_load() end,
+                    { "vscode", "snipmate", "lua" }
+                )
 
                 -- friendly-snippets - enable standardized comments snippets
                 snip.filetype_extend("typescript", { "tsdoc" })
@@ -61,9 +60,7 @@ return { -- Autocompletion
 
         cmp.setup {
             snippet = {
-                expand = function(args)
-                    luasnip.lsp_expand(args.body)
-                end,
+                expand = function(args) luasnip.lsp_expand(args.body) end,
             },
             completion = { completeopt = "menu,menuone,noinsert" },
 
@@ -89,14 +86,10 @@ return { -- Autocompletion
                 -- <c-l> will move you to the right of each of the expansion locations.
                 -- <c-h> is similar, except moving you backwards.
                 ["<C-right>"] = cmp.mapping(function()
-                    if luasnip.expand_or_locally_jumpable() then
-                        luasnip.expand_or_jump()
-                    end
+                    if luasnip.expand_or_locally_jumpable() then luasnip.expand_or_jump() end
                 end, { "i", "s" }),
                 ["<C-left>"] = cmp.mapping(function()
-                    if luasnip.locally_jumpable(-1) then
-                        luasnip.jump(-1)
-                    end
+                    if luasnip.locally_jumpable(-1) then luasnip.jump(-1) end
                 end, { "i", "s" }),
             },
             sources = {
@@ -113,4 +106,3 @@ return { -- Autocompletion
         }
     end,
 }
-

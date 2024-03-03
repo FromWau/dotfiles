@@ -11,7 +11,7 @@ return {
                     theme = theme,
                     globalstatus = true,
                     disabled_filetypes = {
-                        statusline = { "Neotree" },
+                        statusline = { "Neotree", "dashboard" },
                     },
                 },
                 sections = {
@@ -28,57 +28,20 @@ return {
             require("harpoon").setup()
             require("telescope").load_extension "harpoon"
         end,
-        dependencies = {
-            "nvim-lua/plenary.nvim",
-        },
+        dependencies = { "nvim-lua/plenary.nvim" },
         keys = {
-            {
-                "<leader>hm",
-                function()
-                    require("harpoon.mark").add_file()
-                end,
-                desc = "mark",
-            },
-            {
-                "<leader>hu",
-                function()
-                    require("harpoon.mark").rm_file()
-                end,
-                desc = "unmark",
-            },
-            {
-                "<leader>hl",
-                function()
-                    require("harpoon.ui").toggle_quick_menu()
-                end,
-                desc = "show marks",
-            },
-            {
-                "<leader>hn",
-                function()
-                    require("harpoon.ui").nav_next()
-                end,
-                desc = "next mark",
-            },
-            {
-                "<leader>hp",
-                function()
-                    require("harpoon.ui").nav_prev()
-                end,
-                desc = "previous mark",
-            },
+            { "<leader>hm", function() require("harpoon.mark").add_file() end, desc = "mark" },
+            { "<leader>hu", function() require("harpoon.mark").rm_file() end, desc = "unmark" },
+            { "<leader>hl", function() require("harpoon.ui").toggle_quick_menu() end, desc = "show marks" },
+            { "<leader>hn", function() require("harpoon.ui").nav_next() end, desc = "next mark" },
+            { "<leader>hp", function() require("harpoon.ui").nav_prev() end, desc = "previous mark" },
         },
     },
 
     {
         "folke/noice.nvim",
         event = "VeryLazy",
-        opts = {},
-        config = function()
-            require("noice").setup {
-                presets = { inc_rename = true },
-            }
-        end,
+        opts = { presets = { inc_rename = true } },
         dependencies = {
             "MunifTanjim/nui.nvim",
             {
@@ -90,21 +53,26 @@ return {
             },
         },
         keys = {
-            {
-                "<leader>un",
-                function()
-                    require("noice").cmd "dismiss"
-                end,
-                desc = "Dismiss noice",
-            },
-
-            {
-                "<leader>uh",
-                function()
-                    require("noice").cmd "telescope"
-                end,
-                desc = "Show noice history",
-            },
+            { "<leader>un", function() require("noice").cmd "dismiss" end, desc = "Dismiss noice" },
+            { "<leader>uh", function() require("noice").cmd "telescope" end, desc = "Show noice history" },
         },
+    },
+
+    {
+        "folke/which-key.nvim",
+        event = "VeryLazy",
+        config = function()
+            local wk = require "which-key"
+            wk.setup()
+            wk.register {
+                ["<leader>c"] = { name = "+Code", _ = "which_key_ignore" },
+                ["<leader>f"] = { name = "+Find", _ = "which_key_ignore" },
+                ["<leader>g"] = { name = "+Git", _ = "which_key_ignore" },
+                ["<leader>h"] = { name = "+Harpoon", _ = "which_key_ignore" },
+                ["<leader>s"] = { name = "+Split Window", _ = "which_key_ignore" },
+                ["<leader>u"] = { name = "+Ui", _ = "which_key_ignore" },
+                ["<leader>x"] = { name = "+Trouble", _ = "which_key_ignore" },
+            }
+        end,
     },
 }

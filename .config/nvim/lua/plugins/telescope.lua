@@ -7,10 +7,7 @@ return {
         {
             "nvim-telescope/telescope-fzf-native.nvim",
             build = "make",
-            -- `cond` is a condition used to determine whether this plugin should be installed and loaded.
-            cond = function()
-                return vim.fn.executable "make" == 1
-            end,
+            cond = function() return vim.fn.executable "make" == 1 end,
         },
         "nvim-telescope/telescope-ui-select.nvim",
         "nvim-tree/nvim-web-devicons",
@@ -21,15 +18,13 @@ return {
                 layout_strategy = "vertical",
                 layout_config = {
                     vertical = {
-                        prompt_position = "top",
-                        width = 0.8,
-                        preview_height = 0.6,
+                        prompt_position = "bottom",
+                        -- width = 0.8,
+                        -- preview_height = 0.6,
                     },
                 },
                 mappings = {
                     i = {
-                        ["<c-enter>"] = "to_fuzzy_refine",
-
                         ["<ScrollWheelUp>"] = "preview_scrolling_up",
                         ["<c-up>"] = "preview_scrolling_up",
                         ["<ScrollWheelDown>"] = "preview_scrolling_down",
@@ -37,9 +32,7 @@ return {
                     },
                 },
             },
-            pickers = {
-                find_files = { hidden = true },
-            },
+            pickers = { find_files = { hidden = true } },
         }
 
         -- Enable telescope extensions, if they are installed
@@ -58,22 +51,32 @@ return {
         keymap.set("n", "<leader>fr", builtin.oldfiles, { desc = "[F]ind Recent Files" })
         keymap.set("n", "<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
 
-        keymap.set("n", "<leader>/", function()
-            builtin.current_buffer_fuzzy_find {
-                layout_strategy = "center",
-                layout_config = {
-                    width = 0.8,
-                    height = 0.7,
-                },
-                previewer = false,
-            }
-        end, { desc = "[/] Fuzzily search in current buffer" })
+        keymap.set(
+            "n",
+            "<leader>/",
+            function()
+                builtin.current_buffer_fuzzy_find {
+                    layout_strategy = "center",
+                    layout_config = {
+                        width = 0.8,
+                        height = 0.7,
+                    },
+                    previewer = false,
+                }
+            end,
+            { desc = "[/] Fuzzily search in current buffer" }
+        )
 
-        keymap.set("n", "<leader>f/", function()
-            builtin.live_grep {
-                grep_open_files = true,
-                prompt_title = "Live Grep in Open Files",
-            }
-        end, { desc = "[F]ind [/] in Open Files" })
+        keymap.set(
+            "n",
+            "<leader>f/",
+            function()
+                builtin.live_grep {
+                    grep_open_files = true,
+                    prompt_title = "Live Grep in Open Files",
+                }
+            end,
+            { desc = "[F]ind [/] in Open Files" }
+        )
     end,
 }

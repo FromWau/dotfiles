@@ -1,16 +1,143 @@
+-- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
+local tools = {
+    python = {
+        lsp = { pyright = {} },
+        formatter = { "black" },
+        linter = { "pylint" },
+    },
+    lua = {
+        lsp = {
+            lua_ls = {
+                settings = {
+                    Lua = {
+                        runtime = { version = "LuaJIT" },
+                        workspace = {
+                            checkThirdParty = false,
+                            library = { "${3rd}/luv/library", unpack(vim.api.nvim_get_runtime_file("", true)) },
+                        },
+                        completion = { callSnippet = "Replace" },
+                    },
+                },
+            },
+        },
+        formatter = { "stylua" },
+        linter = { "luacheck" },
+    },
+    rust = {
+        lsp = { rust_analyzer = {} },
+        formatter = {}, -- use plugin instead
+        linter = {}, -- use plugin instead
+    },
+    typescript = {
+        lsp = { tsserver = {} },
+        formatter = { { "prettierd", "prettier" } },
+        linter = {},
+    },
+    javascript = {
+        lsp = { tsserver = {} },
+        formatter = { { "prettierd", "prettier" } },
+        linter = {},
+    },
+    bash = {
+        lsp = { bashls = {} },
+        formatter = { "shfmt" },
+        linter = { "shellcheck" },
+    },
+    css = {
+        lsp = { cssls = {} },
+        formatter = { { "prettierd", "prettier" } },
+        linter = { "stylelint" },
+    },
+    scss = {
+        lsp = { cssls = {} },
+        formatter = { { "prettierd", "prettier" } },
+        linter = { "stylelint" },
+    },
+    java = {
+        lsp = { jdtls = {} },
+        formatter = {},
+        linter = {},
+    },
+    kotlin = {
+        lsp = { kotlin_language_server = {} },
+        formatter = { "ktlint" },
+        linter = { "ktlint" },
+    },
+}
+
+local ensure_installed = {}
+local formatters = {}
+local linters = {}
+local language_servers = {}
+
+local function populateTables()
+    local toolSet = {}
+
+    local function insertEnsure(tbl)
+        for _, tool_table in ipairs(tbl) do
+            if type(tool_table) == "string" then
+                if not toolSet[tool_table] then toolSet[tool_table] = true end
+            elseif next(tool_table) ~= nil then
+                for _, tool in ipairs(tool_table) do
+                    if not toolSet[tool] then toolSet[tool] = true end
+                end
+            end
+        end
+    end
+
+    for lang, langTools in pairs(tools) do
+        if langTools.formatter then
+            formatters[lang] = langTools.formatter
+            insertEnsure(langTools.formatter)
+        end
+        if langTools.linter then
+            linters[lang] = langTools.linter
+            insertEnsure(langTools.linter)
+        end
+        if langTools.lsp then
+            for server, config in pairs(langTools.lsp) do
+                language_servers[server] = config
+                if not toolSet[server] then toolSet[server] = true end
+            end
+        end
+    end
+
+    for k, _ in pairs(toolSet) do
+        table.insert(ensure_installed, k)
+    end
+end
+populateTables()
+
 return { -- LSP Configuration & Plugins
     "neovim/nvim-lspconfig",
     dependencies = {
-        -- Automatically install LSPs and related tools to stdpath for neovim
         "williamboman/mason.nvim",
         "williamboman/mason-lspconfig.nvim",
         "WhoIsSethDaniel/mason-tool-installer.nvim",
         "j-hui/fidget.nvim",
+        {
+            "stevearc/conform.nvim",
+            cmd = "ConformInfo",
+            event = "BufWritePre",
+            dependencies = { "mason.nvim" },
+            lazy = true,
+            opts = {
+                formatters_by_ft = formatters,
+            },
+        },
     },
     config = function()
         vim.api.nvim_create_autocmd("LspAttach", {
-            group = vim.api.nvim_create_augroup("kickstart-lsp-attach", { clear = true }),
+            group = vim.api.nvim_create_augroup("lsp-attach", { clear = true }),
             callback = function(event)
+                -- Format
+                vim.keymap.set(
+                    "n",
+                    "<leader>cf",
+                    function() require("conform").format { async = true, lsp_fallback = true } end,
+                    { buffer = event.buf, desc = "Format buffer" }
+                )
+
                 local map = function(keys, func, desc)
                     vim.keymap.set("n", keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
                 end
@@ -72,75 +199,15 @@ return { -- LSP Configuration & Plugins
         --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
         --  - settings (table): Override the default settings passed when initializing the server.
         --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
-        local servers = {
-            pyright = {},
-            rust_analyzer = {},
-            -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
-            tsserver = {},
-            bashls = {},
-            cssls = {},
-            kotlin_language_server = {},
-            jdtls = {},
-            lua_ls = {
-                settings = {
-                    Lua = {
-                        runtime = { version = "LuaJIT" },
-                        workspace = {
-                            checkThirdParty = false,
-                            -- Tells lua_ls where to find all the Lua files that you have loaded
-                            -- for your neovim configuration.
-                            library = {
-                                "${3rd}/luv/library",
-                                unpack(vim.api.nvim_get_runtime_file("", true)),
-                            },
-                            -- If lua_ls is really slow on your computer, you can try this instead:
-                            -- library = { vim.env.VIMRUNTIME },
-                        },
-                        -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-                        -- diagnostics = { disable = { 'missing-fields' } },
-                    },
-                },
-            },
-        }
 
         -- Ensure the servers and tools above are installed
         require("mason").setup()
-
-        local ensure_installed = vim.tbl_keys(servers or {})
-        vim.list_extend(ensure_installed, {
-            -- Lua
-            "lua-language-server", --Lsp
-            "luacheck", --Linter
-            "stylua", --Format
-            -- Python
-            "pyright", --Lsp
-            "pylint", --Linter
-            "black", --Format
-            -- Bash
-            "bash-language-server", --Lsp
-            "shellcheck", --Linter
-            "shfmt", --Format
-            -- Javascript/Typescript
-            "typescript-language-server", --Lsp
-            "prettierd", --Format Daemon
-            -- Css / Scss
-            "css-lsp", --Lsp
-            "stylelint", --Linter
-            "prettierd", --Format Daemon
-            -- Kotlin
-            "kotlin-language-server", --Lsp
-            "ktlint", --Linter, Format
-            -- Java
-            "jdtls", --Lsp
-            -- Rust
-            "rust-analyzer", --Lsp
-        })
         require("mason-tool-installer").setup { ensure_installed = ensure_installed }
 
         require("mason-lspconfig").setup {
             handlers = {
                 function(server_name)
-                    local server = servers[server_name] or {}
+                    local server = language_servers[server_name] or {}
                     require("lspconfig")[server_name].setup {
                         cmd = server.cmd,
                         settings = server.settings,

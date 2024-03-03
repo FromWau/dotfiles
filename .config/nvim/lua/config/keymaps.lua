@@ -30,8 +30,18 @@ keymap.set("n", "<C-Up>", "<C-w>k", { desc = "Navigate Up" })
 keymap.set("n", "<C-Right>", "<C-w>l", { desc = "Navigate Right" })
 
 -- Keep indent
-keymap.set("n", "<", "<gv", { desc = "Indent Left" })
-keymap.set("n", ">", ">gv", { desc = "Indent Right" })
+keymap.set("n", "<", "<<", { desc = "Indent Left" })
+keymap.set("n", ">", ">>", { desc = "Indent Right" })
+keymap.set("v", "<", "<gv", { desc = "Indent Block Left" })
+keymap.set("v", ">", ">gv", { desc = "Indent Block Right" })
 
 -- Select all
 keymap.set("n", "<C-a>", "ggVG", { desc = "Select all" })
+
+-- Show Lazy
+keymap.set("n", "<leader>ul", function() require("lazy").show() end, { desc = "Lazy" })
+
+-- Window management
+keymap.set("n", "<leader>sv", "<cmd>vsplit<CR>", { desc = "Split vertically" })
+keymap.set("n", "<leader>sh", "<cmd>split<CR>", { desc = "Split horizontally" })
+keymap.set("n", "<leader>sm", "<cmd>MaximizerToggle<CR>", { desc = "Maximise" })
