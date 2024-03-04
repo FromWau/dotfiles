@@ -8,11 +8,9 @@ local function nmap(keys, func, opts) map("n", keys, func, opts) end
 local function vmap(keys, func, opts) map("v", keys, func, opts) end
 local function tmap(keys, func, opts) map("t", keys, func, opts) end
 
-local m = {
+return {
     map = map,
     nmap = nmap,
     vmap = vmap,
     tmap = tmap,
 }
-
-return m

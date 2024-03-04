@@ -12,7 +12,6 @@ return { -- Autocompletion
             },
             config = function(_, opts)
                 local snip = require "luasnip"
-
                 if opts then snip.config.setup(opts) end
 
                 vim.tbl_map(
@@ -44,12 +43,31 @@ return { -- Autocompletion
         -- AI
         {
             "zbirenbaum/copilot-cmp",
-            dependencies = "copilot.lua",
+            config = function() require("copilot_cmp").setup() end,
+            dependencies = {
+                "zbirenbaum/copilot.lua",
+                cmd = "Copilot",
+                build = ":Copilot auth",
+                event = "InsertEnter",
+                opts = {
+                    suggestion = { enabled = false, },
+                    panel = { enabled = false },
+                    filetypes = {
+                        help = false,
+                        gitcommit = false,
+                        gitrebase = false,
+                        ["."] = false,
+                    },
+                },
+            },
         },
     },
     config = function()
         -- See `:help cmp`
         local lspkind = require "lspkind"
+        lspkind.init { symbol_map = { Copilot = "" } }
+        vim.api.nvim_set_hl(0, "CmpItemKindCopilot", { fg = "#6CC644" })
+
         local cmp = require "cmp"
         local luasnip = require "luasnip"
         luasnip.config.setup {}
@@ -59,19 +77,14 @@ return { -- Autocompletion
         cmp.setup {
             snippet = { expand = function(args) luasnip.lsp_expand(args.body) end },
             completion = { completeopt = "menu,menuone,noinsert" },
-
-            -- For an understanding of why these mappings were
-            -- chosen, you will need to read `:help ins-completion`
             mapping = cmp.mapping.preset.insert {
-                -- Select the [n]ext item
                 ["<C-n>"] = cmp.mapping.select_next_item(),
-                -- Select the [p]revious item
-                ["<C-N>"] = cmp.mapping.select_prev_item(),
+                ["<C-p>"] = cmp.mapping.select_prev_item(),
 
                 -- Accept ([y]es) the completion.
                 --  This will auto-import if your LSP supports it.
                 --  This will expand snippets if the LSP sent a snippet.
-                ["<C-tab>"] = cmp.mapping.confirm { select = true },
+                ["<C-y>"] = cmp.mapping.confirm { select = true },
 
                 -- Think of <c-l> as moving to the right of your snippet expansion.
                 --  So if you have a snippet that's like:
@@ -90,26 +103,17 @@ return { -- Autocompletion
             },
             sources = {
                 { name = "nvim_lsp" },
+                { name = "copilot" },
                 { name = "luasnip" },
                 { name = "path" },
-                { name = "copilot" },
             },
             experimental = { ghost_text = { hl_group = "CmpGhostText" } },
             formatting = {
-                fields = {
-                    cmp.ItemField.Kind,
-                    cmp.ItemField.Abbr,
-                    cmp.ItemField.Menu,
-                },
                 format = lspkind.cmp_format {
-                    -- options: 'text', 'text_symbol', 'symbol_text', 'symbol'
-                    mode = "symbol_text", -- show only symbol annotations
+                    mode = "text_symbol", -- options: 'text', 'text_symbol', 'symbol_text', 'symbol'
                     maxwidth = function() return math.floor(0.45 * vim.o.columns) end,
-                    ellipsis_char = "...", -- when popup menu exceed maxwidth, the truncated part would show ellipsis_char instead (must define maxwidth first)
-                    show_labelDetails = true, -- show labelDetails in menu. Disabled by default
-
-                    -- so that you can provide more controls on popup customization. (See [#30](https://github.com/onsails/lspkind-nvim/pull/30))
-                    before = function(_, vim_item) return vim_item end,
+                    ellipsis_char = "...",
+                    show_labelDetails = true,
                 },
             },
         }

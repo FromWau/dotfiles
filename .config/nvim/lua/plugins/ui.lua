@@ -75,6 +75,7 @@ return {
             local wk = require "which-key"
             wk.setup()
             wk.register {
+                ["<leader>b"] = { name = "+Buffer", _ = "which_key_ignore" },
                 ["<leader>c"] = { name = "+Code", _ = "which_key_ignore" },
                 ["<leader>f"] = { name = "+Find", _ = "which_key_ignore" },
                 ["<leader>g"] = { name = "+Git", _ = "which_key_ignore" },

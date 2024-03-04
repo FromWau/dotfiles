@@ -76,7 +76,6 @@ return { -- LSP Configuration & Plugins
                 nmap_buffer("K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
 
                 -- WARN: This is not Goto Definition, this is Goto Declaration.
-                --  For example, in C this would take you to the header
                 nmap_buffer("gD", vim.lsp.buf.declaration, { desc = "[G]oto [D]eclaration" })
 
                 -- The following two autocommands are used to highlight references of the

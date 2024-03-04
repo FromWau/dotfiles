@@ -1,4 +1,4 @@
-local tools = require("plugins.lang.config")
+local tools = require "plugins.lang.config"
 
 local function getTables()
     local ensure_installed = {}
@@ -40,14 +40,12 @@ local function getTables()
         table.insert(ensure_installed, k)
     end
 
-    local m = {
+    return {
         ensure_installed = ensure_installed,
         formatters = formatters,
         linters = linters,
         language_servers = language_servers,
     }
-    return m
 end
 
-local m = { getTables = getTables }
-return m
+return { getTables = getTables }

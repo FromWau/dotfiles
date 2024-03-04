@@ -13,7 +13,7 @@ local tmap = require("utils.keymaps").tmap
 nmap("<ESC>", "<cmd>nohlsearch<CR>")
 
 -- Diagnostic keymaps
-nmap("dN", vim.diagnostic.goto_prev, { desc = "Go to previous [D]iagnostic message" })
+nmap("dp", vim.diagnostic.goto_prev, { desc = "Go to previous [D]iagnostic message" })
 nmap("dn", vim.diagnostic.goto_next, { desc = "Go to next [D]iagnostic message" })
 nmap("de", vim.diagnostic.open_float, { desc = "Show diagnostic [E]rror messages" })
 nmap("dq", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
@@ -46,3 +46,4 @@ nmap("<leader>ul", function() require("lazy").show() end, { desc = "Show Lazy" }
 -- Window management
 nmap("<leader>sv", "<cmd>vsplit<CR>", { desc = "Split vertically" })
 nmap("<leader>sh", "<cmd>split<CR>", { desc = "Split horizontally" })
+
