@@ -187,11 +187,23 @@ return {
         end,
     },
 
+    {
+        "windwp/nvim-autopairs",
+        event = "InsertEnter",
+        config = true, --https://github.com/akinsho/toggleterm.nvim
+    },
+
+    {
+        "akinsho/toggleterm.nvim",
+        version = "*",
+        config = true,
+    },
+
     -- TEST: Test some other maybe cool plugins:
     -- - https://github.com/lewis6991/satellite.nvim
     -- - https://github.com/ggandor/leap.nvim
-    -- - https://github.com/windwp/nvim-autopairs
     -- - https://github.com/Wansmer/treesj
+    -- - https://github.com/znck/grammarly
     -- - Testing: Find something that can run tests and show the results in a nice way
     -- - Terminal: Find a terminal plugin
 }

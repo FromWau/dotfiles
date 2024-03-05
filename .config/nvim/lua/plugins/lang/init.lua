@@ -31,6 +31,24 @@ return { -- LSP Configuration & Plugins
                 use_diagnostic_signs = true,
             },
         },
+        -- TODO : IDK if I need a linter
+        -- {
+        --     "mfussenegger/nvim-lint",
+        --     opts = {
+        --         events = { "BufWritePost", "BufReadPost", "InsertLeave" },
+        --         linters_by_ft = linters,
+        --     },
+        --     config = function()
+        --         vim.api.nvim_create_autocmd({ "BufWritePost" }, {
+        --             callback = function() require("lint").try_lint() end,
+        --         })
+        --     end,
+        -- },
+        {
+            "ray-x/lsp_signature.nvim",
+            event = "VeryLazy",
+            config = function() require("lsp_signature").setup() end,
+        },
     },
     config = function()
         vim.api.nvim_create_autocmd("LspAttach", {
@@ -69,7 +87,7 @@ return { -- LSP Configuration & Plugins
                     require("telescope.builtin").lsp_dynamic_workspace_symbols,
                     { desc = "[W]orkspace [S]ymbols" }
                 )
-                nmap_buffer("<leader>rn", vim.lsp.buf.rename, { desc = "[R]e[n]ame" })
+                nmap_buffer("<leader>cr", vim.lsp.buf.rename, { desc = "[C]ode [R]ename" })
 
                 nmap_buffer("<leader>ca", vim.lsp.buf.code_action, { desc = "[C]ode [A]ction" })
 
@@ -101,6 +119,8 @@ return { -- LSP Configuration & Plugins
                     local navic = require "nvim-navic"
                     navic.attach(client, event.buf)
                 end
+
+                require("lsp_signature").on_attach(client, event.buf)
             end,
         })
 

@@ -21,10 +21,6 @@ nmap("dq", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list"
 -- Exit terminal mode in the builtin terminal
 tmap("<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 
--- Keybinds to make split navigation easier.
---  Use CTRL+<hjkl> to switch between windows
---
---  See `:help wincmd` for a list of all window commands
 -- Pane and Window Navigation
 nmap("<C-Left>", "<C-w>h", { desc = "Navigate Left" })
 nmap("<C-Down>", "<C-w>j", { desc = "Navigate Down" })

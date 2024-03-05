@@ -49,9 +49,20 @@ return {
     },
 
     {
+        "smjonas/inc-rename.nvim",
+        config = function() require("inc_rename").setup() end,
+        keys = {
+            { "<leader>rn", ":IncRename ", desc = "Rename" },
+        },
+    },
+
+    {
         "folke/noice.nvim",
         event = "VeryLazy",
-        opts = { presets = { inc_rename = true } },
+        opts = {
+            presets = { inc_rename = true },
+            lsp = { signature = { enabled = false } }, -- Disable warning, lsp_signature overrides
+        },
         dependencies = {
             "MunifTanjim/nui.nvim",
             {
