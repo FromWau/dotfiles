@@ -13,6 +13,8 @@ return {
         "nvim-tree/nvim-web-devicons",
     },
     config = function()
+        local trouble = require "trouble.providers.telescope"
+
         require("telescope").setup {
             defaults = {
                 layout_strategy = "vertical",
@@ -29,7 +31,9 @@ return {
                         ["<c-up>"] = "preview_scrolling_up",
                         ["<ScrollWheelDown>"] = "preview_scrolling_down",
                         ["<c-down>"] = "preview_scrolling_down",
+                        ["<c-t>"] = trouble.open_with_trouble,
                     },
+                    n = { ["<c-t>"] = trouble.open_with_trouble },
                 },
             },
             pickers = {

@@ -199,11 +199,70 @@ return {
         config = true,
     },
 
-    -- TEST: Test some other maybe cool plugins:
-    -- - https://github.com/lewis6991/satellite.nvim
-    -- - https://github.com/ggandor/leap.nvim
-    -- - https://github.com/Wansmer/treesj
-    -- - https://github.com/znck/grammarly
-    -- - Testing: Find something that can run tests and show the results in a nice way
-    -- - Terminal: Find a terminal plugin
+    {
+        "folke/trouble.nvim",
+        dependencies = { "nvim-tree/nvim-web-devicons" },
+        opts = {},
+        keys = {
+            {
+                "<leader>xx",
+                function() require("trouble").toggle() end,
+                desc = "Toggle Trouble",
+            },
+            {
+                "<leader>xw",
+                function() require("trouble").toggle "workspace_diagnostics" end,
+                desc = "Show Workspace Diagnostics",
+            },
+            {
+                "<leader>xd",
+                function() require("trouble").toggle "document_diagnostics" end,
+                desc = "Show Document Diagnostics",
+            },
+            {
+                "<leader>xl",
+                function() require("trouble").toggle "loclist" end,
+                desc = "Show Loclist",
+            },
+            {
+                "<leader>xq",
+                function() require("trouble").toggle "quickfix" end,
+                desc = "Show Quickfix",
+            },
+            {
+                "<leader>xr",
+                function() require("trouble").toggle "lsp_references" end,
+                desc = "Show LSP References",
+            },
+            {
+                "<leader>xn",
+                function()
+                    require("trouble").next { skip_groups = true, jump = true }
+                    vim.cmd.normal "V"
+                end,
+
+                desc = "Next Trouble",
+            },
+            {
+                "<leader>xp",
+                function()
+                    require("trouble").previous { skip_groups = true, jump = true }
+                    vim.cmd.normal "V"
+                end,
+                desc = "Previous Trouble",
+            },
+        },
+    },
+
+    {
+        "nvim-pack/nvim-spectre",
+        dedendencies = "nvim-lua/plenary.nvim",
+    },
 }
+
+-- TEST: Test some other maybe cool plugins:
+-- - https://github.com/lewis6991/satellite.nvim
+-- - https://github.com/ggandor/leap.nvim
+-- - https://github.com/Wansmer/treesj
+-- - https://github.com/znck/grammarly
+-- - Testing: Find something that can run tests and show the results in a nice way
