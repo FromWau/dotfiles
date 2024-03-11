@@ -43,6 +43,11 @@ local tools = {
         formatter = { "shfmt" },
         linter = { "shellcheck" },
     },
+    sh = {
+        lsp = { bashls = {} },
+        formatter = { "shfmt" },
+        linter = { "shellcheck" },
+    },
     css = {
         lsp = { cssls = {} },
         formatter = { { "prettierd", "prettier" } },
@@ -62,6 +67,16 @@ local tools = {
         lsp = { kotlin_language_server = {} },
         formatter = { "ktlint" },
         linter = { "ktlint" },
+    },
+    toml = {
+        lsp = { taplo = {} },
+        formatter = {},
+        linter = {},
+    },
+    gradle = {
+        lsp = { gradle_ls = {} },
+        formatter = {},
+        linter = {},
     },
 }
 

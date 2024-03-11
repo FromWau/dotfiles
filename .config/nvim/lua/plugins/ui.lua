@@ -25,6 +25,16 @@ return {
                             cond = function() return navic.is_available() end,
                         },
                     },
+                    lualine_x = {
+                        "encoding",
+                        "fileformat",
+                        "filetype",
+                        {
+                            require("noice").api.status.mode.get,
+                            cond = require("noice").api.status.mode.has,
+                            color = { fg = "#ff9e64" },
+                        },
+                    },
                     lualine_y = { "progress", "location" },
                     lualine_z = { { "datetime", style = "%H:%M" } },
                 },

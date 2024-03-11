@@ -6,8 +6,11 @@ vim.g.maplocalleader = " "
 vim.g.loaded_netrwPlugin = 1
 vim.g.loaded_netrw = 1
 
+vim.g.have_nerd_font = true
+
 -- [[ Setting options ]]
 local opt = vim.opt
+
 -- Disable line wrap
 opt.wrap = false
 
