@@ -38,7 +38,7 @@ set -x DELTA_FEATURES "+side-by-side +dark +syntax-theme base16-256 +true-color 
 
 fish_vi_key_bindings insert
 
-fzf_key_bindings
+# fzf_key_bindings
 
 fish_add_path ~/.local/bin
 fish_add_path ~/.nix-profile/bin
@@ -57,7 +57,7 @@ abbr llh 'exa --icons --all --group-directories-first --color always --long | he
 abbr tree 'exa --icons --all --group-directories-first --color always --tree --ignore-glob ".git*"'
 abbr ps procs
 abbr grep rg
-abbr fzf 'fzf -d "|" --cycle -i'
+abbr fzf 'fzf -d "|" --cycle -i --reverse'
 abbr cd z
 abbr zz 'z -'
 abbr vim nvim
@@ -70,9 +70,22 @@ abbr reload 'source ~/.config/fish/config.fish'
 abbr lg lazygit
 abbr sc systemctl
 abbr chx 'chmod +x'
+abbr clear-nvim 'rm -rf ~/.cache/nvim ~/.local/share/nvim ~/.local/state/nvim'
 
 
 # functions
+function nvim -d "Open nvim and handle arg path"
+    set -l dir (pwd)
+    if count $argv -eq "2" >/dev/null && test -d $argv[1]
+        cd $argv[1]
+        command nvim
+        cd $dir
+    else
+        command nvim $argv
+    end
+end
+ 
+
 function fdir -d "Jump to selected zoxide dir"
     set -l selected_dir (zoxide query -l | fzf --preview "exa -lah --color always --group-directories-first {}" --cycle -i -d "|" --exact --prompt "z into dir: ")
     if count $selected_dir >/dev/null
@@ -100,7 +113,7 @@ function ff -d "Search for files and open in nvim"
 end
 
 function fp -d "Search for git repos and jump to selected repo"
-    set -l repo (fd -u -g '.git' -E '.local' -E '.cache' --base-directory ~ | sed 's/\/\.git\///' | fzf -d "|" --cycle -i)
+    set -l repo (fd --type d --hidden --no-ignore-vcs --base-directory ~ --strip-cwd-prefix --exclude .cache --exclude .gradle --exclude .local "^.git\$" -x echo {//} | fzf -d "|" --cycle -i --reverse)
     if count $repo >/dev/null
         z $repo
     end
@@ -108,7 +121,7 @@ end
 
 function fpl -d "Search for git repos and open repo in lazygit"
     set -l dir (pwd)
-    set -l repo (fd -u -g '.git' -E '.local' -E '.cache' --base-directory ~ | sed 's/\/\.git\///' | fzf -d "|" --cycle -i)
+    set -l repo (fd --type d --hidden --no-ignore-vcs --base-directory ~ --strip-cwd-prefix --exclude .cache --exclude .gradle --exclude .local "^.git\$" -x echo {//} | fzf -d "|" --cycle -i --reverse)
     if count $repo >/dev/null
         z $repo
         lazygit
