@@ -76,12 +76,16 @@ abbr clear-nvim 'rm -rf ~/.cache/nvim ~/.local/share/nvim ~/.local/state/nvim'
 # functions
 function nvim -d "Open nvim and handle arg path"
     set -l dir (pwd)
-    if count $argv -eq "2" >/dev/null && test -d $argv[1]
-        cd $argv[1]
-        command nvim
-        cd $dir
+    if count $argv >/dev/null
+        if test -d $argv[1]
+            cd $argv[1]
+            command nvim
+            cd $dir
+        else
+            command nvim $argv
+        end
     else
-        command nvim $argv
+        command nvim
     end
 end
  
