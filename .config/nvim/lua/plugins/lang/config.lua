@@ -28,6 +28,11 @@ local tools = {
             rust_analyzer = {
                 settings = {
                     ["rust-analyzer"] = {
+                        diagnostics = {
+                            experimental = {
+                                enable = true,
+                            },
+                        },
                         imports = {
                             granularity = {
                                 group = "module",

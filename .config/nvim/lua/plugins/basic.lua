@@ -258,6 +258,74 @@ return {
         "nvim-pack/nvim-spectre",
         dedendencies = "nvim-lua/plenary.nvim",
     },
+
+    {
+        "kevinhwang91/nvim-ufo",
+        dependencies = "kevinhwang91/promise-async",
+        config = function()
+            local handler = function(virtText, lnum, endLnum, width, truncate)
+                local newVirtText = {}
+                local suffix = (" 󰁂 %d "):format(endLnum - lnum)
+                local sufWidth = vim.fn.strdisplaywidth(suffix)
+                local targetWidth = width - sufWidth
+                local curWidth = 0
+                for _, chunk in ipairs(virtText) do
+                    local chunkText = chunk[1]
+                    local chunkWidth = vim.fn.strdisplaywidth(chunkText)
+                    if targetWidth > curWidth + chunkWidth then
+                        table.insert(newVirtText, chunk)
+                    else
+                        chunkText = truncate(chunkText, targetWidth - curWidth)
+                        local hlGroup = chunk[2]
+                        table.insert(newVirtText, { chunkText, hlGroup })
+                        chunkWidth = vim.fn.strdisplaywidth(chunkText)
+                        -- str width returned from truncate() may less than 2nd argument, need padding
+                        if curWidth + chunkWidth < targetWidth then
+                            suffix = suffix .. (" "):rep(targetWidth - curWidth - chunkWidth)
+                        end
+                        break
+                    end
+                    curWidth = curWidth + chunkWidth
+                end
+                table.insert(newVirtText, { suffix, "MoreMsg" })
+                return newVirtText
+            end
+
+            vim.o.foldlevel = 99
+            vim.o.foldlevelstart = -1
+            vim.o.foldenable = true
+
+            require("ufo").setup {
+                enable_get_fold_virt_text = true,
+                fold_virt_text_handler = handler,
+                filetype_exclude = { "gitsigns", "help", "dashboard", "neo-tree", "Trouble", "lazy", "mason" },
+                open_fold_hl_timeout = 150,
+                preview = {
+                    win_config = {
+                        border = { "", "─", "", "", "", "─", "", "" },
+                        winhighlight = "Normal:Folded",
+                        winblend = 0,
+                    },
+                },
+            }
+        end,
+        keys = {
+            { "<C-Kplus>", "zo", desc = "Open fold" },
+            { "<C-Kminus>", "zc", desc = "Close fold" },
+            { "<A-Kplus>", function() require("ufo").openAllFolds() end, desc = "Open all folds" },
+            { "<A-Kminus>", function() require("ufo").closeAllFolds() end, desc = "Close all folds" },
+            { "zr", function() require("ufo").openFoldsExceptKinds() end, desc = "Open folds" },
+            { "zm", function() require("ufo").closeFoldsWith() end, desc = "Close folds" },
+            {
+                "zk",
+                function()
+                    local winid = require("ufo").peekFoldedLinesUnderCursor()
+                    if not winid then vim.lsp.buf.hover() end
+                end,
+                desc = "Peek folded lines under cursor",
+            },
+        },
+    },
 }
 
 -- TEST: Test some other maybe cool plugins:

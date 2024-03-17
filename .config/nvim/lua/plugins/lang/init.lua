@@ -57,6 +57,7 @@ return { -- LSP Configuration & Plugins
                 autocmd = { enabled = true },
             },
         },
+        "kevinhwang91/nvim-ufo",
     },
     config = function()
         vim.api.nvim_create_autocmd("LspAttach", {
@@ -144,6 +145,13 @@ return { -- LSP Configuration & Plugins
         --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities.
         --  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
         local capabilities = vim.lsp.protocol.make_client_capabilities()
+        -- Tell the server the capability of foldingRange, 
+        -- Neovim hasn't added foldingRange to default capabilities, users must add it manually.
+        capabilities.textDocument.foldingRange = {
+            dynamicRegistration = false,
+            lineFoldingOnly = true,
+        }
+
         capabilities = vim.tbl_deep_extend("force", capabilities, require("cmp_nvim_lsp").default_capabilities())
 
         --  Add any additional override configuration in the following tables. Available keys are:
