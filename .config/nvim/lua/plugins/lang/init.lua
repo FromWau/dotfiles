@@ -49,6 +49,14 @@ return { -- LSP Configuration & Plugins
             event = "VeryLazy",
             config = function() require("lsp_signature").setup() end,
         },
+        "aznhe21/actions-preview.nvim",
+        {
+            "kosayoda/nvim-lightbulb",
+            opts = {
+                hide_in_unfocused_buffer = false,
+                autocmd = { enabled = true },
+            },
+        },
     },
     config = function()
         vim.api.nvim_create_autocmd("LspAttach", {
@@ -89,7 +97,7 @@ return { -- LSP Configuration & Plugins
                 )
                 nmap_buffer("<leader>cr", vim.lsp.buf.rename, { desc = "[C]ode [R]ename" })
 
-                nmap_buffer("<leader>ca", vim.lsp.buf.code_action, { desc = "[C]ode [A]ction" })
+                nmap_buffer("<leader>ca", require("actions-preview").code_actions, { desc = "[C]ode [A]ction" })
 
                 nmap_buffer("K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
 
@@ -118,6 +126,13 @@ return { -- LSP Configuration & Plugins
                 if client and client.server_capabilities.documentSymbolProvider then
                     local navic = require "nvim-navic"
                     navic.attach(client, event.buf)
+                end
+
+                -- Use icons for diagnostic signs
+                local signs = { Error = "󰅚 ", Warn = "󰀪 ", Hint = "󰌶 ", Info = " " }
+                for type, icon in pairs(signs) do
+                    local hl = "DiagnosticSign" .. type
+                    vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
                 end
 
                 require("lsp_signature").on_attach(client, event.buf)

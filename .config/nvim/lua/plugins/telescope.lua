@@ -11,6 +11,7 @@ return {
         },
         "nvim-telescope/telescope-ui-select.nvim",
         "nvim-tree/nvim-web-devicons",
+        { "nvim-telescope/telescope-media-files.nvim", dependencies = "nvim-lua/popup.nvim" },
     },
     config = function()
         local trouble = require "trouble.providers.telescope"
@@ -40,11 +41,17 @@ return {
                 find_files = { hidden = true },
                 current_buffer_fuzzy_find = { sorting_strategy = "ascending" },
             },
+            extensions = {
+                media_files = {
+                    filetypes = { "png", "webp", "jpg", "jpeg", "pdf" },
+                },
+            },
         }
 
         -- Enable telescope extensions, if they are installed
         pcall(require("telescope").load_extension, "fzf")
         pcall(require("telescope").load_extension, "noice")
+        pcall(require("telescope").load_extension, "media_files")
 
         local builtin = require "telescope.builtin"
         local nmap = require("utils.keymaps").nmap
