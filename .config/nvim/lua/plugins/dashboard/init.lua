@@ -37,16 +37,22 @@ local opts = {
     config = {
         header = rand_banner(),
         center = {
-            { icon = " ", desc = "Find File", action = "Telescope find_files", key = "f" },
+            { icon = " ", desc = "Find File", action = function() require("telescope.builtin").find_files() end, key = "f" },
             { icon = " ", desc = "New File", action = "ene | startinsert", key = "n" },
-            { icon = "󱄽 ", desc = "Find Word", action = "Telescope live_grep", key = "g" },
-            { icon = " ", desc = "Recently Used Files", action = "Telescope oldfiles", key = "r" },
+            { icon = "󱄽 ", desc = "Find Word", action = function() require("telescope.builtin").live_grep() end, key = "g" },
+            { icon = " ", desc = "Recent Files", action = function() require("telescope.builtin").oldfiles() end, key = "r" },
             { icon = "󰙅 ", desc = "File Browser", action = "Neotree toggle", key = "e" },
             { icon = "󰊳 ", desc = "Open Lazy", action = "Lazy", key = "l" },
             { icon = "󰺾 ", desc = "Open Mason", action = "Mason", key = "m" },
+            { icon = "󰋗 ", desc = "Search Help", action = function() require("telescope.builtin").help_tags() end, key = "h" },
+            {
+                icon = " ",
+                desc = "Open Config",
+                action = function() require("telescope.builtin").find_files { cwd = "~/.config/nvim/" } end,
+                key = "c",
+            },
             { icon = "󰩈 ", desc = "Quit", action = "qa", key = "q" },
         },
-        footer = {},
     },
 }
 
