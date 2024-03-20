@@ -1,9 +1,17 @@
 .bar {
     background-color: transparent;
+    /* background-color: @theme_bg_color; */
+    color: @theme_fg_color;
+}
+
+.revealer {
+    background-color: transparent;
+    color: transparent;
 }
 
 .media {
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: @theme_fg_color;
     border-radius: 13px;
 }
 

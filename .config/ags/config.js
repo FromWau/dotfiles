@@ -3,8 +3,6 @@ import App from "resource:///com/github/Aylur/ags/app.js"
 import Widget from "resource:///com/github/Aylur/ags/widget.js"
 import { execAsync } from "resource:///com/github/Aylur/ags/utils.js"
 import { Media } from "./widgets/Media.js"
-const audio = await Service.import("audio")
-// import { Variable } from "resource:///com/github/Aylur/ags/variable.js"
 
 const show_media = Variable(false)
 
@@ -80,14 +78,21 @@ const Clock = () =>
 const MediaMenu = (monitor = 0) =>
     Widget.Window({
         name: `mediaMenu-${monitor}`,
-        class_name: "media",
+        class_name: "revealer",
         monitor,
         anchor: ["top", "left"],
         exclusivity: "exclusive",
-        child: Widget.Revealer({
-            revealChild: true,
-            transitionDuration: 1000,
-            child: Media(),
+        child: Widget.Box({
+            css: "padding:1px;",
+            child: Widget.Revealer({
+                revealChild: show_media.bind(),
+                transition: "slide_down",
+                transitionDuration: 1000,
+                child: Widget.Box({
+                    class_name: "media",
+                    child: Media(),
+                }),
+            }),
         }),
     })
 
