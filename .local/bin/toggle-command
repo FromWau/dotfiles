@@ -1,0 +1,17 @@
+!/bin/bash
+
+if [ "$#" -lt 1 ]; then
+    echo "Usage: $0 <command>"
+    exit 1
+fi
+
+COMMAND="$1"
+shift
+
+if pgrep -x "$COMMAND" >/dev/null; then
+    echo "$COMMAND is already running, stopping it."
+    pkill -SIGTERM -f "$COMMAND"
+else
+    echo "$COMMAND is not running, starting it."
+    "$COMMAND" "$@" &
+fi
