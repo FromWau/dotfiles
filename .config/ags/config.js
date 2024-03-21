@@ -1,10 +1,12 @@
 import Hyprland from "resource:///com/github/Aylur/ags/service/hyprland.js"
 import App from "resource:///com/github/Aylur/ags/app.js"
 import Widget from "resource:///com/github/Aylur/ags/widget.js"
-import { execAsync } from "resource:///com/github/Aylur/ags/utils.js"
 import { Media } from "./widgets/Media.js"
 
 const show_media = Variable(false)
+const date = Variable("", {
+    poll: [1000, "date '+%T      %a, %d. %_B(%m) %Y'"],
+})
 
 const Bar = (monitor = 0) =>
     Widget.Window({
@@ -56,23 +58,20 @@ const Right = () =>
     Widget.Box({
         hpack: "end",
         spacing: 8,
-        children: [audioIndicator, Clock()],
+        children: [AudioMenuToggle(), Clock()],
     })
 
-const audioIndicator = Widget.Button({
-    on_clicked: () => show_media.setValue(!show_media.getValue()),
-    child: Widget.Icon("media-tape-symbolic"),
-})
+const AudioMenuToggle = () =>
+    Widget.Button({
+        on_clicked: () => show_media.setValue(!show_media.getValue()),
+        tooltip_text: "Audio Menu",
+        child: Widget.Icon("media-tape-symbolic"),
+    })
 
 const Clock = () =>
     Widget.Label({
         class_name: "clock",
-        setup: (self) =>
-            self.poll(1000, (self) =>
-                execAsync(["date", "+%T -- %a, %d. %_B(%m) %Y"]).then(
-                    (date) => (self.label = date)
-                )
-            ),
+        label: date.bind(),
     })
 
 const MediaMenu = (monitor = 0) =>
@@ -84,19 +83,24 @@ const MediaMenu = (monitor = 0) =>
         exclusivity: "exclusive",
         child: Widget.Box({
             css: "padding:1px;",
-            child: Widget.Revealer({
-                revealChild: show_media.bind(),
-                transition: "slide_down",
-                transitionDuration: 1000,
-                child: Widget.Box({
-                    class_name: "media",
-                    child: Media(),
+            children: [
+                Widget.Revealer({
+                    revealChild: show_media.bind(),
+                    transition: "slide_down",
+                    transitionDuration: 1000,
+                    child: Widget.Box({
+                        class_name: "media",
+                        child: Media(),
+                    }),
                 }),
-            }),
+            ],
         }),
     })
 
 App.config({
     style: App.configDir + "/style.css",
-    windows: [MediaMenu(), Bar()],
+    windows: [
+        MediaMenu(Hyprland.active.workspace.bind("id").transform((i) => i - 1)),
+        Bar(Hyprland.active.workspace.bind("id").transform((i) => i - 1)),
+    ],
 })
