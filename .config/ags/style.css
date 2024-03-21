@@ -16,14 +16,20 @@
     color: transparent;
 }
 
-.media {
+.media-menu {
     background-color: rgba(0, 0, 0, 0.8);
     color: @theme_fg_color;
     border-radius: 13px;
+    padding: 10px;
+}
+
+.media-section {
+    background-color: @theme_bg_color;
+    border-radius: 13px;
+    padding: 10px;
 }
 
 .player {
-    padding: 10px;
     min-width: 350px;
 }
 
@@ -70,4 +76,9 @@
 
 .player button.play-pause {
     margin: 0 0.3em;
+}
+
+.icon {
+    color: @theme_fg_color;
+    padding: 10px;
 }

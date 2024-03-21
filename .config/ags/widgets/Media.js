@@ -141,6 +141,7 @@ function Player(player) {
 
 export function Media() {
     return Widget.Box({
+        class_name: "media-section",
         vertical: true,
         css: "min-height: 2px; min-width: 2px;", // small hack to make it visible
         visible: players.as((p) => p.length > 0),
