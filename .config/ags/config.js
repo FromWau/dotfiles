@@ -97,10 +97,23 @@ const MediaMenu = (monitor = 0) =>
         }),
     })
 
+const Windows = () => {
+    var wins = []
+    wins.push(
+        MediaMenu(Hyprland.active.workspace.bind("id").transform((i) => i - 1))
+    )
+
+    Hyprland.monitors.forEach((monitor) => {
+        // INFO: This is not dynamic, use bind if we want to make it dynamic
+        wins.push(Bar(monitor.id))
+    })
+
+    // wins.push(Bar(Hyprland.active.workspace.bind("id").transform((i) => i - 1)))
+
+    return wins
+}
+
 App.config({
     style: App.configDir + "/style.css",
-    windows: [
-        MediaMenu(Hyprland.active.workspace.bind("id").transform((i) => i - 1)),
-        Bar(Hyprland.active.workspace.bind("id").transform((i) => i - 1)),
-    ],
+    windows: Windows(),
 })
