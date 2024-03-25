@@ -50,7 +50,7 @@ gui:
 git:
     paging:
         colorArg: always
-        pager: export DELTA_FEATURES=+''; delta --paging=never 
+        pager: export DELTA_FEATURES=+''; delta --paging=never --dark
     commit:
         signOff: false
         verbose: default # one of 'default' | 'always' | 'never'
