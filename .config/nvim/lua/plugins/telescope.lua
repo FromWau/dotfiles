@@ -56,6 +56,15 @@ return {
         local builtin = require "telescope.builtin"
         local nmap = require("utils.keymaps").nmap
 
+        nmap(
+            "<leader>fc",
+            function()
+                builtin.find_files {
+                    cwd = "~/.config/nvim/",
+                }
+            end,
+            { desc = "[F]ind [C]onfig files" }
+        )
         nmap("<leader>fh", builtin.help_tags, { desc = "[F]ind [H]elp" })
         nmap("<leader>fk", builtin.keymaps, { desc = "[F]ind [K]eymaps" })
         nmap("<leader>ff", builtin.find_files, { desc = "[F]ind [F]iles" })

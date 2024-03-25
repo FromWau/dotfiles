@@ -178,6 +178,8 @@ return {
                 vim.api.nvim_set_hl(0, "RainbowCyan", { fg = "#56B6C2" })
             end)
 
+            hooks.register(hooks.type.WHITESPACE, hooks.builtin.hide_first_space_indent_level)
+
             vim.g.rainbow_delimiters = { highlight = highlight }
             require("ibl").setup {
                 indent = { highlight = highlight },

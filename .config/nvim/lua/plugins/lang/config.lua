@@ -68,12 +68,12 @@ local tools = {
     typescript = {
         lsp = { tsserver = {} },
         formatter = { { "prettierd", "prettier" } },
-        linter = {},
+        linter = { "eslint" },
     },
     javascript = {
         lsp = { tsserver = {} },
         formatter = { { "prettierd", "prettier" } },
-        linter = {},
+        linter = { "eslint" },
     },
     bash = {
         lsp = { bashls = {} },
