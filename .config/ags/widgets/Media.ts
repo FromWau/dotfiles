@@ -1,5 +1,7 @@
 const mpris = await Service.import("mpris")
-const players = mpris.bind("players").transform((p) => p.filter((p) => p.name !== "playerctld"))
+const players = mpris
+    .bind("players")
+    .transform((p) => p.filter((p) => p.name !== "playerctld"))
 
 const FALLBACK_ICON = "audio-x-generic-symbolic"
 const PLAY_ICON = "media-playback-start-symbolic"
@@ -8,7 +10,7 @@ const PREV_ICON = "media-skip-backward-symbolic"
 const NEXT_ICON = "media-skip-forward-symbolic"
 
 /** @param {number} length */
-function lengthStr(length) {
+function lengthStr(length: number) {
     const min = Math.floor(length / 60)
     const sec = Math.floor(length % 60)
     const sec0 = sec < 10 ? "0" : ""
@@ -16,7 +18,7 @@ function lengthStr(length) {
 }
 
 /** @param {import('types/service/mpris').MprisPlayer} player */
-function Player(player) {
+function Player(player: import("types/service/mpris").MprisPlayer) {
     const img = Widget.Box({
         class_name: "img",
         vpack: "start",
@@ -60,7 +62,7 @@ function Player(player) {
         class_name: "position",
         hpack: "start",
         setup: (self) => {
-            const update = (/** @type {any} */ _, /** @type {any} */ time) => {
+            const update = (_: any, time: any): void => {
                 self.label = lengthStr(time || player.position)
                 self.visible = player.length > 0
             }
@@ -145,6 +147,6 @@ export function Media() {
         vertical: true,
         css: "min-height: 2px; min-width: 2px;", // small hack to make it visible
         visible: players.as((p) => p.length > 0),
-        children: players.as((p) => p.map(Player))
+        children: players.as((p) => p.map(Player)),
     })
 }

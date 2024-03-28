@@ -1,26 +1,28 @@
-import { show_media } from "libs/variables.js"
+import { show_media } from "libs/variables"
 import Widget from "resource:///com/github/Aylur/ags/widget.js"
-import { Media } from "widgets/Media.js"
-import { DividerH, DividerV } from "widgets/utils/Divider.js"
-import { Spacer } from "widgets/utils/Spacer.js"
+import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
+import { Media } from "widgets/Media"
+import { DividerH, DividerV } from "widgets/utils/Divider"
+import { Spacer } from "widgets/utils/Spacer"
 
 const audio = await Service.import("audio")
 
 /** @param {'speaker' | 'microphone'} type */
-const VolumeSlider = (type = "speaker") =>
+const VolumeSlider = (type: "speaker" | "microphone" = "speaker") =>
     Widget.Slider({
         hexpand: true,
         drawValue: false,
         onChange: ({ value }) => (audio[type].volume = value),
-        value: audio[type].bind("volume"),
+    }).hook(audio[type], (self) => {
+        self.value = audio[type].volume
     })
 
 /** @param {'speaker' | 'microphone'} type */
-const VolumeIcon = (type = "speaker") =>
+const VolumeIcon = (type: "speaker" | "microphone" = "speaker") =>
     Widget.Button({
         on_clicked: () => (audio[type].is_muted = !audio[type].is_muted),
         child: Widget.Icon().hook(audio[type], (self) => {
-            const v = audio[type].volume * 100
+            const v: number = audio[type].volume * 100
             const icon = [
                 [101, "overamplified"],
                 [67, "high"],
@@ -28,13 +30,14 @@ const VolumeIcon = (type = "speaker") =>
                 [1, "low"],
                 [0, "muted"],
             ].find(([threshold]) => threshold <= v)?.[1]
+
             self.icon = `audio-volume-${icon}-symbolic`
             self.tooltip_text = `Volume ${Math.round(v)}%`
         }),
     })
 
 /** @param {'speaker' | 'microphone'} type */
-const AudioCard = (type = "speaker") =>
+const AudioCard = (type: "speaker" | "microphone" = "speaker") =>
     Widget.Box({
         class_name: "audio-card",
         vertical: true,
@@ -62,10 +65,8 @@ const AudioCard = (type = "speaker") =>
                     self.icon = icon
                     self.tooltip_text = type
                 }),
-                centerWidget: Widget.Label({
-                    label: audio[type]
-                        .bind("volume")
-                        .transform((v) => `${type}: ${Math.round(v * 100)}%`),
+                centerWidget: Widget.Label().hook(audio[type], (self) => {
+                    self.label = `${type}: ${Math.round(audio[type].volume * 100)}%`
                 }),
             }),
 
@@ -88,11 +89,11 @@ const Audio = () =>
         children: [AudioCard("speaker"), DividerH(0), AudioCard("microphone")],
     })
 
-export const MediaMenu = (monitor = 0) =>
+export const MediaMenu = (monitor: number = 0): Gtk.Window =>
     Widget.Window({
-        name: `mediaMenu-${monitor}`,
+        name: `mediaMenu`,
         class_name: "revealer",
-        monitor,
+        monitor: monitor,
         anchor: ["top", "left"],
         exclusivity: "exclusive",
         child: Widget.Box({

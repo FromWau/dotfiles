@@ -22,8 +22,8 @@ const WiredIndicator = () =>
 export const NetworkIndicator = () =>
     Widget.Stack({
         children: {
-            "wifi": WifiIndicator(),
-            "wired": WiredIndicator(),
+            wifi: WifiIndicator(),
+            wired: WiredIndicator(),
         },
         shown: network.bind("primary").as((p) => p || "wifi"),
     })

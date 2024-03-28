@@ -23,6 +23,14 @@
     padding: 10px;
 }
 
+.workspaces button {
+    color: @insensitive_fg_color;
+}
+
+.workspaces .focused label {
+    color: @theme_fg_color;
+}
+
 .media-section {
     background-color: @theme_bg_color;
     border-radius: 13px;

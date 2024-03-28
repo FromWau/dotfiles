@@ -1,6 +1,7 @@
-import Hyprland from "resource:///com/github/Aylur/ags/service/hyprland.js"
-import { date, show_media } from "libs/variables.js"
-import { NetworkIndicator } from "widgets/network/Network.js"
+import { date, show_media } from "libs/variables"
+import { NetworkIndicator } from "widgets/network/Network"
+
+const hyprland = await Service.import("hyprland")
 
 const Left = () =>
     Widget.Box({
@@ -11,18 +12,18 @@ const Left = () =>
 const Workspaces = () =>
     Widget.Box({
         class_name: "workspaces",
-        children: Hyprland.bind("workspaces").transform((ws) => {
-            return ws.map(({ id }) =>
+    }).hook(hyprland, (self) => {
+        self.children = hyprland.workspaces
+            .sort((a, b) => a.id - b.id)
+            .map((ws) =>
                 Widget.Button({
                     on_clicked: () =>
-                        Hyprland.sendMessage(`dispatch workspace ${id}`),
-                    child: Widget.Label(`${id === -99 ? "X" : id}`),
-                    class_name: Hyprland.active.workspace
-                        .bind("id")
-                        .transform((i) => `${i === id ? "focused" : ""}`),
+                        hyprland.sendMessage(`dispatch workspace ${ws.id}`),
+                    child: Widget.Label(`${ws.id === -99 ? "X" : ws.id}`),
+                    class_name:
+                        hyprland.active.workspace.id === ws.id ? "focused" : "",
                 })
             )
-        }),
     })
 
 const Center = () =>

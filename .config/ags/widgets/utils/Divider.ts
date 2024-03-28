@@ -2,7 +2,7 @@
  * Set a vertical divider `|`
  * @param {number} length Define the length of the divider
  */
-export const DividerV = (length = 30) =>
+export const DividerV = (length: number = 30) =>
     Widget.Box({
         css: `
             color: @insensitive_fg_color;
@@ -19,7 +19,7 @@ export const DividerV = (length = 30) =>
  * Set a horizontal divider `-`
  * @param {number} length Define the length of the divider
  */
-export const DividerH = (length = 350) =>
+export const DividerH = (length: number = 350) =>
     Widget.Box({
         css: `
             color: @insensitive_fg_color;
