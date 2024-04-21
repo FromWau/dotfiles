@@ -4,6 +4,7 @@ import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 import { Media } from "widgets/Media"
 import { DividerH, DividerV } from "widgets/utils/Divider"
 import { Spacer } from "widgets/utils/Spacer"
+import PopupWindow from "widgets/window/PopupWindow"
 
 const audio = await Service.import("audio")
 
@@ -23,13 +24,13 @@ const VolumeIcon = (type: "speaker" | "microphone" = "speaker") =>
         on_clicked: () => (audio[type].is_muted = !audio[type].is_muted),
         child: Widget.Icon().hook(audio[type], (self) => {
             const v: number = audio[type].volume * 100
-            const icon = [
+            const icon = new Map<number, string>([
                 [101, "overamplified"],
                 [67, "high"],
                 [34, "medium"],
                 [1, "low"],
                 [0, "muted"],
-            ].find(([threshold]) => threshold <= v)?.[1]
+            ]).entries().find(([threshold]) => threshold <= v)?.[0])
 
             self.icon = `audio-volume-${icon}-symbolic`
             self.tooltip_text = `Volume ${Math.round(v)}%`
@@ -97,7 +98,7 @@ export const MediaMenu = (monitor: number = 0): Gtk.Window =>
         anchor: ["top", "left"],
         exclusivity: "exclusive",
         child: Widget.Box({
-            css: "padding:1px;",
+            css: "min-width: 2px;min-height: 2px;",
             child: Widget.Revealer({
                 revealChild: show_media.bind(),
                 transition: "slide_down",
@@ -105,8 +106,24 @@ export const MediaMenu = (monitor: number = 0): Gtk.Window =>
                 child: Widget.Box({
                     class_name: "media-menu",
                     vertical: true,
-                    children: [Media(), Spacer("horizontal", 10), Audio()],
+                    children: [Media(), Audio()],
                 }),
             }),
         }),
     })
+
+// export const MediaMenu = (monitor: number = 0) =>
+//     PopupWindow(
+//         "mediaMenu",
+//         monitor,
+//         "topLeft",
+//         "slide_right",
+//         "ignore",
+//         ["top", "left"],
+//         show_media,
+//         Widget.Box({
+//             class_name: "media-menu",
+//             vertical: true,
+//             children: [Media(), Spacer("horizontal", 10), Audio()],
+//         })
+//     )

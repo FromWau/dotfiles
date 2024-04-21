@@ -15,3 +15,6 @@ export const forMonitors = (widget: (monitor_id: number) => Gtk.Window) => {
 export const forActiveWorkspace = (
     widget: (monitor_id: number) => Gtk.Window
 ): Gtk.Window => widget(hyprland.active.monitor.id)
+
+
+export type Binding<T> = import("types/service").Binding<any, any, T>

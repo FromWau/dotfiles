@@ -26,13 +26,6 @@ const indicator = Widget.Icon({
 })
 
 export const BluetoothIndicator = () =>
-    Widget.Revealer({
-        revealChild: false,
-        transitionDuration: 1000,
-        transition: "slide_right",
-        child: connectedList,
-        setup: (self) =>
-            self.poll(2000, () => {
-                self.reveal_child = !self.reveal_child
-            }),
+    Widget.Box({
+        child: indicator,
     })

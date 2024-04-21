@@ -142,11 +142,14 @@ function Player(player: import("types/service/mpris").MprisPlayer) {
 }
 
 export function Media() {
+    if (players.as((p) => p.length == 0)) {
+        return
+    }
+
     return Widget.Box({
         class_name: "media-section",
         vertical: true,
         css: "min-height: 2px; min-width: 2px;", // small hack to make it visible
-        visible: players.as((p) => p.length > 0),
         children: players.as((p) => p.map(Player)),
     })
 }

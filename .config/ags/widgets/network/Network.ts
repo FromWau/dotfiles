@@ -27,3 +27,4 @@ export const NetworkIndicator = () =>
         },
         shown: network.bind("primary").as((p) => p || "wifi"),
     })
+

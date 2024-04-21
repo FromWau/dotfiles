@@ -1,6 +1,7 @@
 import { date, show_media } from "libs/variables"
 import { NetworkIndicator } from "widgets/network/Network"
 import { BluetoothIndicator } from "widgets/bluetooth/Bluetooth"
+import { Battery } from "widgets/battery/Battery"
 
 const hyprland = await Service.import("hyprland")
 
@@ -37,7 +38,13 @@ const Right = () =>
     Widget.Box({
         hpack: "end",
         spacing: 8,
-        children: [AudioMenuToggle(), BluetoothIndicator(), NetworkIndicator(), Clock()],
+        children: [
+            AudioMenuToggle(),
+            BluetoothIndicator(),
+            Battery(),
+            NetworkIndicator(),
+            Clock(),
+        ],
     })
 
 const AudioMenuToggle = () =>
