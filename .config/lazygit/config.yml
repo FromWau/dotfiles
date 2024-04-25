@@ -76,8 +76,8 @@ git:
     autoFetch: true
     autoRefresh: true
     fetchAll: true # Pass --all flag when running git fetch. Set to false to fetch only origin (or the current branch's upstream remote if there is one)
-    branchLogCmd: 'git log --graph --color=always --abbrev-commit --oneline {{branchName}} --'
-    allBranchesLogCmd: 'git log --graph --all --color=always --abbrev-commit --decorate --date=relative  --pretty=medium'
+    branchLogCmd: 'git log --color --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" {{branchName}} --'
+    allBranchesLogCmd: 'git log --color --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset" --branches'
     overrideGpg: false # prevents lazygit from spawning a separate process when using GPG
     disableForcePushing: false
     parseEmoji: true
