@@ -1,4 +1,4 @@
-import { date, show_media } from "libs/variables"
+import { date, show_media, show_settings } from "libs/variables"
 import { NetworkIndicator } from "widgets/network/Network"
 import { BluetoothIndicator } from "widgets/bluetooth/Bluetooth"
 import { Battery } from "widgets/battery/Battery"
@@ -43,6 +43,7 @@ const Right = () =>
             BluetoothIndicator(),
             Battery(),
             NetworkIndicator(),
+            SettingsIcon(),
             Clock(),
         ],
     })
@@ -58,6 +59,13 @@ const Clock = () =>
     Widget.Label({
         class_name: "clock",
         label: date.bind(),
+    })
+
+const SettingsIcon = () =>
+    Widget.Button({
+        on_clicked: () => show_settings.setValue(!show_settings.getValue()),
+        tooltip_text: "Settings",
+        child: Widget.Icon("preferences-system-symbolic"),
     })
 
 export const Bar = (monitor = 0) =>

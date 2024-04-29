@@ -143,7 +143,7 @@ function Player(player: import("types/service/mpris").MprisPlayer) {
 
 export function Media() {
     if (players.as((p) => p.length == 0)) {
-        return
+        return Widget.Box()
     }
 
     return Widget.Box({

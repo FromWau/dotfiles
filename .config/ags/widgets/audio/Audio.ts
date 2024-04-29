@@ -24,13 +24,15 @@ const VolumeIcon = (type: "speaker" | "microphone" = "speaker") =>
         on_clicked: () => (audio[type].is_muted = !audio[type].is_muted),
         child: Widget.Icon().hook(audio[type], (self) => {
             const v: number = audio[type].volume * 100
-            const icon = new Map<number, string>([
+            const maps = new Map<number, string>([
                 [101, "overamplified"],
                 [67, "high"],
                 [34, "medium"],
                 [1, "low"],
                 [0, "muted"],
-            ]).entries().find(([threshold]) => threshold <= v)?.[0])
+            ])
+
+            const icon = [...maps].find(([threshold]) => threshold <= v)?.[0]
 
             self.icon = `audio-volume-${icon}-symbolic`
             self.tooltip_text = `Volume ${Math.round(v)}%`
