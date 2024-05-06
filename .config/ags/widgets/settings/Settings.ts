@@ -1,5 +1,12 @@
-import { selection_owner_get_for_display } from "types/@girs/gdk-3.0/gdk-3.0.cjs"
+import { selected_settings_item } from "libs/variables"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
+
+export const Settings = () =>
+    Widget.Box({
+        class_name: "settings",
+        vertical: true,
+        children: [SettingHeaderWidget(), SettingItemsWidget()],
+    })
 
 const SettingHeaderWidget = () =>
     Widget.Label({
@@ -15,26 +22,29 @@ const SettingItemsWidget = () => {
     ]
 
     const itemList = Widget.Box({
+        class_name: "settings-items-labels",
         vertical: true,
-        class_name: "settings-items",
         children: items.map((item) => item.label()),
     })
 
-    // TODO: Change content on click -> setup + variable binding
+    const content = Widget.Box({
+        class_name: "settings-items-content",
+        vertical: true,
+        setup: (self) =>
+            selected_settings_item.connect("changed", ({ value }) => {
+                self.child = value.content()
+            }),
+        // child: selected_settings_item.bind().as((item) => item.content()),
+    })
+
     return Widget.Box({
+        class_name: "settings-items",
         vertical: false,
-        children: [itemList, items[0].content()],
+        children: [itemList, content],
     })
 }
 
-export const Settings = () =>
-    Widget.Box({
-        class_name: "settings",
-        vertical: true,
-        children: [SettingHeaderWidget(), SettingItemsWidget()],
-    })
-
-class SettingsItem {
+export class SettingsItem {
     readonly name: string
     readonly icon: string
     private readonly _content: Gtk.Widget
@@ -72,33 +82,35 @@ class SettingsItem {
     })
 
     label(): Gtk.Widget {
-        const onClick = (self: Gtk.Widget) => {
-            self.connect("button-press-event", () =>
-                console.log("Show content for", this.name)
-            )
-        }
+        return Widget.EventBox({
+            child: Widget.Box({
+                class_name: "settings-item-label",
+                children: [
+                    Widget.Icon({
+                        class_name: "settings-item-label-icon",
+                        icon: this.icon,
+                    }),
 
-        return Widget.Box({
-            class_name: "settings-item-label",
-            children: [
-                Widget.Icon({
-                    class_name: "settings-item-label-icon",
-                    icon: this.icon,
-                }),
-
-                Widget.Label({
-                    class_name: "settings-item-label-text",
-                    label: this.name,
-                }),
-            ],
-            setup: onClick,
+                    Widget.Label({
+                        class_name: "settings-item-label-text",
+                        label: this.name,
+                    }),
+                ],
+            }),
+            on_primary_click: () => {
+                if (selected_settings_item.getValue() !== this) {
+                    selected_settings_item.setValue(this)
+                }
+            },
         })
     }
 
     content(): Gtk.Widget {
         return Widget.Box({
+            vertical: true,
+            expand: true,
             class_name: "settings-item-content",
-            children: [this._content],
+            child: this._content,
         })
     }
 }

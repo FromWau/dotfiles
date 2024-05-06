@@ -11,9 +11,9 @@
 
 .media-menu {
     background-color: rgba(0, 0, 0, 0.8);
-    color: @theme_fg_color;
     border-radius: 13px;
     padding: 10px;
+    color: @theme_fg_color;
 }
 
 .workspaces button {
@@ -25,9 +25,9 @@
 }
 
 .media-section {
-    background-color: @theme_bg_color;
     border-radius: 13px;
     padding: 10px;
+    background-color: @theme_bg_color;
 }
 
 .player {
@@ -80,17 +80,47 @@
 }
 
 .icon {
-    color: @theme_fg_color;
     padding: 10px;
+    color: @theme_fg_color;
 }
 
 .settings {
-    padding: 10px;
+    padding: 1em;
 }
 
 .settings-header {
-    font-size: 1.5em;
+    font-size: 2em;
+    border-radius: 13px;
+    padding: 0.3em;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.settings-items {
+    padding-top: 0.5em;
+}
+
+.settings-items-labels {
+    padding: 10px;
     border-radius: 13px;
     background-color: rgba(0, 0, 0, 0.8);
+}
+
+.settings-item-label {
+    font-size: 1.2em;
+    margin: 0.3em;
+    padding: 1em;
+    border-radius: 13px;
+    background-color: @theme_bg_color;
+}
+
+.settings-item-label-icon {
+    margin-right: 1em;
+}
+
+.settings-items-content {
+    border-radius: 13px;
+    font-size: 1.2em;
+    margin-left: 1em;
     padding: 0.3em;
+    background-color: rgba(0, 0, 0, 0.8);
 }
