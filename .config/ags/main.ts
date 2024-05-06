@@ -3,6 +3,7 @@ import { Bar } from "widgets/bar/Bar"
 import { MediaMenu } from "widgets/audio/Audio"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 import { show_settings } from "libs/variables"
+import { Settings } from "widgets/settings/Settings"
 
 const hyprland = await Service.import("hyprland")
 
@@ -26,18 +27,18 @@ App.config({
 
 const RegularWindow = Widget.subclass(Gtk.Window, "RegularWindow")
 
-const createRegWindow = () => {
-    const x = RegularWindow(Widget.Box(Widget.Label("Hello, World!")))
-    x.connect("destroy", () => show_settings.setValue(false))
-
-    return x
-}
+const createRegWindow = (content: Gtk.Widget) =>
+    RegularWindow({
+        child: content,
+        setup: (self) =>
+            self.connect("destroy", () => show_settings.setValue(false)),
+    })
 
 var win: Gtk.Window | null = null
 
 show_settings.connect("changed", ({ value }) => {
     if (value) {
-        win = createRegWindow()
+        win = createRegWindow(Settings())
         win.show_all()
     } else {
         win?.destroy()
