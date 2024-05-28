@@ -38,7 +38,7 @@ set -x DELTA_FEATURES "+side-by-side +dark +syntax-theme base16-256 +true-color 
 
 fish_vi_key_bindings insert
 
-# fzf_key_bindings
+fzf_key_bindings
 
 fish_add_path ~/.local/bin
 fish_add_path ~/.nix-profile/bin
@@ -64,8 +64,8 @@ abbr vim nvim
 abbr v nvim
 abbr cat 'bat -p --color always'
 abbr yeet 'yay -Rns'
-abbr bed 'hyprctl keyword monitor HDMI-A-1,3840x2160@60,0x0,2'
-abbr desk 'hyprctl keyword monitor HDMI-A-1,3840x2160@60,0x0,1'
+abbr bed 'hyprctl keyword monitor HDMI-A-1,2560x1440@120.00Hz,0x0,1.6'
+abbr desk 'hyprctl keyword monitor HDMI-A-1,2560x1440@120.00Hz,0x0,1'
 abbr reload 'source ~/.config/fish/config.fish'
 abbr lg lazygit
 abbr sc systemctl
