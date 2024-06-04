@@ -5,6 +5,20 @@ test lspci || {
 	exit 1
 }
 
+function write_file_content() {
+	file=$1
+	content=$2
+	content_file=$(cat "$file" 2>/dev/null)
+
+	if [ "$content_file" == "$content" ]; then
+		echo "$file content is already set"
+		exit 1
+	fi
+
+	notify-send "Setting up GPU specific environment variables"
+	echo "$content" >"$file"
+}
+
 lspci | rg VGA | rg -i intel >/dev/null
 hasIntelGPU=$?
 
@@ -32,7 +46,9 @@ fi
 if [ $hasNvidiaGPU -eq 0 ]; then
 	echo "Nvidia GPU detected"
 
-	cat <<EOF >~/.config/hypr/config/env-nvidia.conf
+	file=~/.config/hypr/conf/env/env-nvidia.conf
+	content=$(
+		cat <<EOF
 ## NVIDIA Specific
 ### To force GBM as a backend, set the following environment variables:
 
@@ -46,8 +62,11 @@ env = LIBVA_DRIVER_NAME,nvidia #Hardware acceleration on NVIDIA GPUs
 #__GL_GSYNC_ALLOWED #Controls if G-Sync capable monitors should use Variable Refresh Rate (VRR)
 ### See Nvidia Documentation for details.
 
-#__GL_VRR_ALLOWED #Controls if Adaptive Sync should be used. Recommended to set as “0” to avoid having problems on some games.
+#__GL_VRR_ALLOWED #Controls if Adaptive Sync should be used. Recommended to set as “0” to avoid having problems on some games
 
 env = WLR_DRM_NO_ATOMIC,1 #use legacy DRM interface instead of atomic mode setting. Might fix flickering issues.
 EOF
+	)
+
+	write_file_content "$file" "$content"
 fi
