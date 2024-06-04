@@ -16,6 +16,8 @@ function write_file_content() {
 	fi
 
 	notify-send "Setting up GPU specific environment variables"
+
+	[[ ! -f "$file" ]] && mkdir -p "$(dirname "$file")"
 	echo "$content" >"$file"
 }
 

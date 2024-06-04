@@ -16,6 +16,8 @@ function write_file_content() {
 	fi
 
 	notify-send "Setting up Monitor specific settings"
+
+	[[ ! -f "$file" ]] && mkdir -p "$(dirname "$file")"
 	echo "$content" >"$file"
 }
 
@@ -40,7 +42,7 @@ EOF
 	content=$(
 		cat <<EOF
 $info
-monitor=HDMI-A-1, 3840x2160@120, 0x0, 1
+monitor=HDMI-A-1, 2560x1440@120, 0x0, 1
 EOF
 	)
 
