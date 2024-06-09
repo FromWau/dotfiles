@@ -14,7 +14,7 @@ return {
         { "nvim-telescope/telescope-media-files.nvim", dependencies = "nvim-lua/popup.nvim" },
     },
     config = function()
-        local trouble = require "trouble.providers.telescope"
+        local trouble = require "trouble.sources.telescope"
 
         require("telescope").setup {
             defaults = {
@@ -32,9 +32,9 @@ return {
                         ["<c-up>"] = "preview_scrolling_up",
                         ["<ScrollWheelDown>"] = "preview_scrolling_down",
                         ["<c-down>"] = "preview_scrolling_down",
-                        ["<c-t>"] = trouble.open_with_trouble,
+                        ["<c-t>"] = trouble.open,
                     },
-                    n = { ["<c-t>"] = trouble.open_with_trouble },
+                    n = { ["<c-t>"] = trouble.open },
                 },
             },
             pickers = {
