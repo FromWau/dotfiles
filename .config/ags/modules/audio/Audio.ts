@@ -1,10 +1,8 @@
 import { show_media } from "libs/variables"
 import Widget from "resource:///com/github/Aylur/ags/widget.js"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
-import { Media } from "widgets/Media"
-import { DividerH, DividerV } from "widgets/utils/Divider"
-import { Spacer } from "widgets/utils/Spacer"
-import PopupWindow from "widgets/window/PopupWindow"
+import { Media } from "./widgets/media/Media"
+import { DividerH, DividerV } from "modules/utils/Divider"
 
 const audio = await Service.import("audio")
 
@@ -32,7 +30,7 @@ const VolumeIcon = (type: "speaker" | "microphone" = "speaker") =>
                 [0, "muted"],
             ])
 
-            const icon = [...maps].find(([threshold]) => threshold <= v)?.[0]
+            const icon = [...maps].find(([threshold]) => threshold <= v)?.[1]
 
             self.icon = `audio-volume-${icon}-symbolic`
             self.tooltip_text = `Volume ${Math.round(v)}%`

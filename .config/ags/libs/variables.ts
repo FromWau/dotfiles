@@ -1,15 +1,49 @@
-import { SettingsItem } from "widgets/settings/Settings"
+const POLLING_INTERVAL = 2000
 
 export const date = Variable("", {
-    poll: [1000, "date '+%T      %a, %d. %_B(%m) %Y'"],
+    poll: [POLLING_INTERVAL, "date '+%T      %a, %d. %_B(%m) %Y'"],
 })
+
+export const cpuUsage = Variable(0, {
+    poll: [
+        POLLING_INTERVAL,
+        [
+            "bash",
+            "-c",
+            "top -n1 -b | rg Cpu | awk '{printf \"%.2f\\n\", (100-$8)}'",
+        ],
+    ],
+})
+
+// Ram usage in GB
+export const ramUsage = Variable(0, {
+    poll: [
+        POLLING_INTERVAL,
+        "awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{printf \"%.2f\\n\", (t-a)/1024/1024}' /proc/meminfo",
+    ],
+})
+
+export const ramPercentage = Variable(0, {
+    poll: [
+        POLLING_INTERVAL,
+        "awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{printf \"%.2f\\n\", (t-a)/t*100}' /proc/meminfo",
+    ],
+})
+
+export const CpuProgress = () =>
+    Widget.CircularProgress({
+        value: cpuUsage.bind().as((u) => u / 100),
+    })
+
+export const RamProgress = () =>
+    Widget.CircularProgress({
+        value: ramPercentage.bind().as((u) => u / 100),
+    })
 
 export const show_media = Variable(false)
 
 export const show_settings = Variable(false)
 
-export const selected_settings_item = Variable(SettingsItem.General)
+export const show_power_menu = Variable(false)
 
-selected_settings_item.connect("changed", ({ value }) => {
-    console.log("Selected settings item:", value.name)
-})
+export const selected_settings_item = Variable("general")

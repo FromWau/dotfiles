@@ -3,22 +3,16 @@ const entry = `${App.configDir}/main.ts`
 
 const v = {
     ags: pkg.version?.split(".").map(Number) || [],
-    expect: [1, 8, 0],
+    expect: [1, 8, 1],
 }
 
 try {
     await Utils.execAsync([
-        "bun",
-        "build",
-        entry,
-        "--outfile",
-        main,
-        "--external",
-        "resource://*",
-        "--external",
-        "gi://*",
-        "--external",
-        "file://*",
+        "bun", "build", entry,
+        "--outfile", main,
+        "--external", "resource://*",
+        "--external", "gi://*",
+        "--external", "file://*",
     ])
 
     if (v.ags[1] < v.expect[1] || v.ags[2] < v.expect[2]) {

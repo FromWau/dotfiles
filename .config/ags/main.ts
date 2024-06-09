@@ -1,9 +1,11 @@
 import App from "resource:///com/github/Aylur/ags/app.js"
-import { Bar } from "widgets/bar/Bar"
-import { MediaMenu } from "widgets/audio/Audio"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
+import { Bar } from "modules/bar/Bar"
+import { MediaMenu } from "modules/audio/Audio"
+import { PowerMenuWindow } from "modules/powermenu/PowerMenu"
+import { Settings } from "modules/settings/Settings"
 import { show_settings } from "libs/variables"
-import { Settings } from "widgets/settings/Settings"
+import { reloadScss } from "libs/utils"
 
 const hyprland = await Service.import("hyprland")
 
@@ -17,11 +19,15 @@ const windows = (): Gtk.Window[] => {
 
     wins.push(MediaMenu(hyprland.active.monitor.id))
 
+    wins.push(PowerMenuWindow(hyprland.active.monitor.id))
+
     return wins
 }
 
+reloadScss()
+
 App.config({
-    style: App.configDir + "/style.scss",
+    style: `${App.configDir}/style.css`,
     windows: windows,
 })
 
