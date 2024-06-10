@@ -69,12 +69,16 @@ export const PowerMenuWindow = (monitor: number = 0): Gtk.Window =>
                                 {
                                     label: "Shutdown",
                                     icon: "system-shutdown-symbolic",
-                                    onClicked: () => {},
+                                    onClicked: () => {
+                                        Utils.exec("shutdown now")
+                                    },
                                 },
                                 {
                                     label: "Restart",
                                     icon: "system-reboot-symbolic",
-                                    onClicked: () => {},
+                                    onClicked: () => {
+                                        Utils.exec("reboot")
+                                    },
                                 },
                                 {
                                     label: "Lock Screen",
@@ -84,12 +88,16 @@ export const PowerMenuWindow = (monitor: number = 0): Gtk.Window =>
                                 {
                                     label: "Log Out",
                                     icon: "application-exit-symbolic",
-                                    onClicked: () => {},
+                                    onClicked: () => {
+                                        Utils.exec("hyprctl dispatchers exit")
+                                    },
                                 },
                                 {
                                     label: "Sleep in 30minuts",
                                     icon: "preferences-system-time-symbolic",
-                                    onClicked: () => {},
+                                    onClicked: () => {
+                                        Utils.exec("shutdown 30")
+                                    },
                                 },
                             ],
                         }),
