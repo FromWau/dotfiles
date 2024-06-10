@@ -1,20 +1,24 @@
 Config(
-  prefix: "?",
+  prefix: "? ",
   // Options: Google, Ecosia, Bing, DuckDuckGo, Custom
   // NOTE: `{}` is replaced by the search query and `https://` is automatically added in front.
   engines: [
     DuckDuckGo,
     Custom (
       name: "GitHub",
-      url: "github.com/search?q={}"
+      url: "github.com/search?q={}",
     ),
     Custom (
-      name: "AUR packages",
-      url: "aur.archlinux.org/packages?K={}"
+      name: "My Github Repos",
+      url: "github.com/search?q=owner%3AFromWau+{}&type=repositories",
     ),
     Custom (
-      name: "Arch packages",
-      url: "archlinux.org/packages/?q={}"
+      name: "AUR Packages",
+      url: "aur.archlinux.org/packages?K={}",
+    ),
+    Custom (
+      name: "Arch Packages",
+      url: "archlinux.org/packages/?q={}",
     ),
   ]
 )
