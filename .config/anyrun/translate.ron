@@ -1,5 +1,5 @@
 Config(
-  prefix: "~",
+  prefix: "~ ",
   language_delimiter: ">",
   max_entries: 3,
 )

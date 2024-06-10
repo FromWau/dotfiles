@@ -1,4 +1,4 @@
 Config(
-  prefix: ":def",
+  prefix: ":def ",
   max_entries: 5,
 )
