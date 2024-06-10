@@ -27,7 +27,7 @@ if [ ! "$(fd . "$HOME"/.ssh/ 2>/dev/null | wc -l)" -ge 2 ]; then
     echo "SSH key setup complete."
 fi
 
-key=$(fd . --base-directory "$HOME"/.ssh/ -e .pub | cut -d . -f1 | fzf -d "|" --cycle -i -1)
+key=$(fd . --base-directory "$HOME"/.ssh/ -e .pub | cut -d . -f1 | fzf -d "|" --cycle -i -1 --reverse --header="Select a key to add to ssh-agent")
 
 ssh-add "$HOME"/.ssh/"$key"
 
