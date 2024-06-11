@@ -69,7 +69,7 @@ EOF
 		content=$(
 			cat <<EOF
 $info - @home
-monitor=eDP-1, 3840x2160@60, 0x1080, 2
+monitor=eDP-1, 3840x2400@60, 0x1200, 2
 monitor=HDMI-A-1, 4096x2160@120, 1920x0, 1
 EOF
 		)
@@ -81,7 +81,7 @@ EOF
 		content=$(
 			cat <<EOF
 $info - @work
-monitor=eDP-1, 3840x2160@60, 0x0, 2
+monitor=eDP-1, 3840x2400@60, 0x1200, 2
 monitor=DP-4, 2560x1440, 1920x0, 1
 monitor=DP-5, 2560x1440, 4480x0, 1
 EOF
@@ -94,7 +94,7 @@ EOF
 		content=$(
 			cat <<EOF
 $info - @hallein
-monitor=eDP-1, 3840x2160@60, 0x0, 2
+monitor=eDP-1, 3840x2400@60, 0x1200, 2
 monitor=DP-4, 2560x1440, 1920x0, 1
 monitor=DP-5, 2560x1440, 4480x0, 1
 EOF
