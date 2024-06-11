@@ -1,20 +1,34 @@
 #!/usr/bin/env bash
 
-clients=$(hyprctl clients -j | jq -r '.[] | select(.mapped==true) | {class: .class ,title: .title, address: .address}')
+TMP_DIR="/tmp/open_windows/"
 
-window=$(echo "$clients" | jq -r '[ .class, .title|tostring ] | join(": ")' | fzf)
+[[ -d $TMP_DIR ]] || mkdir -p $TMP_DIR
 
-echo $window
-window_class=$(echo "$window" | cut -d':' -f1)
-window_title=$(echo "$window" | cut -d':' -f2-)
+# Get the list of clients and iterate through each client
+hyprctl clients -j | jq -c '.[] | {address, class, title, at, size}' | while IFS= read -r client; do
+	# Extract necessary properties
+	address=$(jq -r '.address' <<<"$client")
+	at=($(jq -r '.at | @sh' <<<"$client"))
+	size=($(jq -r '.size | @sh' <<<"$client"))
 
-echo $window_class
-echo $window_title
+	# Extracting coordinates and dimensions
+	startY=${at[0]}
+	startX=${at[1]}
+	width=${size[0]}
+	height=${size[1]}
 
-window_addr=$(echo "$clients" | jq -r --arg window_class "$window_class" --arg window_title "$window_title" 'select(.class == $window_class and .title == $window_title) | .address')
-echo $window_addr
+	# Generating the geometry string and defining the file path
+	geometry="${startY},${startX} ${width}x${height}"
+	picPath="$TMP_DIR$address.png"
 
-# window_addr=$(echo "$clients" | jq -r " select(.class==\"$window_class\" and .title==\"$window_title\") | .address") 
-# echo $window_addr
+	# Taking screenshot using grim
+	grim -g "$geometry" "$picPath"
 
-# hyprctl dispatch focuswindow address:"$window_addr"
+	# Building new client object without unnecessary properties
+	newClient=$(jq -n \
+		--arg picPath "$picPath" \
+		--argjson client "$client" \
+		'{$picPath, class: $client.class, title: $client.title}')
+
+	echo "$newClient"
+done | jq -s .
