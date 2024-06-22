@@ -143,3 +143,9 @@ function cp-to-dot -d "copies the given item to ~/Projects/dotfiles"
         end
     end
 end
+
+function copy-content -d "Send file content to clipboard"
+    if count $argv >/dev/null
+        cat $argv | wl-copy
+    end
+end
