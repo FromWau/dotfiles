@@ -1,33 +1,66 @@
 #!/usr/bin/env bash
 
-systemctl restart --user ssh-agent.service
+export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR"/ssh-agent.socket
 
 setup-ssh-key() {
-    echo "Setting up ssh key."
-    read -p "Enter your email: " -r email
+	echo "Setting up ssh key."
+	read -p "Enter your email: " -r email
 
-    ssh-keygen -q -t ed25519 -C "$email"
-    ##  If you are using a legacy system that doesn't support the Ed25519 algorithm, use:
-    # ssh-keygen -q  -t rsa -b 4096 -C "$email"
+	ssh-keygen -q -t ed25519 -C "$email"
+	##  If you are using a legacy system that doesn't support the Ed25519 algorithm, use:
+	# ssh-keygen -q  -t rsa -b 4096 -C "$email"
 
-    wl-copy < "$HOME"/.ssh/id_ed25519.pub
-    echo "Copied newly generated public key to clipboard."
+	# Set the permissions of the ssh folder and the keys
+	fd . --base-directory ~/.ssh/ --strip-cwd-prefix -E '*.pub' -E '*hosts*' -E 'config' --print0 -x chmod 600 {}
 
-    xdg-open https://github.com/settings/keys &
+	wl-copy <"$HOME"/.ssh/id_ed25519.pub
+	echo "Copied newly generated public key to clipboard."
 
-    echo "1) Click 'New SSH Key'"
-    echo "2) Enter a title for the key in the 'Title' field, maybe the hostname: $HOSTNAME"
-    echo "3) Key type: 'Authentication key'"
-    echo "4) Paste the key from your clipboard in the 'Key' field"
+	xdg-open https://github.com/settings/keys &
+
+	echo "1) Click 'New SSH Key'"
+	echo "2) Enter a title for the key in the 'Title' field, maybe the hostname: $HOSTNAME"
+	echo "3) Key type: 'Authentication key'"
+	echo "4) Paste the key from your clipboard in the 'Key' field"
 }
 
-if [ ! "$(fd . "$HOME"/.ssh/ 2>/dev/null | wc -l)" -ge 2 ]; then
-    setup-ssh-key
-    chmod 600 "$HOME"/.ssh/*
-    echo "SSH key setup complete."
+current_key=$(ssh-add -l)
+
+mapfile -t files < <(fd . --base-directory ~/.ssh/ ~/.ssh/ -E '*.pub' -E '*hosts*' -E 'config' --print0)
+
+if [ ${#files[@]} -eq 0 ]; then
+	echo "No SSH keys found in ~/.ssh/"
+
+	setup-ssh-key
+	echo "SSH key setup complete."
+
+	mapfile -t files < <(fd . --base-directory ~/.ssh/ ~/.ssh/ -E '*.pub' -E '*hosts*' -E 'config' --print0)
 fi
 
-key=$(fd . --base-directory "$HOME"/.ssh/ -e .pub | cut -d . -f1 | fzf -d "|" --cycle -i -1 --reverse --header="Select a key to add to ssh-agent")
+key_files=()
+for file in "${files[@]}"; do
+	if [ "$(ssh-keygen -l -f "$file")" = "$current_key" ]; then
+		continue
+	fi
 
-ssh-add "$HOME"/.ssh/"$key"
+	key_files+=("$file")
+done
 
+key=$(echo "${key_files[@]}" | fzf -d "|" --cycle -i --reverse -1 --prompt="Select SSH key: ")
+if [ -z "$key" ]; then
+	echo "Your already loaded key is the only key available."
+	exit 0
+fi
+
+if ! systemctl --user restart ssh-agent.service; then
+	echo "Failed to restart ssh-agent.service"
+	exit 1
+fi
+
+# Wait for SSH_AUTH_SOCK to point to a valid socket
+while [ ! -S "$SSH_AUTH_SOCK" ]; do
+	echo "Waiting for SSH_AUTH_SOCK..."
+	sleep 0.1
+done
+
+ssh-add "$key"
