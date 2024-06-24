@@ -51,10 +51,10 @@ zoxide init fish | source
 # abbr
 abbr icat 'kitty +kitten icat'
 abbr mirror 'sudo reflector --country AT --latest 50 --sort rate --save /etc/pacman.d/mirrorlist'
-abbr ls 'exa --icons --all --group-directories-first --color always'
-abbr ll 'exa --icons --all --group-directories-first --color always --long'
-abbr llh 'exa --icons --all --group-directories-first --color always --long | head -10'
-abbr tree 'exa --icons --all --group-directories-first --color always --tree --ignore-glob ".git*"'
+abbr ls 'eza --icons --all --group-directories-first --color always'
+abbr ll 'eza --icons --all --group-directories-first --color always --long'
+abbr llh 'eza --icons --all --group-directories-first --color always --long | head -10'
+abbr tree 'eza --icons --all --group-directories-first --color always --tree --ignore-glob ".git*"'
 abbr ps procs
 abbr grep rg
 abbr fzf 'fzf -d "|" --cycle -i --reverse'
@@ -91,10 +91,10 @@ end
  
 
 function fdir -d "Jump to selected zoxide dir"
-    set -l selected_dir (zoxide query -l | fzf --preview "exa -lah --color always --group-directories-first {}" --cycle -i -d "|" --exact --prompt "z into dir: ")
+    set -l selected_dir (zoxide query -l | fzf --preview "eza -lah --color always --group-directories-first {}" --cycle -i -d "|" --exact --prompt "z into dir: ")
     if count $selected_dir >/dev/null
         z $selected_dir
-        exa --icons --all --group-directories-first --color always
+        eza --icons --all --group-directories-first --color always
     end
 end
 
