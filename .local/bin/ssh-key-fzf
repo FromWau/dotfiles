@@ -26,7 +26,7 @@ setup-ssh-key() {
 
 current_key=$(ssh-add -l)
 
-mapfile -t files < <(fd . --base-directory ~/.ssh/ ~/.ssh/ -E '*.pub' -E '*hosts*' -E 'config' --print0)
+mapfile -t files < <(fd . --base-directory ~/.ssh/ ~/.ssh/ -E '*.pub' -E '*hosts*' -E 'config')
 
 if [ ${#files[@]} -eq 0 ]; then
 	echo "No SSH keys found in ~/.ssh/"
@@ -34,7 +34,7 @@ if [ ${#files[@]} -eq 0 ]; then
 	setup-ssh-key
 	echo "SSH key setup complete."
 
-	mapfile -t files < <(fd . --base-directory ~/.ssh/ ~/.ssh/ -E '*.pub' -E '*hosts*' -E 'config' --print0)
+	mapfile -t files < <(fd . --base-directory ~/.ssh/ ~/.ssh/ -E '*.pub' -E '*hosts*' -E 'config')
 fi
 
 key_files=()
