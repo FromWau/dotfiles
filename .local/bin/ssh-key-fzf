@@ -11,7 +11,7 @@ setup-ssh-key() {
 	# ssh-keygen -q  -t rsa -b 4096 -C "$email"
 
 	# Set the permissions of the ssh folder and the keys
-	fd . --base-directory ~/.ssh/ --strip-cwd-prefix -E '*.pub' -E '*hosts*' -E 'config' --print0 -x chmod 600 {}
+	fd . --base-directory ~/.ssh/ --strip-cwd-prefix -E '*.pub' -E '*hosts*' -E 'config' -x chmod 600 {}
 
 	wl-copy <"$HOME"/.ssh/id_ed25519.pub
 	echo "Copied newly generated public key to clipboard."
@@ -26,7 +26,7 @@ setup-ssh-key() {
 
 current_key=$(ssh-add -l)
 
-mapfile -t files < <(fd . --base-directory ~/.ssh/ ~/.ssh/ -E '*.pub' -E '*hosts*' -E 'config')
+mapfile -t files < <(fd . --base-directory ~/.ssh/ --strip-cwd-prefix -E '*.pub' -E '*hosts*' -E 'config')
 
 if [ ${#files[@]} -eq 0 ]; then
 	echo "No SSH keys found in ~/.ssh/"
@@ -34,21 +34,25 @@ if [ ${#files[@]} -eq 0 ]; then
 	setup-ssh-key
 	echo "SSH key setup complete."
 
-	mapfile -t files < <(fd . --base-directory ~/.ssh/ ~/.ssh/ -E '*.pub' -E '*hosts*' -E 'config')
+	mapfile -t files < <(fd . --base-directory ~/.ssh/ --strip-cwd-prefix -E '*.pub' -E '*hosts*' -E 'config')
 fi
 
 key_files=()
 for file in "${files[@]}"; do
-	if [ "$(ssh-keygen -l -f "$file")" = "$current_key" ]; then
+	if [ "$(ssh-keygen -l -f "$HOME/.ssh/$file")" = "$current_key" ]; then
 		continue
 	fi
 
 	key_files+=("$file")
 done
 
-key=$(echo "${key_files[@]}" | fzf -d "|" --cycle -i --reverse -1 --prompt="Select SSH key: ")
-if [ -z "$key" ]; then
+if [ ${#key_files[@]} -eq 0 ]; then
 	echo "Your already loaded key is the only key available."
+	exit 0
+fi
+
+key=$(printf "%s\n" "${key_files[@]}" | fzf -d "|" --cycle -i --reverse -1 --prompt="Select SSH key: ")
+if [ -z "$key" ]; then
 	exit 0
 fi
 
@@ -63,4 +67,4 @@ while [ ! -S "$SSH_AUTH_SOCK" ]; do
 	sleep 0.1
 done
 
-ssh-add "$key"
+ssh-add "$HOME/.ssh/$key"
