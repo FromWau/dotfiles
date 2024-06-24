@@ -71,6 +71,9 @@ abbr lg lazygit
 abbr sc systemctl
 abbr chx 'chmod +x'
 abbr clear-nvim 'rm -rf ~/.cache/nvim ~/.local/share/nvim ~/.local/state/nvim'
+abbr .. 'cd ..'
+abbr ... 'cd ../..'
+abbr .... 'cd ../../..'
 
 
 # functions
