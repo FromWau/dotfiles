@@ -1,8 +1,8 @@
 #!/bin/bash
 
 UB_PID_FILE="/tmp/.$(uuidgen)"
-ueberzugpp layer --no-stdin --silent --pid-file $UB_PID_FILE
-UB_PID=$(cat $UB_PID_FILE)
+ueberzugpp layer --no-stdin --silent --pid-file "$UB_PID_FILE"
+UB_PID=$(cat "$UB_PID_FILE")
 
 export SOCKET=/tmp/ueberzugpp-$UB_PID.socket
 export X=$(($(tput cols) / 2 + 1))
@@ -17,4 +17,4 @@ else
 end
 ' "$@"
 
-ueberzugpp cmd -s $SOCKET -a exit
+ueberzugpp cmd -s "$SOCKET" -a exit
