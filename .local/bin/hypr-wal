@@ -1,23 +1,17 @@
 #!/usr/bin/env bash
 
 changeWallpaper() {
-	monitors=(
-		$(hyprctl monitors -j | jq -r '.[].name')
-	)
+	mapfile -t monitors < <(hyprctl monitors -j | jq -r '.[].name')
 
 	pics=()
 	if ! command -v find-similar-pics &>/dev/null; then
-		pics=(
-			$(fd ".png|.jpg|.jpeg" ~/Pictures/wallpapers/ | shuf -n ${#monitors[@]})
-		)
+		mapfile -t pics < <(fd ".png|.jpg|.jpeg" ~/Pictures/wallpapers/ | shuf -n ${#monitors[@]})
 	else
 		rand_pic=$(fd ".png|.jpg|.jpeg" ~/Pictures/wallpapers/ | shuf -n 1)
 		pics[0]=$rand_pic
 
 		if [ ! ${#monitors[@]} -eq 1 ]; then
-			similar_pics=(
-				$(find-similar-pics "$rand_pic" ~/Pictures/wallpapers/ -s -n $((${#monitors[@]} - 1)))
-			)
+			mapfile -t similar_pics < <(find-similar-pics "$rand_pic" ~/Pictures/wallpapers/ -s -n $((${#monitors[@]} - 1)))
 
 			pics+=("${similar_pics[@]}")
 		fi
@@ -38,11 +32,11 @@ changeWallpaper() {
 }
 
 updateKitty() {
-	cp -r "$HOME"/.cache/wal/colors-kitty.conf "$HOME"/.config/kitty/current-theme.conf
+	cp "$HOME"/.cache/wal/colors-kitty.conf "$HOME"/.config/kitty/current-theme.conf
 }
 
 updateCava() {
-	cp -r "$HOME"/.cache/wal/colors-cava.cava "$HOME"/.config/cava/config
+	cp "$HOME"/.cache/wal/colors-cava.cava "$HOME"/.config/cava/config
 
 	# refresh cava if running
 	[[ $(pidof cava) != "" ]] && pkill -USR1 cava
@@ -79,7 +73,11 @@ updateWalfox() {
 }
 
 upateHyprland() {
-	cp -r "$HOME"/.cache/wal/colors-hyprland.conf "$HOME"/.config/hypr/themes/wal.conf
+	cp "$HOME"/.cache/wal/colors-hyprland.conf "$HOME"/.config/hypr/themes/wal.conf
+}
+
+updateAgs() {
+	cp "$HOME"/.cache/wal/colors.scss "$HOME"/.config/ags/colors.scss
 }
 
 pic=$(changeWallpaper)
@@ -92,3 +90,4 @@ updateBtop++
 updateBat
 updateWalfox
 upateHyprland
+updateAgs
