@@ -2,4 +2,35 @@
   all: unset;
 }
 
+.bar {
+  background: transparent;
+}
+
+.sections {
+  background: transparent;
+  margin-left: 20px;
+  margin-right: 20px;
+  margin-top: 10px;
+}
+
+.workspaces {
+  background: #111214;
+  color: #de8300;
+  padding-left: 20px;
+  padding-right: 20px;
+  border-radius: 16px;
+}
+
+.workspace {
+  min-width: 25px;
+  background: #111214;
+  color: #de8300;
+}
+.workspace.focused {
+  border-bottom: #de8300 2px solid;
+}
+.workspace:hover {
+  background: #4c4d4e;
+}
+
 /*# sourceMappingURL=style.css.map */

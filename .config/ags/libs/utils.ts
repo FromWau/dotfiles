@@ -22,9 +22,7 @@ export const forActiveWorkspace = (
  */
 export const reloadScss = () => {
     exec(`sass ${App.configDir}/scss/main.scss ${App.configDir}/style.css`)
-    exec(
-        `sass ${App.configDir}/scss/highlight.scss ${App.configDir}/highlight.css`
-    )
+    exec(`sass ${App.configDir}/scss/highlight.scss ${App.configDir}/highlight.css`)
 
     // Apply compiled css
     App.resetCss()

@@ -40,6 +40,17 @@ export const RamProgress = () =>
         value: ramPercentage.bind().as((u) => u / 100),
     })
 
+export const currentKeymap = Variable("Unknown", {
+    poll: [
+        POLLING_INTERVAL,
+        [
+            "bash",
+            "-c",
+            "hyprctl devices -j | jq '.keyboards[] | select(.main == true) | .active_keymap' -r",
+        ],
+    ],
+})
+
 export const show_media = Variable(false)
 
 export const show_settings = Variable(false)

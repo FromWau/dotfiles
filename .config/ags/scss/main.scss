@@ -4,4 +4,39 @@
 
 // general
 @import "colors";
-@import "common";
+
+.bar {
+    background: transparent;
+}
+
+.sections {
+    background: transparent;
+
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-top: 10px;
+}
+
+.workspaces {
+    background: $background;
+    color: $primary;
+
+    padding-left: 20px;
+    padding-right: 20px;
+
+    border-radius: 16px;
+}
+
+.workspace {
+    min-width: 25px;
+    background: $background;
+    color: $primary;
+
+    &.focused {
+        border-bottom: $primary 2px solid;
+    }
+
+    &:hover {
+        background: $color8;
+    }
+}
