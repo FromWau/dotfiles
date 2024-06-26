@@ -1,7 +1,7 @@
-import { show_power_menu } from "libs/variables"
+import { show_session } from "libs/variables"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 
-const WINDOW_NAME = "powermenu"
+export const WINDOW_SESSION = "session"
 
 type Item = {
     label: string
@@ -10,9 +10,8 @@ type Item = {
 }
 
 // widget representing a power menu item
-const PowerMenuItem = (item: Item) =>
+const SessionMenuItem = (item: Item) =>
     Widget.Button({
-        className: "powermenuButtons",
         onClicked: item.onClicked,
         child: Widget.Box({
             children: [
@@ -30,13 +29,13 @@ const PowerMenuItem = (item: Item) =>
     })
 
 // widget showing a list of PowerMenuItems
-const PowerMenu = ({ items }) => {
+const SessionMenu = ({ items }) => {
     const list = Widget.Box({
         vertical: true,
         spacing: 12,
     })
 
-    list.children = items.map((item: Item) => PowerMenuItem(item))
+    list.children = items.map((item: Item) => SessionMenuItem(item))
 
     return Widget.Box({
         vertical: true,
@@ -45,26 +44,25 @@ const PowerMenu = ({ items }) => {
     })
 }
 
-export const PowerMenuWindow = (monitor: number = 0): Gtk.Window =>
+export const SessionWindow = (monitor: number = 0): Gtk.Window =>
     Widget.Window({
-        name: WINDOW_NAME,
-        class_name: "powermenuwindow",
+        name: WINDOW_SESSION,
+        class_name: "session",
         monitor: monitor,
         anchor: ["top", "right"],
         child: Widget.Box({
             css: "min-width: 2px;min-height: 2px;",
             child: Widget.Revealer({
-                revealChild: show_power_menu.bind(),
+                revealChild: show_session.bind(),
                 transition: "slide_left",
                 transitionDuration: 1000,
                 child: Widget.Box({
                     vertical: true,
                     children: [
                         Widget.Label({
-                            class_name: "powermenu-title",
                             label: "Power Menu",
                         }),
-                        PowerMenu({
+                        SessionMenu({
                             items: [
                                 {
                                     label: "Shutdown",

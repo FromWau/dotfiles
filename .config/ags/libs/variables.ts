@@ -30,16 +30,7 @@ export const ramPercentage = Variable(0, {
     ],
 })
 
-export const CpuProgress = () =>
-    Widget.CircularProgress({
-        value: cpuUsage.bind().as((u) => u / 100),
-    })
-
-export const RamProgress = () =>
-    Widget.CircularProgress({
-        value: ramPercentage.bind().as((u) => u / 100),
-    })
-
+// TODO: Can we get this from the hyprland service?
 export const currentKeymap = Variable("Unknown", {
     poll: [
         POLLING_INTERVAL,
@@ -53,8 +44,4 @@ export const currentKeymap = Variable("Unknown", {
 
 export const show_media = Variable(false)
 
-export const show_settings = Variable(false)
-
-export const show_power_menu = Variable(false)
-
-export const selected_settings_item = Variable("general")
+export const show_session = Variable(false)

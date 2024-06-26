@@ -73,12 +73,7 @@ const AudioCard = (type: "speaker" | "microphone" = "speaker") =>
 
             Widget.Box({
                 hexpand: true,
-                children: [
-                    VolumeIcon(type),
-                    // Spacer("vertical", 20),
-                    DividerV(30),
-                    VolumeSlider(type),
-                ],
+                children: [VolumeIcon(type), DividerV(30), VolumeSlider(type)],
             }),
         ],
     })
@@ -111,19 +106,3 @@ export const MediaMenu = (monitor: number = 0): Gtk.Window =>
             }),
         }),
     })
-
-// export const MediaMenu = (monitor: number = 0) =>
-//     PopupWindow(
-//         "mediaMenu",
-//         monitor,
-//         "topLeft",
-//         "slide_right",
-//         "ignore",
-//         ["top", "left"],
-//         show_media,
-//         Widget.Box({
-//             class_name: "media-menu",
-//             vertical: true,
-//             children: [Media(), Spacer("horizontal", 10), Audio()],
-//         })
-//     )

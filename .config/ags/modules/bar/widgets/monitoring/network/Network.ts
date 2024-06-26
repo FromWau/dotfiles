@@ -4,6 +4,7 @@ const network = await Service.import("network")
 
 const WifiIndicator = () =>
     Widget.Box({
+        spacing: 8,
         children: [
             Widget.Icon({
                 icon: icons.network.wifi,
@@ -21,6 +22,7 @@ const WifiIndicator = () =>
 
 const WiredIndicator = () =>
     Widget.Box({
+        spacing: 8,
         children: [
             Widget.Icon({
                 icon: icons.network.wired,
@@ -33,6 +35,7 @@ const WiredIndicator = () =>
 
 const OfflineIndicator = () =>
     Widget.Box({
+        spacing: 8,
         children: [
             Widget.Icon({ icon: icons.network.offline }),
             Widget.Label({ label: "Offline" }),
@@ -41,6 +44,7 @@ const OfflineIndicator = () =>
 
 export const NetworkIndicator = () =>
     Widget.Stack({
+        class_name: "bar-item",
         children: {
             wifi: WifiIndicator(),
             wired: WiredIndicator(),

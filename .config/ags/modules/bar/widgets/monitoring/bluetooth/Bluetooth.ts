@@ -27,5 +27,6 @@ const indicator = Widget.Icon({
 
 export const BluetoothIndicator = () =>
     Widget.Box({
+        class_name: "bar-item",
         child: indicator,
     })

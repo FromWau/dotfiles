@@ -6,31 +6,30 @@
   background: transparent;
 }
 
-.sections {
+.bar-spacing {
   background: transparent;
   margin-left: 20px;
   margin-right: 20px;
   margin-top: 10px;
 }
 
-.workspaces {
-  background: #111214;
-  color: #de8300;
+.bar-section {
+  background: #0A080C;
   padding-left: 20px;
   padding-right: 20px;
   border-radius: 16px;
 }
 
-.workspace {
+.bar-item {
   min-width: 25px;
-  background: #111214;
-  color: #de8300;
+  background: #0A080C;
+  color: #d90067;
 }
-.workspace.focused {
-  border-bottom: #de8300 2px solid;
+.bar-item.focused {
+  border-bottom: #d90067 2px solid;
 }
-.workspace:hover {
-  background: #4c4d4e;
+.bar-item:hover {
+  background: #474548;
 }
 
 /*# sourceMappingURL=style.css.map */

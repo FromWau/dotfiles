@@ -1,5 +1,6 @@
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 import { exec } from "resource:///com/github/Aylur/ags/utils.js"
+import { show_media, show_session } from "./variables"
 
 const hyprland = await Service.import("hyprland")
 
@@ -22,9 +23,19 @@ export const forActiveWorkspace = (
  */
 export const reloadScss = () => {
     exec(`sass ${App.configDir}/scss/main.scss ${App.configDir}/style.css`)
-    exec(`sass ${App.configDir}/scss/highlight.scss ${App.configDir}/highlight.css`)
 
     // Apply compiled css
     App.resetCss()
     App.applyCss(`${App.configDir}/style.css`)
 }
+
+/**
+ * Toggle the power menu
+ */
+export const toggleSessionMenu = () =>
+    show_session.setValue(!show_session.value)
+
+/**
+ * Toggle the media menu
+ * */
+export const toggleMediaMenu = () => show_media.setValue(!show_media.value)
