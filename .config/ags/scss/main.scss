@@ -4,6 +4,7 @@
 
 @import "colors";
 
+// BAR
 .bar {
     background: transparent;
 }
@@ -37,4 +38,20 @@
     &:hover {
         background: $color8;
     }
+}
+// -------------------------
+
+// AUDIO
+.media {
+    background: $background;
+    margin: 20px;
+    border-radius: 16px;
+}
+
+.player {
+    margin: 4px;
+    border-radius: 16px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
 }

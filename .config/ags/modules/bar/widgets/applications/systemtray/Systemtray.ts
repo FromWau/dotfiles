@@ -13,7 +13,7 @@ export const Systemtray = () =>
     Widget.Box({
         class_name: "bar-item",
         children: systemtray.bind("items").as((i) => {
-            console.log("SysTray Item: ", i)
+            // console.log("SysTray Item: ", i)
 
             return i.map(SysTrayItem)
         }),

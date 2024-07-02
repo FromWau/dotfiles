@@ -1,26 +1,20 @@
 import { show_media } from "libs/variables"
+import { RevealerWindow } from "modules/windows/RevealerWindow"
+import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
+import { Players } from "./widgets/Player"
 
 const WINDOW_MEDIA = "media"
 
-export const MediaWindow = (monitor: number = 0) =>
-    Widget.Window({
+export const MediaWindow = (monitor: number = 0): Gtk.Window =>
+    RevealerWindow({
         name: WINDOW_MEDIA,
         monitor: monitor,
         anchor: ["top", "left"],
-        exclusivity: "exclusive",
+        transition: "slide_left",
+        binding: show_media.bind(),
         child: Widget.Box({
-            css: "min-width: 2px;min-height: 2px;",
-            child: Widget.Revealer({
-                revealChild: show_media.bind(),
-                transition: "slide_down",
-                transitionDuration: 1000,
-                child: Widget.Box({
-                    children: [
-                        Widget.Label({
-                            label: "Media",
-                        }),
-                    ],
-                }),
-            }),
+            class_name: "media",
+            vertical: true,
+            children: [Players()],
         }),
     })

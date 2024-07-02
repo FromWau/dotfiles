@@ -7,7 +7,9 @@ export const Applications = () =>
         spacing: 8,
         children: [
             Widget.Button({
-                class_name: "bar-item",
+                class_name: show_media
+                    .bind()
+                    .as((isShown) => "bar-item" + (isShown ? " focused" : "")),
                 on_clicked: () => show_media.setValue(!show_media.getValue()),
                 tooltip_text: "Audio Menu",
                 child: Widget.Icon("media-tape-symbolic"),

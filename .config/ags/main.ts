@@ -1,9 +1,10 @@
 import App from "resource:///com/github/Aylur/ags/app.js"
 import { Bar } from "modules/bar/Bar"
-import { MediaWindow } from "modules/media/Media"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 import { reloadScss } from "libs/utils"
+import { MediaWindow } from "modules/media/Media"
 import { SessionWindow } from "modules/session/Session"
+import "modules/api/Api"
 
 const hyprland = await Service.import("hyprland")
 

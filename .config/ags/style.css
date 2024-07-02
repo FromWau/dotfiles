@@ -14,7 +14,7 @@
 }
 
 .bar-section {
-  background: #0A080C;
+  background: #19061f;
   padding-left: 20px;
   padding-right: 20px;
   border-radius: 16px;
@@ -22,14 +22,28 @@
 
 .bar-item {
   min-width: 25px;
-  background: #0A080C;
-  color: #d90067;
+  background: #19061f;
+  color: #009058;
 }
 .bar-item.focused {
-  border-bottom: #d90067 2px solid;
+  border-bottom: #009058 2px solid;
 }
 .bar-item:hover {
-  background: #474548;
+  background: #524457;
+}
+
+.media {
+  background: #19061f;
+  margin: 20px;
+  border-radius: 16px;
+}
+
+.player {
+  margin: 4px;
+  border-radius: 16px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 /*# sourceMappingURL=style.css.map */
