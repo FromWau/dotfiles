@@ -10,7 +10,7 @@ export const MediaWindow = (monitor: number = 0): Gtk.Window =>
         name: WINDOW_MEDIA,
         monitor: monitor,
         anchor: ["top", "left"],
-        transition: "slide_left",
+        transition: "slide_down",
         binding: show_media.bind(),
         child: Widget.Box({
             class_name: "media",

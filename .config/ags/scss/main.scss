@@ -48,10 +48,15 @@
     border-radius: 16px;
 }
 
-.player {
+.cover {
     margin: 4px;
     border-radius: 16px;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
+}
+
+.positionSlider {
+    background: $background;
+    color: white;
 }

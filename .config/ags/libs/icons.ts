@@ -7,4 +7,13 @@ export default {
         wifi: "network-wireless-symbolic",
         offline: "network-offline-symbolic",
     },
+    media: {
+        play: "media-playback-start-symbolic",
+        pause: "media-playback-pause-symbolic",
+        next: "media-skip-forward-symbolic",
+        previous: "media-skip-backward-symbolic",
+        shuffle: "media-playlist-shuffle-symbolic",
+        forward: "media-seek-forward-symbolic",
+        backward: "media-seek-backward-symbolic",
+    }
 }
