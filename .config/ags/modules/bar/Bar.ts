@@ -33,17 +33,24 @@ const Right = () =>
         ],
     })
 
-export const Bar = (monitor = 0) =>
-    Widget.Window({
-        name: `${WINDOW_BAR}-${monitor}`,
+export const Bar = () =>
+    Widget.Box({
         class_name: "bar",
-        monitor,
-        anchor: ["top", "left", "right"],
-        exclusivity: "exclusive",
         child: Widget.CenterBox({
+            vexpand: true,
+            hexpand: true,
             class_name: "bar-spacing",
             start_widget: Left(),
             center_widget: Center(),
             end_widget: Right(),
         }),
+    })
+
+export const BarWindow = (monitor = 0) =>
+    Widget.Window({
+        name: `${WINDOW_BAR}-${monitor}`,
+        monitor,
+        anchor: ["top", "left", "right"],
+        exclusivity: "exclusive",
+        child: Bar(),
     })
