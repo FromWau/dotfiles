@@ -1,7 +1,7 @@
 import App from "resource:///com/github/Aylur/ags/app.js"
 import { BarWindow, Bar } from "modules/bar/Bar"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
-import { reloadScss } from "libs/utils"
+import { formatNumber, reloadScss } from "libs/utils"
 import { MediaWindow } from "modules/media/Media"
 import { SessionWindow } from "modules/session/Session"
 import "modules/api/Api"
@@ -45,8 +45,8 @@ const TestWindow = (): Gtk.Window =>
 const windows = (): Gtk.Window[] => {
     const wins: Gtk.Window[] = []
 
-    // hyprland.monitors.map((monitor) => wins.push(BarWindow(monitor.id)))
-    wins.push(TestWindow())
+    hyprland.monitors.map((monitor) => wins.push(BarWindow(monitor.id)))
+    // wins.push(TestWindow())
 
     wins.push(MediaWindow(hyprland.active.monitor.id))
 
@@ -62,3 +62,4 @@ App.config({
     style: `${App.configDir}/style.css`,
     windows: windows,
 })
+

@@ -39,3 +39,17 @@ export const toggleSessionMenu = () =>
  * Toggle the media menu
  * */
 export const toggleMediaMenu = () => show_media.setValue(!show_media.value)
+
+export function formatNumber(num: number, leadingSpace: number = 3): string {
+    // Extract the integer and decimal parts
+    let integerPart = Math.floor(num).toString()
+    let decimalPart = Math.round((num % 1) * 100)
+        .toString()
+        .padEnd(2, "0")
+
+    // Pad the integer part with leading spaces to ensure it has at least 3 digits
+    integerPart = integerPart.padStart(leadingSpace, " ")
+
+    // Combine the integer and fractional parts
+    return `${integerPart}.${decimalPart}`
+}

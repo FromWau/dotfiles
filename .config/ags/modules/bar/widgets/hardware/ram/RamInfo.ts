@@ -1,3 +1,4 @@
+import { formatNumber } from "libs/utils"
 import { ramUsage, ramPercentage } from "libs/variables"
 
 export const RamInfo = () =>
@@ -11,11 +12,11 @@ export const RamInfo = () =>
             }),
             Widget.Label({
                 class_name: "bar-item",
-                label: ramUsage.bind().as((ram) => `Ram usage: ${ram}GB`),
+                label: ramUsage.bind().as((ram) => `Ram usage: ${formatNumber(ram)}GB`),
             }),
             Widget.Label({
                 class_name: "bar-item",
-                label: ramPercentage.bind().as((ram) => `${ram}%`),
+                label: ramPercentage.bind().as((ram) => `${formatNumber(ram)}%`),
             }),
         ],
     })

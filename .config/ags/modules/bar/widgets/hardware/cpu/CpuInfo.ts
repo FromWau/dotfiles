@@ -1,3 +1,4 @@
+import { formatNumber } from "libs/utils"
 import { cpuUsage } from "libs/variables"
 
 export const CpuInfo = () =>
@@ -11,7 +12,7 @@ export const CpuInfo = () =>
             }),
             Widget.Label({
                 class_name: "bar-item",
-                label: cpuUsage.bind().as((cpu) => `CPU usage: ${cpu}%`),
+                label: cpuUsage.bind().as((cpu) => `CPU usage: ${formatNumber(cpu)}%`),
             }),
         ],
     })
