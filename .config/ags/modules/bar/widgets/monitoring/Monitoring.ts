@@ -4,7 +4,5 @@ import { NetworkIndicator } from "./network/Network"
 
 export const Monitoring = () =>
     Widget.Box({
-        class_name: "bar-section",
-        spacing: 8,
         children: [NetworkIndicator(), BluetoothIndicator(), Battery()],
     })

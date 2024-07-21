@@ -22,7 +22,6 @@ const WifiIndicator = () =>
 
 const WiredIndicator = () =>
     Widget.Box({
-        spacing: 8,
         children: [
             Widget.Icon({
                 icon: icons.network.wired,

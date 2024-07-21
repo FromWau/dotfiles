@@ -1,11 +1,10 @@
 import App from "resource:///com/github/Aylur/ags/app.js"
 import { BarWindow, Bar } from "modules/bar/Bar"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
-import { formatNumber, reloadScss } from "libs/utils"
+import { reloadScss } from "libs/utils"
 import { MediaWindow } from "modules/media/Media"
 import { SessionWindow } from "modules/session/Session"
 import "modules/api/Api"
-import { show_session } from "libs/variables"
 
 const hyprland = await Service.import("hyprland")
 
@@ -52,7 +51,6 @@ const windows = (): Gtk.Window[] => {
 
     wins.push(SessionWindow(hyprland.active.monitor.id))
 
-
     return wins
 }
 
@@ -62,4 +60,3 @@ App.config({
     style: `${App.configDir}/style.css`,
     windows: windows,
 })
-

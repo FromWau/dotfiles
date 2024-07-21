@@ -3,9 +3,7 @@ import { ramUsage, ramPercentage } from "libs/variables"
 
 export const RamInfo = () =>
     Widget.Box({
-        class_name: "bar-section",
         tooltip_text: "RAM Usage",
-        spacing: 8,
         children: [
             Widget.Icon({
                 class_name: "bar-item",

@@ -19,19 +19,10 @@
     margin-top: 10px;
 }
 
-.bar-section {
-    background: $background;
-
-    padding-left: 20px;
-    padding-right: 20px;
-
-    border-radius: 16px;
-}
-
 .bar-item {
-    min-width: 25px;
     background: $background;
     color: $primary;
+    padding-right: 15px;
 
     &.focused {
         border-bottom: $primary 2px solid;
@@ -40,11 +31,19 @@
     &:hover {
         background: $color8;
     }
+
     &:first-child {
-        /* border-radius: 16px 0 0 16px; */
+        border-radius: 16px 0 0 16px;
+        padding-left: 15px;
     }
     &:last-child {
-        /* border-radius: 0 16px 16px 0; */
+        border-radius: 0 16px 16px 0;
+        padding-right: 15px;
+    }
+    &:first-child:last-child {
+        border-radius: 16px;
+        padding-left: 15px;
+        padding-right: 15px;
     }
 }
 // -------------------------

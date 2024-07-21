@@ -4,8 +4,6 @@ import { cpuUsage } from "libs/variables"
 export const CpuInfo = () =>
     Widget.Box({
         tooltip_text: "CPU Usage",
-        class_name: "bar-section",
-        spacing: 8,
         children: [
             Widget.Icon({
                 class_name: "bar-item",
