@@ -1,22 +1,27 @@
-import { formatNumber } from "libs/utils"
+import icons from "libs/icons"
 import { ramUsage, ramPercentage } from "libs/variables"
 
 export const RamInfo = () =>
     Widget.Box({
         class_name: "bar-section",
+        tooltip_text: "RAM Usage",
         spacing: 8,
         children: [
-            Widget.CircularProgress({
+            Widget.Icon({
                 class_name: "bar-item",
-                value: ramPercentage.bind().as((u) => u / 100),
+                icon: icons.ram,
             }),
             Widget.Label({
                 class_name: "bar-item",
-                label: ramUsage.bind().as((ram) => `Ram usage: ${formatNumber(ram)}GB`),
+                css: `min-width: 50px`,
+                xalign: 1,
+                label: ramUsage.bind().as((ram) => `${ram}GB`),
             }),
             Widget.Label({
                 class_name: "bar-item",
-                label: ramPercentage.bind().as((ram) => `${formatNumber(ram)}%`),
+                css: `min-width: 50px`,
+                xalign: 1,
+                label: ramPercentage.bind().as((ram) => `${ram}%`),
             }),
         ],
     })

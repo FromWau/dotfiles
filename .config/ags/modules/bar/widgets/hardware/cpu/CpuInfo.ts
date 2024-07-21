@@ -1,18 +1,21 @@
-import { formatNumber } from "libs/utils"
+import icons from "libs/icons"
 import { cpuUsage } from "libs/variables"
 
 export const CpuInfo = () =>
     Widget.Box({
+        tooltip_text: "CPU Usage",
         class_name: "bar-section",
         spacing: 8,
         children: [
-            Widget.CircularProgress({
+            Widget.Icon({
                 class_name: "bar-item",
-                value: cpuUsage.bind().as((u) => u / 100),
+                icon: icons.cpu,
             }),
             Widget.Label({
                 class_name: "bar-item",
-                label: cpuUsage.bind().as((cpu) => `CPU usage: ${formatNumber(cpu)}%`),
+                css: `min-width: 50px`,
+                xalign: 1,
+                label: cpuUsage.bind().as((cpu) => `${cpu}%`),
             }),
         ],
     })

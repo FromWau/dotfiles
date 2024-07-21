@@ -3,10 +3,12 @@
 }
 
 @import "colors";
+// -------------------------
 
 // BAR
 .bar {
     background: transparent;
+    min-height: 40px;
 }
 
 .bar-spacing {
@@ -37,6 +39,12 @@
 
     &:hover {
         background: $color8;
+    }
+    &:first-child {
+        /* border-radius: 16px 0 0 16px; */
+    }
+    &:last-child {
+        /* border-radius: 0 16px 16px 0; */
     }
 }
 // -------------------------

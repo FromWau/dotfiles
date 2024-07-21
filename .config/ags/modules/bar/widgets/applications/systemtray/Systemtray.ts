@@ -12,12 +12,5 @@ const SysTrayItem = (item: import("types/service/systemtray").TrayItem) =>
 export const Systemtray = () =>
     Widget.Box({
         class_name: "bar-item",
-        children: systemtray.bind("items").as((i) => {
-            // console.log("SysTray Item: ", i)
-
-            return i.map(SysTrayItem)
-        }),
-        setup: (self) => {
-            self.visible = systemtray.bind("items").transform.length > 0
-        },
+        children: systemtray.bind("items").as((i) => i.map(SysTrayItem)),
     })

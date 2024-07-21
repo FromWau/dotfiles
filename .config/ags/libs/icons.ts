@@ -15,5 +15,8 @@ export default {
         shuffle: "media-playlist-shuffle-symbolic",
         forward: "media-seek-forward-symbolic",
         backward: "media-seek-backward-symbolic",
-    }
+    },
+    keymap: "input-keyboard-symbolic",
+    cpu: "cpu-symbolic",
+    ram: "ram-symbolic",
 }

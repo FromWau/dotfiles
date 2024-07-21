@@ -4,6 +4,7 @@
 
 .bar {
   background: transparent;
+  min-height: 40px;
 }
 
 .bar-spacing {
@@ -30,6 +31,12 @@
 }
 .bar-item:hover {
   background: #524457;
+}
+.bar-item:first-child {
+  /* border-radius: 16px 0 0 16px; */
+}
+.bar-item:last-child {
+  /* border-radius: 0 16px 16px 0; */
 }
 
 .media {
