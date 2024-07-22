@@ -19,4 +19,12 @@ export default {
     keymap: "input-keyboard-symbolic",
     cpu: "cpu-symbolic",
     ram: "ram-symbolic",
+    runner: {
+        mode: {
+            none: "system-search-symbolic",
+            web: "web-browser-symbolic",
+            shell: "code-context-symbolic",
+            apps: "applications-all-symbolic",
+        }
+    }
 }

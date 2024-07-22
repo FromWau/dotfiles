@@ -7,7 +7,7 @@ const WINDOW_MEDIA = "media"
 
 export const MediaWindow = (monitor: number = 0): Gtk.Window =>
     RevealerWindow({
-        name: WINDOW_MEDIA,
+        name: `${WINDOW_MEDIA}-${monitor}`,
         monitor: monitor,
         anchor: ["top", "left"],
         transition: "slide_down",

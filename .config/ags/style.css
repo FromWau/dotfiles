@@ -58,4 +58,27 @@
   color: white;
 }
 
+.runnerSpace {
+  background: rgba(25, 6, 31, 0.4);
+}
+
+.runner {
+  border-radius: 16px;
+  padding: 10px;
+  border: #009058 2px solid;
+  background: #19061f;
+}
+
+.inputContainer {
+  border-bottom: #009058 1px solid;
+  padding: 5px;
+}
+
+.input {
+  padding: 10px;
+  min-width: 150px;
+  border-radius: 16px;
+  border: #8c828f 1px solid;
+}
+
 /*# sourceMappingURL=style.css.map */

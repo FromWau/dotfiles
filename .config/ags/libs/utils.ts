@@ -1,6 +1,6 @@
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 import { exec } from "resource:///com/github/Aylur/ags/utils.js"
-import { show_media, show_session } from "./variables"
+import { show_media, show_runner, show_session } from "./variables"
 
 const hyprland = await Service.import("hyprland")
 
@@ -40,3 +40,7 @@ export const toggleSessionMenu = () =>
  * */
 export const toggleMediaMenu = () => show_media.setValue(!show_media.value)
 
+/**
+ * Toggle the runner
+ * */
+export const toggleRunner = () => show_runner.setValue(!show_runner.value)

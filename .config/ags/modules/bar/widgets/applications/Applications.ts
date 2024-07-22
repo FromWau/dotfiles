@@ -1,6 +1,7 @@
-import { show_media } from "libs/variables"
+import { show_media, show_runner } from "libs/variables"
 import { Systemtray } from "./systemtray/Systemtray"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
+import icons from "libs/icons"
 
 const systemtray = await Service.import("systemtray")
 
@@ -24,6 +25,20 @@ export const Applications = () =>
                 })
             )
 
+            childs.push(
+                Widget.Button({
+                    class_name: show_runner
+                        .bind()
+                        .as(
+                            (isShown) =>
+                                "bar-item" + (isShown ? " focused" : "")
+                        ),
+                    on_clicked: () =>
+                        show_runner.setValue(!show_runner.getValue()),
+                    tooltip_text: "Runner",
+                    child: Widget.Icon({ icon: icons.runner.mode.none }),
+                })
+            )
             childs.push(Systemtray())
 
             self.children = childs

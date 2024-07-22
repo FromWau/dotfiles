@@ -45,3 +45,5 @@ export const currentKeymap = Variable("Unknown", {
 export const show_media = Variable(false)
 
 export const show_session = Variable(false)
+
+export const show_runner = Variable(false)
