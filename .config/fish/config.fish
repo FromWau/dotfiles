@@ -38,7 +38,7 @@ set -x DELTA_FEATURES "+side-by-side +dark +syntax-theme base16-256 +true-color 
 
 fish_vi_key_bindings insert
 
-fzf_key_bindings
+# fzf_key_bindings
 
 fish_add_path ~/.local/bin
 fish_add_path ~/.nix-profile/bin
@@ -74,7 +74,7 @@ abbr clear-nvim 'rm -rf ~/.cache/nvim ~/.local/share/nvim ~/.local/state/nvim'
 abbr .. 'cd ..'
 abbr ... 'cd ../..'
 abbr .... 'cd ../../..'
-
+abbr ags 'bash -c "cd ~/.config/ags/ && ags"'
 
 # functions
 function nvim -d "Open nvim and handle arg path"

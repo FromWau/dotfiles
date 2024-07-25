@@ -1,0 +1,41 @@
+.bar {
+    background: transparent;
+    min-height: 40px;
+}
+
+.bar-spacing {
+    background: transparent;
+
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-top: 10px;
+}
+
+.bar-item {
+    background: $background;
+    color: $primary;
+    padding-left: 8px;
+    padding-right: 8px;
+
+    &.focused {
+        border-bottom: $primary 2px solid;
+    }
+
+    &:hover {
+        background: $color8;
+    }
+
+    &:first-child {
+        border-radius: 16px 0 0 16px;
+        padding-left: 16px;
+    }
+    &:last-child {
+        border-radius: 0 16px 16px 0;
+        padding-right: 16px;
+    }
+    &:first-child:last-child {
+        border-radius: 16px;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}

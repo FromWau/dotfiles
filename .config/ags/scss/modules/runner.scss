@@ -1,0 +1,22 @@
+.runnerSpace {
+    background: rgba($background, 0.7);
+}
+
+.runner {
+    border-radius: 16px;
+    padding: 10px;
+    border: $primary 2px solid;
+    background: $background;
+}
+
+.inputContainer {
+    border-bottom: $primary 1px solid;
+    padding: 5px;
+}
+
+.input {
+    padding: 10px;
+    min-width: 550px;
+    border-radius: 16px;
+    border: $color7 1px solid;
+}

@@ -41,7 +41,10 @@ export const Applications = () =>
             childs.push(
                 Widget.Button({
                     class_name: "bar-item",
-                    on_clicked: () => Utils.execAsync("qr"),
+                    on_clicked: () =>
+                        Utils.execAsync("qr").catch(() => {
+                            // User canceled program. Do nothing.
+                        }),
                     tooltip_text: "QR Scanner",
                     child: Widget.Icon({ icon: icons.qr }),
                 })
@@ -51,9 +54,17 @@ export const Applications = () =>
                 Widget.Button({
                     class_name: "bar-item",
                     on_primary_click: () =>
-                        Utils.execAsync("screenshot -m region -c -z"),
+                        Utils.execAsync("screenshot -m region -c -z").catch(
+                            () => {
+                                // User canceled program. Do nothing.
+                            }
+                        ),
                     on_secondary_click: () =>
-                        Utils.execAsync("screenshot -m region -c -z -e"),
+                        Utils.execAsync("screenshot -m region -c -z -e").catch(
+                            () => {
+                                // User canceled program. Do nothing.
+                            }
+                        ),
                     tooltip_text: "Screenshot",
                     child: Widget.Icon({ icon: icons.screenshot }),
                 })
