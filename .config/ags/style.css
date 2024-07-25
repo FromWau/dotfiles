@@ -17,7 +17,8 @@
 .bar-item {
   background: #19061f;
   color: #009058;
-  padding-right: 15px;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 .bar-item.focused {
   border-bottom: #009058 2px solid;
@@ -27,16 +28,16 @@
 }
 .bar-item:first-child {
   border-radius: 16px 0 0 16px;
-  padding-left: 15px;
+  padding-left: 16px;
 }
 .bar-item:last-child {
   border-radius: 0 16px 16px 0;
-  padding-right: 15px;
+  padding-right: 16px;
 }
 .bar-item:first-child:last-child {
   border-radius: 16px;
-  padding-left: 15px;
-  padding-right: 15px;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .media {
@@ -59,7 +60,7 @@
 }
 
 .runnerSpace {
-  background: rgba(25, 6, 31, 0.4);
+  background: rgba(25, 6, 31, 0.7);
 }
 
 .runner {
@@ -76,7 +77,7 @@
 
 .input {
   padding: 10px;
-  min-width: 150px;
+  min-width: 550px;
   border-radius: 16px;
   border: #8c828f 1px solid;
 }

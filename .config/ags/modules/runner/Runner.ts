@@ -3,8 +3,30 @@ import { show_runner } from "libs/variables"
 import { RevealerWindow } from "modules/windows/RevealerWindow"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 import "./widgets/fzf"
+import { searchApps } from "./widgets/fzf"
+import { Entry } from "types/widget"
+import { Application } from "resource:///com/github/Aylur/ags/service/applications.js"
 
 const WINDOW_RUNNER = "runner"
+
+type RunnerMode = "none" | "web" | "shell" | "apps"
+
+const runner_mode = Variable<RunnerMode>("none")
+
+const AppItem = (app: Application) => {
+    return Widget.Button({
+        on_clicked: () => {
+            show_runner.setValue(false)
+            app.launch()
+        },
+        child: Widget.Box({
+            children: [
+                Widget.Icon({ icon: app.icon_name || "", size: 25 }),
+                Widget.Label({ label: app.name }),
+            ],
+        }),
+    })
+}
 
 const ModeIcon = () =>
     Widget.Stack({
@@ -14,15 +36,17 @@ const ModeIcon = () =>
             shell: Widget.Icon({ icon: icons.runner.mode.shell, size: 25 }),
             apps: Widget.Icon({ icon: icons.runner.mode.apps, size: 25 }),
         },
-        shown: "apps",
+        shown: runner_mode.bind().as((m) => m),
     })
 
 const Search = () =>
     Widget.Entry({
         class_name: "input",
         placeholder_text: "Search",
-        on_accept: () => {
+        on_accept: (self) => {
             console.log("accept")
+
+            searchApps(self.text || "")
         },
     }).keybind("Escape", () => show_runner.setValue(false))
 
@@ -39,6 +63,21 @@ const Input = () =>
         },
     })
 
+const Result = () => {
+
+    searchApps("")
+
+    return Widget.Box({
+        class_name: "result",
+        vertical: true,
+        children: [
+            Widget.Label({ label: "Web" }),
+            Widget.Label({ label: "Shell" }),
+            Widget.Label({ label: "Apps" }),
+        ],
+    })
+}
+
 export const Runner = () =>
     Widget.Box({
         class_name: "runner",
@@ -49,8 +88,16 @@ export const Runner = () =>
         vertical: true,
         children: [
             Input(),
-            Widget.Label({
-                label: show_runner.bind().as((r) => `show: ${r}`),
+            Result(),
+            Widget.Box({
+                children: [
+                    Widget.Label({
+                        label: show_runner.bind().as((r) => `show: ${r}`),
+                    }),
+                    Widget.Label({
+                        label: runner_mode.bind().as((m) => `mode: ${m}`),
+                    }),
+                ],
             }),
         ],
     })
@@ -83,13 +130,12 @@ export const RunnerWindow = (monitor: number = 0) =>
         name: `${WINDOW_RUNNER}-${monitor}`,
         monitor: monitor,
         window_position: Gtk.WindowPosition.CENTER,
+        anchor: ["left", "right", "bottom", "top"],
         keymode: "exclusive",
         exclusivity: "ignore",
         visible: false,
-        vexpand: true,
-        hexpand: true,
+        class_name: "runnerSpace",
         child: Widget.EventBox({
-            class_name: "runnerspace",
             child: Runner(),
             on_primary_click: () => show_runner.setValue(false),
         }),

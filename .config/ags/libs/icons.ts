@@ -20,11 +20,14 @@ export default {
     cpu: "cpu-symbolic",
     ram: "ram-symbolic",
     runner: {
+        icon: "system-search-symbolic",
         mode: {
             none: "system-search-symbolic",
             web: "web-browser-symbolic",
             shell: "code-context-symbolic",
             apps: "applications-all-symbolic",
-        }
-    }
+        },
+    },
+    qr: "qrscanner-symbolic",
+    screenshot: "gnome-screenshot-symbolic",
 }

@@ -3,8 +3,6 @@ import { Systemtray } from "./systemtray/Systemtray"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 import icons from "libs/icons"
 
-const systemtray = await Service.import("systemtray")
-
 export const Applications = () =>
     Widget.Box({
         setup: (self) => {
@@ -36,9 +34,31 @@ export const Applications = () =>
                     on_clicked: () =>
                         show_runner.setValue(!show_runner.getValue()),
                     tooltip_text: "Runner",
-                    child: Widget.Icon({ icon: icons.runner.mode.none }),
+                    child: Widget.Icon({ icon: icons.runner.icon }),
                 })
             )
+
+            childs.push(
+                Widget.Button({
+                    class_name: "bar-item",
+                    on_clicked: () => Utils.execAsync("qr"),
+                    tooltip_text: "QR Scanner",
+                    child: Widget.Icon({ icon: icons.qr }),
+                })
+            )
+
+            childs.push(
+                Widget.Button({
+                    class_name: "bar-item",
+                    on_primary_click: () =>
+                        Utils.execAsync("screenshot -m region -c -z"),
+                    on_secondary_click: () =>
+                        Utils.execAsync("screenshot -m region -c -z -e"),
+                    tooltip_text: "Screenshot",
+                    child: Widget.Icon({ icon: icons.screenshot }),
+                })
+            )
+
             childs.push(Systemtray())
 
             self.children = childs
