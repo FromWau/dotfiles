@@ -2,6 +2,7 @@ import icons from "libs/icons"
 import { show_runner } from "libs/variables"
 import { RevealerWindow } from "modules/windows/RevealerWindow"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
+import "./widgets/fzf"
 
 const WINDOW_RUNNER = "runner"
 
@@ -13,7 +14,7 @@ const ModeIcon = () =>
             shell: Widget.Icon({ icon: icons.runner.mode.shell, size: 25 }),
             apps: Widget.Icon({ icon: icons.runner.mode.apps, size: 25 }),
         },
-        shown: "none",
+        shown: "apps",
     })
 
 const Search = () =>
@@ -55,25 +56,40 @@ export const Runner = () =>
     })
 
 export const RunnerWindow = (monitor: number = 0) =>
-    RevealerWindow({
+    // RevealerWindow({
+    //     name: `${WINDOW_RUNNER}-${monitor}`,
+    //     monitor: monitor,
+    //     anchor: show_runner
+    //         .bind()
+    //         .as((r) =>
+    //             r
+    //                 ? ["top", "left", "right", "bottom"]
+    //                 : ["left", "right", "bottom"]
+    //         ),
+    //     window_position: Gtk.WindowPosition.CENTER,
+    //     transition: "slide_up",
+    //     keymode: show_runner.bind().as((r) => (r ? "exclusive" : "none")),
+    //     exclusivity: "ignore",
+    //     vexpand: true,
+    //     hexpand: true,
+    //     binding: show_runner.bind(),
+    //     child: widget.eventbox({
+    //         class_name: "runnerspace",
+    //         child: runner(),
+    //         on_primary_click: () => show_runner.setvalue(false),
+    //     }),
+    // })
+    Widget.Window({
         name: `${WINDOW_RUNNER}-${monitor}`,
         monitor: monitor,
-        anchor: show_runner
-            .bind()
-            .as((r) =>
-                r
-                    ? ["top", "left", "right", "bottom"]
-                    : ["left", "right", "bottom"]
-            ),
         window_position: Gtk.WindowPosition.CENTER,
-        transition: "slide_up",
-        keymode: show_runner.bind().as((r) => (r ? "exclusive" : "none")),
+        keymode: "exclusive",
         exclusivity: "ignore",
+        visible: false,
         vexpand: true,
         hexpand: true,
-        binding: show_runner.bind(),
         child: Widget.EventBox({
-            class_name: "runnerSpace",
+            class_name: "runnerspace",
             child: Runner(),
             on_primary_click: () => show_runner.setValue(false),
         }),
