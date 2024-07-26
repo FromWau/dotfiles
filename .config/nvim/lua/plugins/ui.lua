@@ -97,16 +97,15 @@ return {
         event = "VeryLazy",
         config = function()
             local wk = require "which-key"
-            wk.setup()
-            wk.register {
-                ["<leader>b"] = { name = "+Buffer", _ = "which_key_ignore" },
-                ["<leader>c"] = { name = "+Code", _ = "which_key_ignore" },
-                ["<leader>f"] = { name = "+Find", _ = "which_key_ignore" },
-                ["<leader>g"] = { name = "+Git", _ = "which_key_ignore" },
-                ["<leader>h"] = { name = "+Harpoon", _ = "which_key_ignore" },
-                ["<leader>s"] = { name = "+Split Window", _ = "which_key_ignore" },
-                ["<leader>u"] = { name = "+Ui", _ = "which_key_ignore" },
-                ["<leader>x"] = { name = "+Trouble", _ = "which_key_ignore" },
+            wk.add {
+                { "<leader>b", group = "Buffer" },
+                { "<leader>c", group = "Code" },
+                { "<leader>f", group = "Find" },
+                { "<leader>g", group = "Git" },
+                { "<leader>h", group = "Harpoon" },
+                { "<leader>s", group = "Split Window" },
+                { "<leader>u", group = "Ui" },
+                { "<leader>x", group = "Trouble" },
             }
         end,
     },
