@@ -70,9 +70,13 @@
   background: #19061f;
 }
 
+.runnerModeIcon {
+  font-size: 40px;
+}
+
 .inputContainer {
-  border-bottom: #009058 1px solid;
-  padding: 5px;
+  padding: 10px;
+  padding-bottom: 15px;
 }
 
 .input {
@@ -80,6 +84,22 @@
   min-width: 550px;
   border-radius: 16px;
   border: #8c828f 1px solid;
+  font-size: 28px;
+}
+
+.resultContainer {
+  margin: 10px;
+  padding: 10px;
+  border-radius: 16px;
+  border: #8c828f 1px solid;
+  background: #19061f;
+}
+
+.resultItem {
+  padding: 5px;
+  color: white;
+  background: #00b469;
+  border-radius: 16px;
 }
 
 /*# sourceMappingURL=style.css.map */

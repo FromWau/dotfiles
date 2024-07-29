@@ -58,3 +58,10 @@ export const searchApps = (input: string): String[] => {
 
     return sorted
 }
+
+export const searchSshAgentKeys = (selection: string[] , input: string): String[] => {
+    console.log("input: ", input)
+
+
+    return []
+}

@@ -11,7 +11,7 @@ export const Keymap = () =>
             }),
             Widget.Label({
                 class_name: "bar-item",
-                label: currentKeymap.bind().as((keymap) => `${keymap}`),
+                label: currentKeymap.bind(),
             }),
         ],
     })

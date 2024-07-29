@@ -1,42 +1,23 @@
 import icons from "libs/icons"
-import { show_runner } from "libs/variables"
-import { RevealerWindow } from "modules/windows/RevealerWindow"
+import { show_runner, runner_mode } from "libs/variables"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 import "./widgets/fzf"
 import { searchApps } from "./widgets/fzf"
-import { Entry } from "types/widget"
-import { Application } from "resource:///com/github/Aylur/ags/service/applications.js"
+import { Result } from "./Result"
 
 const WINDOW_RUNNER = "runner"
 
-type RunnerMode = "none" | "web" | "shell" | "apps"
-
-const runner_mode = Variable<RunnerMode>("none")
-
-const AppItem = (app: Application) => {
-    return Widget.Button({
-        on_clicked: () => {
-            show_runner.setValue(false)
-            app.launch()
-        },
-        child: Widget.Box({
-            children: [
-                Widget.Icon({ icon: app.icon_name || "", size: 25 }),
-                Widget.Label({ label: app.name }),
-            ],
-        }),
-    })
-}
-
 const ModeIcon = () =>
     Widget.Stack({
+        class_name: "runnerModeIcon",
         children: {
-            none: Widget.Icon({ icon: icons.runner.mode.none, size: 25 }),
-            web: Widget.Icon({ icon: icons.runner.mode.web, size: 25 }),
-            shell: Widget.Icon({ icon: icons.runner.mode.shell, size: 25 }),
-            apps: Widget.Icon({ icon: icons.runner.mode.apps, size: 25 }),
+            none: Widget.Icon({ icon: icons.runner.mode.none }),
+            web: Widget.Icon({ icon: icons.runner.mode.web }),
+            shell: Widget.Icon({ icon: icons.runner.mode.shell }),
+            apps: Widget.Icon({ icon: icons.runner.mode.apps }),
+            sshAgent: Widget.Icon({ icon: icons.runner.mode.sshAgent }),
         },
-        shown: runner_mode.bind().as((m) => m),
+        shown: runner_mode.bind(),
     })
 
 const Search = () =>
@@ -45,8 +26,7 @@ const Search = () =>
         placeholder_text: "Search",
         on_accept: (self) => {
             console.log("accept")
-
-            searchApps(self.text || "")
+            // searchApps(self.text || "")
         },
     }).keybind("Escape", () => show_runner.setValue(false))
 
@@ -63,21 +43,6 @@ const Input = () =>
         },
     })
 
-const Result = () => {
-
-    searchApps("")
-
-    return Widget.Box({
-        class_name: "result",
-        vertical: true,
-        children: [
-            Widget.Label({ label: "Web" }),
-            Widget.Label({ label: "Shell" }),
-            Widget.Label({ label: "Apps" }),
-        ],
-    })
-}
-
 export const Runner = () =>
     Widget.Box({
         class_name: "runner",
@@ -90,6 +55,7 @@ export const Runner = () =>
             Input(),
             Result(),
             Widget.Box({
+                spacing: 8,
                 children: [
                     Widget.Label({
                         label: show_runner.bind().as((r) => `show: ${r}`),

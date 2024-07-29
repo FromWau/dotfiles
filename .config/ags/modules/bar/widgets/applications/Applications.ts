@@ -6,9 +6,9 @@ import icons from "libs/icons"
 export const Applications = () =>
     Widget.Box({
         setup: (self) => {
-            var childs: Gtk.Widget[] = []
+            var childrean: Gtk.Widget[] = []
 
-            childs.push(
+            childrean.push(
                 Widget.Button({
                     class_name: show_media
                         .bind()
@@ -23,7 +23,7 @@ export const Applications = () =>
                 })
             )
 
-            childs.push(
+            childrean.push(
                 Widget.Button({
                     class_name: show_runner
                         .bind()
@@ -38,7 +38,7 @@ export const Applications = () =>
                 })
             )
 
-            childs.push(
+            childrean.push(
                 Widget.Button({
                     class_name: "bar-item",
                     on_clicked: () =>
@@ -50,7 +50,7 @@ export const Applications = () =>
                 })
             )
 
-            childs.push(
+            childrean.push(
                 Widget.Button({
                     class_name: "bar-item",
                     on_primary_click: () =>
@@ -70,8 +70,8 @@ export const Applications = () =>
                 })
             )
 
-            childs.push(Systemtray())
+            childrean.push(Systemtray())
 
-            self.children = childs
+            self.children = childrean
         },
     })

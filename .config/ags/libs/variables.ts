@@ -42,6 +42,21 @@ export const currentKeymap = Variable("Unknown", {
     ],
 })
 
+export const ssh_agent_status = Variable("error:internal-error", {
+    poll: [
+        POLLING_INTERVAL,
+        ["bash", "-c", `${App.configDir}/scripts/sshAgent.sh status`],
+    ],
+})
+
+export const runner_mode = Variable<
+    "none" | "web" | "shell" | "apps" | "sshAgent"
+>("none")
+
+export const runner_query_result = Variable<string[]>([])
+
+export const runner_selected_result = Variable<string[]>([])
+
 export const show_media = Variable(false)
 
 export const show_session = Variable(false)

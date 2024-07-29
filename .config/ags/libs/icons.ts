@@ -24,10 +24,16 @@ export default {
         mode: {
             none: "system-search-symbolic",
             web: "web-browser-symbolic",
-            shell: "code-context-symbolic",
+            shell: "dialog-scripts-symbolic",
             apps: "applications-all-symbolic",
+            sshAgent: "auth-fingerprint-symbolic",
         },
+        delte: "document-cleanup-symbolic",
     },
     qr: "qrscanner-symbolic",
     screenshot: "gnome-screenshot-symbolic",
+    sshAgent: {
+        ok: "auth-fingerprint-symbolic",
+        nok: "applications-all-symbolic",
+    },
 }

@@ -1,6 +1,6 @@
 const battery = await Service.import("battery")
 
-export const Battery = () =>
+export const BatteryIndicator = () =>
     Widget.Box({
         class_name: "bar-item",
         // class_name: battery.bind("charging").as((ch) => (ch ? "charging" : "")),

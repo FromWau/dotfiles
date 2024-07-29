@@ -77,7 +77,7 @@ const Player = (player: Player) => {
     })
 
     const title = Widget.Label({
-        label: player.bind("track_title").as((title) => title),
+        label: player.bind("track_title"),
     })
 
     const artist = Widget.Label({
