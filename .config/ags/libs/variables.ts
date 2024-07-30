@@ -1,3 +1,5 @@
+import { Application } from "types/service/applications"
+
 const POLLING_INTERVAL = 2000
 
 export const date = Variable("", {
@@ -53,9 +55,11 @@ export const runner_mode = Variable<
     "none" | "web" | "shell" | "apps" | "sshAgent"
 >("none")
 
-export const runner_query_result = Variable<string[]>([])
+export const runner_ssh_query_result = Variable<string[]>([])
+export const runner_apps_query_result = Variable<Application[]>([])
 
-export const runner_selected_result = Variable<string[]>([])
+export const runner_ssh_selected_result = Variable<string[]>([])
+export const runner_apps_selected_result = Variable<Application[]>([])
 
 export const show_media = Variable(false)
 

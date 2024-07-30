@@ -1,11 +1,6 @@
-import { USER } from "resource:///com/github/Aylur/ags/utils.js"
 import icons from "libs/icons"
-import {
-    ssh_agent_status,
-    runner_mode,
-    runner_query_result,
-    show_runner,
-} from "libs/variables"
+import { ssh_agent_status } from "libs/variables"
+import { querySshAgentKeys } from "modules/runner/mode/sshAgent/QuerySshAgent"
 
 const ok = () =>
     Widget.Icon({
@@ -20,23 +15,7 @@ const nok = () =>
 export const SshAgendIndicator = () =>
     Widget.Button({
         class_name: "bar-item",
-        on_clicked: () => {
-            Utils.execAsync(
-                `fd . --base-directory /home/${USER}/.ssh/ --strip-cwd-prefix -E '*.pub' -E '*hosts*' -E 'config'`
-            )
-                .then((r) => {
-                    const result: string[] = r
-                        .split("\n")
-                        .filter((e) => e !== "")
-
-                    runner_query_result.setValue(result)
-                    runner_mode.setValue("sshAgent")
-                    show_runner.setValue(true)
-                })
-                .catch((error) => {
-                    console.log("error: ", error)
-                })
-        },
+        on_clicked: () => querySshAgentKeys(""),
         child: Widget.Box({
             setup: (self) =>
                 self.hook(ssh_agent_status, (self) => {

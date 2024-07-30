@@ -2,6 +2,7 @@ import { show_media, show_runner } from "libs/variables"
 import { Systemtray } from "./systemtray/Systemtray"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 import icons from "libs/icons"
+import { queryApps } from "modules/runner/mode/app/QueryApps"
 
 export const Applications = () =>
     Widget.Box({
@@ -31,8 +32,7 @@ export const Applications = () =>
                             (isShown) =>
                                 "bar-item" + (isShown ? " focused" : "")
                         ),
-                    on_clicked: () =>
-                        show_runner.setValue(!show_runner.getValue()),
+                    on_clicked: () => queryApps(""),
                     tooltip_text: "Runner",
                     child: Widget.Icon({ icon: icons.runner.icon }),
                 })

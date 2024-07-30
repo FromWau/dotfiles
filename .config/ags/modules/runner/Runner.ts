@@ -1,9 +1,9 @@
 import icons from "libs/icons"
 import { show_runner, runner_mode } from "libs/variables"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
-import "./widgets/fzf"
-import { searchApps } from "./widgets/fzf"
 import { Result } from "./Result"
+import { queryApps } from "./mode/app/QueryApps"
+import { querySshAgentKeys } from "./mode/sshAgent/QuerySshAgent"
 
 const WINDOW_RUNNER = "runner"
 
@@ -25,8 +25,20 @@ const Search = () =>
         class_name: "input",
         placeholder_text: "Search",
         on_accept: (self) => {
-            console.log("accept")
-            // searchApps(self.text || "")
+            switch (runner_mode.getValue()) {
+                case "none":
+                    break
+                case "web":
+                    break
+                case "shell":
+                    break
+                case "apps":
+                    queryApps(self.text || "")
+                    break
+                case "sshAgent":
+                    querySshAgentKeys(self.text || "")
+                    break
+            }
         },
     }).keybind("Escape", () => show_runner.setValue(false))
 
