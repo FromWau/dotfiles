@@ -27,7 +27,7 @@ const checks = () => {
 
 const deploy = async () => {
     try {
-        await Utils.execAsync(["bun", "add", "fzf"])
+        await Utils.execAsync(["bun", "add", "fzf", "openmeteo"])
 
         await Utils.execAsync([
             "bun", "build", entry,

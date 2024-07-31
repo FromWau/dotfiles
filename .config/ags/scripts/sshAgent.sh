@@ -16,8 +16,8 @@ status() {
     output=$(ssh-add -l 2>&1)
     case "$output" in
     "The agent has no identities.")
-        echo "error:no Identities found" >&2
-        exit 1
+        # echo "error:no Identities found" >&2
+        exit 0
         ;;
     *)
         echo "$output" | awk '{print "ok:"$3}'
@@ -45,8 +45,8 @@ EOF
 }
 
 if ! is_ssh_agent_running; then
-    echo "error:sshAgent is not running" >&2
-    exit 1
+    # echo "error:sshAgent is not running" >&2
+    exit 0
 fi
 
 if [ "$1" == "status" ]; then
@@ -63,7 +63,7 @@ elif [ "$1" == "add" ]; then
     fi
 
     if add_key "$2" "$3"; then
-        echo "ok:key-added"
+        # echo "ok:key-added"
         exit 0
     else
         echo "error:invalid-passphrase" >&2

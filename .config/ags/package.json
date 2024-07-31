@@ -1,1 +1,1 @@
-{ "dependencies": { "fzf": "^0.5.2" } }
+{ "dependencies": { "fzf": "^0.5.2", "openmeteo": "^1.1.4" } }

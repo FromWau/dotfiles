@@ -52,11 +52,24 @@ export const ssh_agent_status = Variable("error:internal-error", {
 })
 
 export const runner_mode = Variable<
-    "none" | "web" | "shell" | "apps" | "sshAgent"
+    "none" | "web" | "shell" | "apps" | "sshAgent" | "location"
 >("none")
 
 export const runner_ssh_query_result = Variable<string[]>([])
 export const runner_apps_query_result = Variable<Application[]>([])
+
+type City = {
+    name: string
+    latitude: number
+    longitude: number
+    elevation: number
+    population: number
+    country: string
+    timezone: string
+}
+export const runner_location = Variable<
+    undefined | City | "unavailable" | "searching"
+>(undefined)
 
 export const runner_ssh_selected_result = Variable<string[]>([])
 export const runner_apps_selected_result = Variable<Application[]>([])

@@ -4,6 +4,7 @@ import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 import { Result } from "./Result"
 import { queryApps } from "./mode/app/QueryApps"
 import { querySshAgentKeys } from "./mode/sshAgent/QuerySshAgent"
+import { queryLocation } from "./mode/location/queryLocation"
 
 const WINDOW_RUNNER = "runner"
 
@@ -16,6 +17,7 @@ const ModeIcon = () =>
             shell: Widget.Icon({ icon: icons.runner.mode.shell }),
             apps: Widget.Icon({ icon: icons.runner.mode.apps }),
             sshAgent: Widget.Icon({ icon: icons.runner.mode.sshAgent }),
+            location: Widget.Icon({ icon: icons.runner.mode.location }),
         },
         shown: runner_mode.bind(),
     })
@@ -37,6 +39,9 @@ const Search = () =>
                     break
                 case "sshAgent":
                     querySshAgentKeys(self.text || "")
+                    break
+                case "location":
+                    queryLocation(self.text || "")
                     break
             }
         },

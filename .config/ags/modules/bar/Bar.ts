@@ -5,6 +5,7 @@ import { HardwareInfo } from "./widgets/hardware/HardwareInfo"
 import { Monitoring } from "./widgets/monitoring/Monitoring"
 import { Clock } from "./widgets/clock/Clock"
 import { Session } from "./widgets/session/Session"
+import { Weather } from "./widgets/weather/Weather"
 
 const WINDOW_BAR = "bar"
 
@@ -24,6 +25,7 @@ const Right = () =>
         hpack: "end",
         spacing: 8,
         children: [
+            Weather(),
             Keymap(),
             HardwareInfo(),
             Applications(),

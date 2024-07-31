@@ -27,6 +27,7 @@ export default {
             shell: "dialog-scripts-symbolic",
             apps: "applications-all-symbolic",
             sshAgent: "auth-fingerprint-symbolic",
+            location: "location-services-active-symbolic",
         },
         delte: "document-cleanup-symbolic",
     },
@@ -35,5 +36,13 @@ export default {
     sshAgent: {
         ok: "auth-fingerprint-symbolic",
         nok: "applications-all-symbolic",
+    },
+    weather: {
+        location: {
+            available: "location-services-active-symbolic",
+            unavailable: "location-services-disabled-symbolic",
+            searching: "find-location-symbolic",
+            edit: "edit-symbolic",
+        },
     },
 }

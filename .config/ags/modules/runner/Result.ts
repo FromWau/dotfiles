@@ -30,6 +30,7 @@ export const Result = () =>
             shell: ShellResult(),
             apps: AppResult(),
             sshAgent: SshAgentResult(),
+            location: Widget.Box(Widget.Label("location")),
         },
         shown: runner_mode.bind(),
     })
