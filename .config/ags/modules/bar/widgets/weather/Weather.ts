@@ -3,16 +3,6 @@ import { runner_location } from "libs/variables"
 import { queryLocation } from "modules/runner/mode/location/queryLocation"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 
-type City = {
-    name: string
-    latitude: number
-    longitude: number
-    elevation: number
-    population: number
-    country: string
-    timezone: string
-}
-
 export const Weather = () =>
     Widget.Box({
         tooltip_text: "Current City",

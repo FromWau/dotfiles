@@ -7,6 +7,7 @@ import { SessionWindow } from "modules/session/Session"
 import "modules/api/Api"
 import { RunnerWindow } from "modules/runner/Runner"
 import { show_runner } from "libs/variables"
+import { loadUserData } from "libs/loadUserData"
 
 const hyprland = await Service.import("hyprland")
 
@@ -35,6 +36,8 @@ const windows = (): Gtk.Window[] => {
 }
 
 reloadScss()
+
+loadUserData()
 
 App.config({
     style: `${App.configDir}/style.css`,
