@@ -19,7 +19,9 @@
   },
   "display": {
     "separator": " ",
-    "keyWidth": 30
+    "key": {
+      "Width": 30
+    }
   },
   "modules": [
     {
