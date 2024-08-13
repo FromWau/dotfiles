@@ -21,7 +21,7 @@ local tools = {
             },
         },
         formatter = { "stylua" },
-        linter = { "selene" },
+        linter = {},
     },
     rust = {
         lsp = {
@@ -113,6 +113,11 @@ local tools = {
     gradle = {
         lsp = { gradle_ls = {} },
         formatter = {},
+        linter = {},
+    },
+    json = {
+        lsp = { jsonls = {} },
+        formatter = { "fixjson" },
         linter = {},
     },
 }

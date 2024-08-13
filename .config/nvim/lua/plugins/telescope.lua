@@ -1,6 +1,6 @@
 return {
     "nvim-telescope/telescope.nvim", -- Fuzzy Finder (files, lsp, etc)
-    event = "VeryLazy",
+    event = "VimEnter",
     branch = "0.1.x",
     dependencies = {
         "nvim-lua/plenary.nvim",
@@ -10,7 +10,7 @@ return {
             cond = function() return vim.fn.executable "make" == 1 end,
         },
         "nvim-telescope/telescope-ui-select.nvim",
-        "nvim-tree/nvim-web-devicons",
+        { "nvim-tree/nvim-web-devicons", enabled = vim.g.have_nerd_font },
         { "nvim-telescope/telescope-media-files.nvim", dependencies = "nvim-lua/popup.nvim" },
     },
     config = function()
@@ -38,7 +38,7 @@ return {
                 },
             },
             pickers = {
-                find_files = { hidden = true },
+                find_files = { hidden = false },
                 current_buffer_fuzzy_find = { sorting_strategy = "ascending" },
             },
             extensions = {
@@ -50,28 +50,21 @@ return {
 
         -- Enable telescope extensions, if they are installed
         pcall(require("telescope").load_extension, "fzf")
+        pcall(require("telescope").load_extension, "ui-select")
         pcall(require("telescope").load_extension, "noice")
         pcall(require("telescope").load_extension, "media_files")
 
         local builtin = require "telescope.builtin"
-        local nmap = require("utils.keymaps").nmap
+        local function nmap(keys, func, opts) vim.keymap.set("n", keys, func, opts) end
 
-        nmap(
-            "<leader>fc",
-            function()
-                builtin.find_files {
-                    cwd = "~/.config/nvim/",
-                }
-            end,
-            { desc = "[F]ind [C]onfig files" }
-        )
         nmap("<leader>fh", builtin.help_tags, { desc = "[F]ind [H]elp" })
         nmap("<leader>fk", builtin.keymaps, { desc = "[F]ind [K]eymaps" })
         nmap("<leader>ff", builtin.find_files, { desc = "[F]ind [F]iles" })
         nmap("<leader>fw", builtin.grep_string, { desc = "[F]ind current [W]ord" })
         nmap("<leader>fg", builtin.live_grep, { desc = "[F]ind by [G]rep" })
         nmap("<leader>fd", builtin.diagnostics, { desc = "[F]ind [D]iagnostics" })
-        nmap("<leader>fr", builtin.oldfiles, { desc = "[F]ind Recent Files" })
+        nmap("<leader>fr", builtin.resume, { desc = "[F]ind [r]esume" })
+        nmap("<leader>fR", builtin.oldfiles, { desc = "[F]ind [R]ecent Files" })
         nmap("<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
 
         nmap(
@@ -95,6 +88,12 @@ return {
                 }
             end,
             { desc = "[F]ind [/] in Open Files" }
+        )
+
+        nmap(
+            "<leader>fc",
+            function() builtin.find_files { cwd = vim.fn.stdpath "config" } end,
+            { desc = "[F]ind [C]onfig files" }
         )
     end,
 }

@@ -25,7 +25,7 @@ opt.mouse = "a"
 opt.showmode = false
 
 -- Sync clipboard between OS and Neo
-opt.clipboard = "unnamedplus"
+vim.schedule(function() vim.opt.clipboard = "unnamedplus" end)
 
 -- Enable break indent
 opt.breakindent = true
@@ -41,14 +41,17 @@ opt.smartcase = true
 opt.signcolumn = "yes"
 
 -- Decrease update time
-opt.updatetime = 250
-opt.timeoutlen = 300
+vim.opt.updatetime = 250
+
+-- Decrease mapped sequence wait time
+-- Displays which-key popup sooner
+vim.opt.timeoutlen = 300
 
 -- Configure how new splits should be opened
 opt.splitright = true
 opt.splitbelow = true
 
--- Sets how neowill display certain whitespace in the editor.
+-- Sets how neovim will display certain whitespace in the editor.
 opt.list = true
 opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 
@@ -60,6 +63,9 @@ opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
 opt.scrolloff = 15
+
+-- Minimal number of screen lines to keep left and right to the cursor.
+opt.sidescrolloff = 15
 
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
 opt.hlsearch = true
@@ -78,4 +84,3 @@ opt.softtabstop = 4
 opt.expandtab = true
 opt.smartindent = true
 opt.wrap = false
-

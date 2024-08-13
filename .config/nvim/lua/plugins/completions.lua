@@ -5,31 +5,20 @@ return { -- Autocompletion
         -- Snippet Engine & its associated nvim-cmp source
         {
             "L3MON4D3/LuaSnip",
-            build = vim.fn.has "win32" ~= 0 and "make install_jsregexp" or nil,
+            build = (function()
+                -- Build Step is needed for regex support in snippets.
+                -- This step is not supported in many windows environments.
+                -- Remove the below condition to re-enable on windows.
+                if vim.fn.has "win32" == 1 or vim.fn.executable "make" == 0 then return end
+                return "make install_jsregexp"
+            end)(),
             dependencies = {
-                "rafamadriz/friendly-snippets",
+                {
+                    "rafamadriz/friendly-snippets",
+                    config = function() require("luasnip.loaders.from_vscode").lazy_load() end,
+                },
                 "benfowler/telescope-luasnip.nvim",
             },
-            config = function(_, opts)
-                local snip = require "luasnip"
-                if opts then snip.config.setup(opts) end
-
-                vim.tbl_map(
-                    function(type) require("luasnip.loaders.from_" .. type).lazy_load() end,
-                    { "vscode", "snipmate", "lua" }
-                )
-
-                -- friendly-snippets - enable standardized comments snippets
-                snip.filetype_extend("typescript", { "tsdoc" })
-                snip.filetype_extend("javascript", { "jsdoc" })
-                snip.filetype_extend("lua", { "luadoc" })
-                snip.filetype_extend("python", { "pydoc" })
-                snip.filetype_extend("rust", { "rustdoc" })
-                snip.filetype_extend("cs", { "csharpdoc" })
-                snip.filetype_extend("java", { "javadoc" })
-                snip.filetype_extend("kotlin", { "kdoc" })
-                snip.filetype_extend("sh", { "shelldoc" })
-            end,
         },
         "saadparwaiz1/cmp_luasnip",
 
@@ -50,7 +39,7 @@ return { -- Autocompletion
                 build = ":Copilot auth",
                 event = "InsertEnter",
                 opts = {
-                    suggestion = { enabled = false, },
+                    suggestion = { enabled = false },
                     panel = { enabled = false },
                     filetypes = {
                         help = false,
@@ -78,14 +67,19 @@ return { -- Autocompletion
             snippet = { expand = function(args) luasnip.lsp_expand(args.body) end },
             completion = { completeopt = "menu,menuone,noinsert" },
             mapping = cmp.mapping.preset.insert {
+                -- Select item
                 ["<C-n>"] = cmp.mapping.select_next_item(),
                 ["<C-p>"] = cmp.mapping.select_prev_item(),
+
+                -- Scroll the documentation window [b]ack / [f]orward
+                ["<C-b>"] = cmp.mapping.scroll_docs(-4),
+                ["<C-f>"] = cmp.mapping.scroll_docs(4),
 
                 -- Accept ([y]es) the completion.
                 --  This will auto-import if your LSP supports it.
                 --  This will expand snippets if the LSP sent a snippet.
                 ["<C-y>"] = cmp.mapping.confirm { select = true },
-                ["<C-z>"] = cmp.mapping.confirm { select = true }, 
+                ["<C-z>"] = cmp.mapping.confirm { select = true },
 
                 -- Think of <c-l> as moving to the right of your snippet expansion.
                 --  So if you have a snippet that's like:
@@ -103,12 +97,12 @@ return { -- Autocompletion
                 end, { "i", "s" }),
             },
             sources = {
+                { name = "lazydev", group_index = 0 }, -- NOTE: set group index to 0 to skip loading LuaLS completions as lazydev recommends it
                 { name = "nvim_lsp" },
                 { name = "copilot" },
                 { name = "luasnip" },
                 { name = "path" },
             },
-            experimental = { ghost_text = { hl_group = "CmpGhostText" } },
             formatting = {
                 format = lspkind.cmp_format {
                     mode = "text_symbol", -- options: 'text', 'text_symbol', 'symbol_text', 'symbol'

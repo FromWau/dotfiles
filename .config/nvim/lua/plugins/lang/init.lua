@@ -6,109 +6,124 @@ local linters = tools.linters
 local ensure_installed = tools.ensure_installed
 
 return {
+    {
+        -- INFO:`lazydev` configures Lua LSP for your Neovim config, runtime and plugins
+        -- used for completion, annotations and signatures of Neovim apis
+        "folke/lazydev.nvim",
+        ft = "lua",
+        opts = {
+            library = {
+                -- Load luvit types when the `vim.uv` word is found
+                { path = "luvit-meta/library", words = { "vim%.uv" } },
+            },
+        },
+    },
+
+    { "Bilal2453/luvit-meta", lazy = true },
+
+    {
+        "stevearc/conform.nvim",
+        event = "BufWritePre",
+        cmd = "ConformInfo",
+        opts = {
+            notify_on_error = true,
+            format_on_save = false,
+            formatters_by_ft = formatters,
+        },
+        keys = {
+            {
+                "<leader>cf",
+                function() require("conform").format { async = true, lsp_fallback = true } end,
+                mode = "",
+                desc = "[F]ormat buffer",
+            },
+        },
+    },
+
+    -- TODO : IDK if I need a linter
+    { -- Linting
+        "mfussenegger/nvim-lint",
+        event = { "BufReadPre", "BufNewFile" },
+        config = function()
+            local lint = require "lint"
+            lint.linters_by_ft = linters
+
+            local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })
+            vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
+                group = lint_augroup,
+                callback = function() lint.try_lint() end,
+            })
+        end,
+    },
+
+    {
+        "SmiteshP/nvim-navic", -- Lualine show context
+        opts = {
+            highlight = true,
+            click = true,
+            use_diagnostic_signs = true,
+        },
+    },
+    {
+        "ray-x/lsp_signature.nvim",
+        event = "VeryLazy",
+        config = function() require("lsp_signature").setup() end,
+    },
+    "aznhe21/actions-preview.nvim",
+    {
+        "kosayoda/nvim-lightbulb",
+        opts = {
+            hide_in_unfocused = false,
+            autocmd = { enabled = true },
+        },
+    },
+    "kevinhwang91/nvim-ufo",
+
     { -- LSP Configuration & Plugins
         "neovim/nvim-lspconfig",
         dependencies = {
             {
                 "williamboman/mason.nvim",
-                keys = { { "<leader>um", "<CMD>Mason<CR>", { desc = "Show Mason" } } },
+                config = true,
+                keys = {
+                    { "<leader>um", "<CMD>Mason<CR>", { desc = "Show Mason" } },
+                },
             },
             "williamboman/mason-lspconfig.nvim",
             "WhoIsSethDaniel/mason-tool-installer.nvim",
-            "j-hui/fidget.nvim",
-            {
-                "stevearc/conform.nvim",
-                cmd = "ConformInfo",
-                event = "BufWritePre",
-                dependencies = "mason.nvim",
-                lazy = true,
-                opts = { formatters_by_ft = formatters },
-            },
-            {
-                "SmiteshP/nvim-navic", -- Lualine show context
-                opts = {
-                    highlight = true,
-                    click = true,
-                    use_diagnostic_signs = true,
-                },
-            },
-            -- TODO : IDK if I need a linter
-            {
-                "mfussenegger/nvim-lint",
-                opts = {
-                    events = { "BufWritePost", "BufReadPost", "InsertLeave" },
-                    linters_by_ft = linters,
-                },
-                config = function()
-                    vim.api.nvim_create_autocmd({ "BufWritePost" }, {
-                        callback = function() require("lint").try_lint() end,
-                    })
-                end,
-            },
-            {
-                "ray-x/lsp_signature.nvim",
-                event = "VeryLazy",
-                config = function() require("lsp_signature").setup() end,
-            },
-            "aznhe21/actions-preview.nvim",
-            {
-                "kosayoda/nvim-lightbulb",
-                opts = {
-                    hide_in_unfocused_buffer = false,
-                    autocmd = { enabled = true },
-                },
-            },
-            "kevinhwang91/nvim-ufo",
+            { "j-hui/fidget.nvim", opts = {} },
+            "hrsh7th/cmp-nvim-lsp",
         },
         config = function()
             vim.api.nvim_create_autocmd("LspAttach", {
                 group = vim.api.nvim_create_augroup("lsp-attach", { clear = true }),
                 callback = function(event)
-                    local nmap = require("utils.keymaps").nmap
-
-                    local nmap_buffer = function(keys, func, opts)
-                        local options = { buffer = event.buf }
-                        if opts then options = vim.tbl_extend("force", options, opts) end
-                        nmap(keys, func, options)
+                    local map = function(keys, func, desc)
+                        vim.keymap.set("n", keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
                     end
 
-                    -- Format
-                    nmap_buffer(
-                        "<leader>cf",
-                        function() require("conform").format { async = true, lsp_fallback = true } end,
-                        { desc = "Format buffer" }
-                    )
-
                     --  To jump back, press <C-T>.
-                    nmap_buffer("gd", require("telescope.builtin").lsp_definitions, { desc = "[G]oto [D]efinition" })
-                    nmap_buffer("gr", require("telescope.builtin").lsp_references, { desc = "[G]oto [R]eferences" })
-                    nmap_buffer("gi", require("telescope.builtin").lsp_implementations, { desc = "[G]oto [I]mplementation" })
+                    map("gd", require("telescope.builtin").lsp_definitions, "[G]oto [D]efinition")
+                    map("gr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
+                    map("gi", require("telescope.builtin").lsp_implementations, "[G]oto [I]mplementation")
 
-                    nmap_buffer("<leader>D", require("telescope.builtin").lsp_type_definitions, { desc = "Type [D]efinition" })
+                    map("<leader>D", require("telescope.builtin").lsp_type_definitions, "Type [D]efinition")
 
                     -- Fuzzy find all the symbols in your current document.
                     --  Symbols are things like variables, functions, types, etc.
-                    nmap_buffer(
-                        "<leader>ds",
-                        require("telescope.builtin").lsp_document_symbols,
-                        { desc = "[D]ocument [S]ymbols" }
-                    )
+                    map("<leader>ds", require("telescope.builtin").lsp_document_symbols, "[D]ocument [S]ymbols")
 
                     -- Fuzzy find all the symbols in your current workspace
                     --  Similar to document symbols, except searches over your whole project.
-                    nmap_buffer(
-                        "<leader>ws",
-                        require("telescope.builtin").lsp_dynamic_workspace_symbols,
-                        { desc = "[W]orkspace [S]ymbols" }
-                    )
-                    nmap_buffer("<leader>cr", vim.lsp.buf.rename, { desc = "[C]ode [R]ename" })
+                    map("<leader>ws", require("telescope.builtin").lsp_dynamic_workspace_symbols, "[W]orkspace [S]ymbols")
+                    map("<leader>cr", vim.lsp.buf.rename, "[C]ode [R]ename")
 
-                    nmap_buffer("<leader>ca", require("actions-preview").code_actions, { desc = "[C]ode [A]ction" })
+                    map("<leader>ca", require("actions-preview").code_actions, "[C]ode [A]ction")
 
-                    nmap_buffer("K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
+                    map("K", vim.lsp.buf.hover, "Hover Documentation")
 
                     -- WARN: This is not Goto Definition, this is Goto Declaration.
-                    nmap_buffer("gD", vim.lsp.buf.declaration, { desc = "[G]oto [D]eclaration" })
+                    map("gD", vim.lsp.buf.declaration, "[G]oto [D]eclaration")
 
                     -- The following two autocommands are used to highlight references of the
                     -- word under your cursor when your cursor rests there for a little while.
@@ -116,15 +131,26 @@ return {
                     --
                     -- When you move your cursor, the highlights will be cleared (the second autocommand).
                     local client = vim.lsp.get_client_by_id(event.data.client_id)
-                    if client and client.server_capabilities.documentHighlightProvider then
+                    if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
+                        local highlight_augroup = vim.api.nvim_create_augroup("lsp-highlight", { clear = false })
                         vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
                             buffer = event.buf,
+                            group = highlight_augroup,
                             callback = vim.lsp.buf.document_highlight,
                         })
 
                         vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
                             buffer = event.buf,
+                            group = highlight_augroup,
                             callback = vim.lsp.buf.clear_references,
+                        })
+
+                        vim.api.nvim_create_autocmd("LspDetach", {
+                            group = vim.api.nvim_create_augroup("lsp-detach", { clear = true }),
+                            callback = function(event2)
+                                vim.lsp.buf.clear_references()
+                                vim.api.nvim_clear_autocmds { group = "lsp-highlight", buffer = event2.buf }
+                            end,
                         })
                     end
 
@@ -141,7 +167,13 @@ return {
                         vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
                     end
 
-                    require("lsp_signature").on_attach(client, event.buf)
+                    if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
+                        map(
+                            "<leader>th",
+                            function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }) end,
+                            "[T]oggle Inlay [H]ints"
+                        )
+                    end
                 end,
             })
 
@@ -150,13 +182,6 @@ return {
             --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities.
             --  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
             local capabilities = vim.lsp.protocol.make_client_capabilities()
-            -- Tell the server the capability of foldingRange,
-            -- Neovim hasn't added foldingRange to default capabilities, users must add it manually.
-            capabilities.textDocument.foldingRange = {
-                dynamicRegistration = false,
-                lineFoldingOnly = true,
-            }
-
             capabilities = vim.tbl_deep_extend("force", capabilities, require("cmp_nvim_lsp").default_capabilities())
 
             --  Add any additional override configuration in the following tables. Available keys are:
@@ -182,6 +207,7 @@ return {
                             -- by the server configuration above. Useful when disabling
                             -- certain features of an LSP (for example, turning off formatting for tsserver)
                             capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {}),
+                            require("lspconfig")[server_name].setup(server),
                         }
                     end,
                 },

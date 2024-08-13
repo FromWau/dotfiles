@@ -1,9 +1,11 @@
 return {
     "tpope/vim-sleuth", -- Detect tabstop and shiftwidth automatically
+
     {
         "folke/todo-comments.nvim", -- Highlight todo, notes, etc in comments (like this one)
+        event = "VimEnter",
         dependencies = "nvim-lua/plenary.nvim",
-        opts = true,
+        opts = { signs = true },
         -- TODO: Add keymaps to navigate through todos and show all todos
         -- and maybe better symbols for todo and test
     },
@@ -23,24 +25,6 @@ return {
             { "<C-/>", "<Plug>(comment_toggle_linewise_visual)", desc = "Comment Line", mode = { "v" } },
             { "<C-kdivide>", "<Plug>(comment_toggle_linewise_visual)", desc = "Comment Line", mode = { "v" } },
             { "<C-7>", "<Plug>(comment_toggle_linewise_visual)", desc = "Comment Line", mode = { "v" } },
-        },
-    },
-
-    {
-        "lewis6991/gitsigns.nvim", -- Show Git changes in the sign column and enable line blame
-        opts = {
-            signs = {
-                add = { text = "󰐗" },
-                change = { text = "" },
-                delete = { text = "󰍶" },
-                topdelete = { text = "‾" },
-                changedelete = { text = "󰏯" },
-                untracked = { text = "?" },
-            },
-            on_attach = function(bufnr)
-                local gs = package.loaded.gitsigns
-                require("utils.keymaps").nmap("<leader>tb", gs.toggle_current_line_blame, { buffer = bufnr })
-            end,
         },
     },
 
@@ -192,7 +176,14 @@ return {
     {
         "windwp/nvim-autopairs",
         event = "InsertEnter",
-        config = true, --https://github.com/akinsho/toggleterm.nvim
+        dependencies = { "hrsh7th/nvim-cmp" },
+        config = function()
+            require("nvim-autopairs").setup {}
+            -- If you want to automatically add `(` after selecting a function or method
+            local cmp_autopairs = require "nvim-autopairs.completion.cmp"
+            local cmp = require "cmp"
+            cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
+        end,
     },
 
     {
