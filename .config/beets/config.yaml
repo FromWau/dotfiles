@@ -1,0 +1,8 @@
+directory: ~/music
+library: ~/.local/beets/library.db
+import:
+    move: yes
+
+# Plugins
+plugins: chroma spotify deezer fromfilename edit embedart fetchart lastgenre lyrics mpdstats albumtypes badfiles fish mpdupdate smartplaylist thumbnails fuzzy info random types web
+
