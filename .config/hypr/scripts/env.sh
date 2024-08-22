@@ -5,20 +5,8 @@ test lspci || {
 	exit 1
 }
 
-function write_file_content() {
-	file=$1
-	content=$2
-	content_file=$(cat "$file" 2>/dev/null)
-
-	if [ "$content_file" == "$content" ]; then
-		echo "$file content is already set"
-		exit 1
-	fi
-
-	notify-send "Setting up GPU specific environment variables"
-
-	[[ ! -f "$file" ]] && mkdir -p "$(dirname "$file")"
-	echo "$content" >"$file"
+function write() {
+	~/.config/hypr/scripts/update_file.sh "$1" "$2"
 }
 
 lspci | rg VGA | rg -i intel >/dev/null
@@ -48,7 +36,7 @@ fi
 if [ $hasNvidiaGPU -eq 0 ]; then
 	echo "Nvidia GPU detected"
 
-	file=~/.config/hypr/conf/env/env-nvidia.conf
+	file=env/env-nvidia.conf
 	content=$(
 		cat <<EOF
 ## NVIDIA Specific
@@ -70,5 +58,5 @@ env = WLR_DRM_NO_ATOMIC,1 #use legacy DRM interface instead of atomic mode setti
 EOF
 	)
 
-	write_file_content "$file" "$content"
+	write "$file" "$content"
 fi

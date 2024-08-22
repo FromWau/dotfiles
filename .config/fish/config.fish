@@ -64,8 +64,6 @@ abbr vim nvim
 abbr v nvim
 abbr cat 'bat -p --color always'
 abbr yeet 'yay -Rns'
-abbr bed 'hyprctl keyword monitor HDMI-A-1,2560x1440@120.00Hz,0x0,1.6'
-abbr desk 'hyprctl keyword monitor HDMI-A-1,2560x1440@120.00Hz,0x0,1'
 abbr reload 'source ~/.config/fish/config.fish'
 abbr lg lazygit
 abbr sc systemctl
@@ -75,6 +73,7 @@ abbr .. 'cd ..'
 abbr ... 'cd ../..'
 abbr .... 'cd ../../..'
 abbr ags 'bash -c "cd ~/.config/ags/ && ags"'
+abbr skf 'ssh-key-fzf'
 
 # functions
 function nvim -d "Open nvim and handle arg path"
@@ -151,4 +150,15 @@ function copy-content -d "Send file content to clipboard"
     if count $argv >/dev/null
         cat $argv | wl-copy
     end
+end
+
+function scale-up -d "Scales up the monitor"
+    set -l monitors (cat ~/.config/hypr/conf/io/monitor.conf | rg monitor=)
+    set -l content (echo $monitors | cut -d ',' -f-3 | xargs -I {} echo "{}, 1.6")
+    ~/.config/hypr/scripts/update_file.sh "temp/temp.conf" "$content"
+end
+
+function hypr-clear-temp -d "Clear temp settings in hyprland"
+    ~/.config/hypr/scripts/update_file.sh "temp/temp.conf" "clear"
+    swww restore
 end
