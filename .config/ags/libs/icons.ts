@@ -182,4 +182,5 @@ export default {
             },
         },
     },
+    hyprwall: "color-picker-white-symbolic",
 }

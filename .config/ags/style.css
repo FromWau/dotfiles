@@ -15,16 +15,16 @@
 }
 
 .bar-item {
-  background: #120f17;
-  color: #c97a00;
+  background: #030508;
+  color: #d65200;
   padding-left: 8px;
   padding-right: 8px;
 }
 .bar-item.focused {
-  border-bottom: #c97a00 2px solid;
+  border-bottom: #d65200 2px solid;
 }
 .bar-item:hover {
-  background: #5f5b6f;
+  background: #535965;
 }
 .bar-item:first-child {
   border-radius: 16px 0 0 16px;
@@ -41,7 +41,7 @@
 }
 
 .media {
-  background: #120f17;
+  background: #030508;
   margin: 20px;
   border-radius: 16px;
 }
@@ -55,19 +55,19 @@
 }
 
 .positionSlider {
-  background: #120f17;
+  background: #030508;
   color: white;
 }
 
 .runnerSpace {
-  background: rgba(18, 15, 23, 0.7);
+  background: rgba(3, 5, 8, 0.7);
 }
 
 .runner {
   border-radius: 16px;
   padding: 10px;
-  border: #c97a00 2px solid;
-  background: #120f17;
+  border: #d65200 2px solid;
+  background: #030508;
 }
 
 .runnerModeIcon {
@@ -83,7 +83,7 @@
   padding: 10px;
   min-width: 550px;
   border-radius: 16px;
-  border: #928f99 1px solid;
+  border: #888e93 1px solid;
   font-size: 28px;
 }
 
@@ -91,14 +91,14 @@
   margin: 10px;
   padding: 10px;
   border-radius: 16px;
-  border: #928f99 1px solid;
-  background: #120f17;
+  border: #888e93 1px solid;
+  background: #030508;
 }
 
 .resultItem {
   padding: 5px;
   color: white;
-  background: #ffa839;
+  background: #0089c6;
   border-radius: 16px;
 }
 

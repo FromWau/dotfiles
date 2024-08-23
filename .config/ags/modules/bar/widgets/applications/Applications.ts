@@ -70,6 +70,18 @@ export const Applications = () =>
                 })
             )
 
+            childrean.push(
+                Widget.Button({
+                    class_name: "bar-item",
+                    on_clicked: () =>
+                        Utils.execAsync("hypr-wal").catch(() => {
+                            // User canceled program. Do nothing.
+                        }),
+                    tooltip_text: "Screencast",
+                    child: Widget.Icon({ icon: icons.hyprwall }),
+                })
+            )
+
             childrean.push(Systemtray())
 
             self.children = childrean
