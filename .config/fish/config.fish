@@ -74,6 +74,7 @@ abbr ... 'cd ../..'
 abbr .... 'cd ../../..'
 abbr ags 'bash -c "cd ~/.config/ags/ && ags"'
 abbr skf 'ssh-key-fzf'
+abbr ncm 'ncmpcpp'
 
 # functions
 function nvim -d "Open nvim and handle arg path"
@@ -155,10 +156,16 @@ end
 function scale-up -d "Scales up the monitor"
     set -l monitors (cat ~/.config/hypr/conf/io/monitor.conf | rg monitor=)
     set -l content (echo $monitors | cut -d ',' -f-3 | xargs -I {} echo "{}, 1.6")
-    ~/.config/hypr/scripts/update_file.sh "temp/temp.conf" "$content"
+    ~/.config/hypr/scripts/update_file.sh "temp/temp.conf" "$content" && swww restore
 end
 
-function hypr-clear-temp -d "Clear temp settings in hyprland"
-    ~/.config/hypr/scripts/update_file.sh "temp/temp.conf" "clear"
-    swww restore
+function clear-hypr -d "Clear temp settings in hyprland"
+    ~/.config/hypr/scripts/update_file.sh "temp/temp.conf" "clear" && swww restore
+end
+
+function music-upload -d "Upload music to fromml@frommhund.xyz"
+    beet fetchart &&
+    beet embedart &&
+    fd cover music -x rm &&
+    rsync -vauP -e "ssh -p 2222" ~/music/ fromml@frommhund.xyz:/home/fromml/music/
 end
