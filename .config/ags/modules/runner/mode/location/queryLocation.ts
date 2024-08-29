@@ -1,6 +1,6 @@
+import { saveUserData } from "libs/UserData"
 import { runner_location, runner_mode, show_runner } from "libs/variables"
 import { fetch } from "resource:///com/github/Aylur/ags/utils/fetch.js"
-import { DateTime } from "types/@girs/glib-2.0/glib-2.0.cjs"
 
 type City = {
     name: string
@@ -131,6 +131,8 @@ export const queryLocation = (input: string) => {
                 runner_location.setValue(result)
                 runner_mode.setValue("none")
                 show_runner.setValue(false)
+
+                saveUserData()
             }
         })
         .catch((error) => {

@@ -7,7 +7,7 @@ import { SessionWindow } from "modules/session/Session"
 import "modules/api/Api"
 import { RunnerWindow } from "modules/runner/Runner"
 import { show_runner } from "libs/variables"
-import { loadUserData } from "libs/loadUserData"
+import { loadUserData } from "libs/UserData"
 
 const hyprland = await Service.import("hyprland")
 
