@@ -1,5 +1,5 @@
 import { show_media, show_runner } from "libs/variables"
-import { Systemtray } from "./systemtray/Systemtray"
+import { getSystemTrayItems } from "./systemtray/Systemtray"
 import Gtk from "types/@girs/gtk-3.0/gtk-3.0"
 import icons from "libs/icons"
 import { queryApps } from "modules/runner/mode/app/QueryApps"
@@ -82,7 +82,16 @@ export const Applications = () =>
                 })
             )
 
-            childrean.push(Systemtray())
+            const trayItems = getSystemTrayItems()
+
+            if (trayItems.length > 0) {
+                childrean.push(
+                    Widget.Box({
+                        class_name: "bar-item",
+                        children: trayItems,
+                    })
+                )
+            }
 
             self.children = childrean
         },

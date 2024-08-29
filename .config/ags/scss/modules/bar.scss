@@ -39,3 +39,21 @@
         padding-right: 16px;
     }
 }
+
+.systray-menu {
+    background: $background;
+    border-radius: 16px;
+
+    separator {
+        background-color: $primary;
+    }
+
+    menuitem {
+        padding: 8px;
+
+        background: $background;
+        color: $primary;
+
+        border-radius: 16px;
+    }
+}

@@ -9,8 +9,9 @@ const SysTrayItem = (item: import("types/service/systemtray").TrayItem) =>
         onSecondaryClick: (_, event) => item.openMenu(event),
     })
 
-export const Systemtray = () =>
-    Widget.Box({
-        class_name: "bar-item",
-        children: systemtray.bind("items").as((i) => i.map(SysTrayItem)),
+export const getSystemTrayItems = () =>
+    systemtray.items.map((item) => {
+        if (item.menu) item.menu.class_name = "systray-menu"
+
+        return SysTrayItem(item)
     })

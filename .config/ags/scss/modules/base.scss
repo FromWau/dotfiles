@@ -3,3 +3,22 @@
 }
 
 @import "../colors";
+
+tooltip {
+    * {
+        all: unset;
+    }
+
+    all: unset;
+
+    > * > * {
+        all: unset;
+
+        padding: 8px;
+
+        background: $background;
+        color: $primary;
+
+        border-radius: 16px;
+    }
+}
