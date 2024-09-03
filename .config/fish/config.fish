@@ -164,8 +164,21 @@ function clear-hypr -d "Clear temp settings in hyprland"
 end
 
 function music-upload -d "Upload music to fromml@frommhund.xyz"
-    beet fetchart &&
-    beet embedart &&
     fd cover music -x rm &&
     rsync -vauP -e "ssh -p 2222" ~/music/ fromml@frommhund.xyz:/home/fromml/music/
+end
+
+function music-download -d "Download music from fromml@frommhund.xyz"
+    rsync -vaP -e "ssh -p 2222" fromml@frommhund.xyz:/home/fromml/music/ ~/music/ && mpc update && mpc listall | mpc add
+end
+
+function mfzf -d "Search and play song"
+    set -l file (mpc listall | fzf -d "|" --cycle -i --reverse -1)
+    if count $file >/dev/null
+        set -l artist (echo "$file" | cut -d '/' -f1)
+        set -l album (echo "$file" | cut -d '/' -f2)
+        set -l title (echo "$file" | cut -d '/' -f3 | cut -d ' ' -f2-  | tr -d '.mp3' )
+
+        mpc searchplay artist "$artist" album "$album" title "$title"
+    end
 end
