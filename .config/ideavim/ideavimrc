@@ -13,6 +13,7 @@ set smartindent
 set autoindent
 set tabstop=4
 set shiftwidth=4
+set cursorline
 
 " set history=1000
 set scrolloff=15
@@ -24,38 +25,136 @@ set ideastatusicon=gray
 set ideavimsupport+=singleline
 
 """ Mapping
-map <leader>ue <Action>(FileStructurePopup)
-
-nnoremap <esc> :noh<cr><esc>
+" nice to have
 nmap <C-a> ggVG
+nmap <Esc> <Esc>:nohls<CR><Esc>
 
-" code analysis
-nmap gf <Action>(ShowUsages)
-nmap gi <Action>(GotoImplementation)
-nmap gs <Action>(GotoSuperMethod)
-nmap gd <Action>(GotoDeclaration)
+" android
+nmap <leader>ag <Action>(Android.SyncProject)
+nmap <leader>am <Action>(MakeGradleModule)
+nmap <leader>aM <Action>(RebuildGradleProject)
+nmap <leader>ar <Action>(Run)
 
-map gj <Action>(GotoNextError)
-map gk <Action>(GotoPreviousError)
-map ge <Action>(ShowErrorDescription)
-
-map gh <Action>(QuickJavaDoc)
-map gH <Action>(QuickActions)
-"
-map ga <Action>(ShowIntentionActions)
+" code actions
+nmap <leader>cf <Action>(ReformatCode)
+nmap <leader>cr <Action>RenameElement)
+nmap <leader>co <Action>(OptimizeImports)
+nmap <leader>cg <Action>(Generate)
+nmap <leader>ca <Action>(ShowIntentionActions)
+nmap <leader>ce <Action>(ShowErrorDescription)
+nmap <leader>cd <Action>(QuickJavaDoc)
 
 " find related
+nmap <leader>fe <Action>(SearchEverywhere)
 nmap <leader>ff <Action>(GotoFile)
 nmap <leader>fg <Action>(FindInPath)
 nmap <leader>fr <Action>(RecentFiles)
 
+" git
+nmap <leader>gb <Action>(Annotate)
+vmap <leader>gh <Action>(Vcs.ShowHistoryForBlock)
+nmap <leader>gh <Action>(Vcs.ShowTabbedFileHistory)
+nmap <leader>gu :!kitty --detach lazygit<CR>
 
-nmap <leader>cf <Action>(ReformatCode)
-nmap <leader>cr <Actions>RenameElement)
-nmap <leader>co <Action>(OptimizeImports)
-nmap <leader>cg <Action>(Generate)
+" goto
+nmap gf <Action>(ShowUsages)
+nmap gi <Action>(GotoImplementation)
+nmap gs <Action>(GotoSuperMethod)
+nmap gd <Action>(GotoDeclaration)
+nmap gj <Action>(GotoNextError)
+nmap gk <Action>(GotoPreviousError)
+
+" harpoon (dont forget to install the plugin from the marketplace)
+nmap <leader>hh :action ShowHarpoon<CR>
+nmap <leader>ha :action SetHarpoon1<CR>
+nmap <leader>hs :action SetHarpoon2<CR>
+nmap <leader>hd :action SetHarpoon3<CR>
+nmap <leader>hf :action SetHarpoon4<CR>
+nmap <leader>hg :action SetHarpoon5<CR>
+
+nmap <leader>hA :action GoToHarpoon1<CR>
+nmap <leader>hS :action GoToHarpoon2<CR>
+nmap <leader>hD :action GoToHarpoon3<CR>
+nmap <leader>hF :action GoToHarpoon4<CR>
+nmap <leader>hG :action GoToHarpoon5<CR>
+
+" ui
+nmap <leader>uV <Action>(VimFindActionIdAction)
+nmap <leader>ue :NERDTreeToggle<CR>
+
+" completion (use <C-z> and <C-y>)
+" actions need to be set in the keymap
+
+" reload vimrc
+nmap <leader>rr :source ~/.config/ideavim/ideavimrc <cr>
+
+""" Plugins
+"WhichKey
+" dont forget to install the plugin from the marketplace
+set which-key
+let g:WhichKeyDesc_android = "<Space>a +[A]ndroid"
+let g:WhichKeyDesc_AndroidSyncProject = "<Space>ag Sync Project"
+let g:WhichKeyDesc_MakeGradleModule = "<Space>am make module"
+let g:WhichKeyDesc_RebuildGradleProject = "<Space>aM make project"
+let g:WhichKeyDesc_Run = "<Space>ar run"
+
+let g:WhichKeyDesc_code = "<Space>c +[C]ode"
+let g:WhichKeyDesc_ReformatCode = "<Space>cf ReformatCode"
+let g:WhichKeyDesc_RenameElement = "<Space>cr RenameElement"
+let g:WhichKeyDesc_OptimizeImports = "<Space>co OptimizeImports"
+let g:WhichKeyDesc_Generate = "<Space>cg Generate"
+let g:WhichKeyDesc_ShowIntentionActions = "<Space>ca ShowIntentionActions"
+let g:WhichKeyDesc_ShowErrorDescription = "<Space>ce ShowErrorDescription"
+let g:WhichKeyDesc_QuickJavaDoc = "<Space>cd QuickJavaDoc"
+
+let g:WhichKeyDesc_find = "<Space>f +[F]ind"
+let g:WhichKeyDesc_SearchEverywhere = "<Space>fe SearchEverywhere"
+let g:WhichKeyDesc_GotoFile = "<Space>ff GotoFile"
+let g:WhichKeyDesc_FindInPath = "<Space>fg FindInPath"
+let g:WhichKeyDesc_RecentFiles = "<Space>fr RecentFiles"
+
+let g:WhichKeyDesc_git = "<Space>g +[G]it"
+let g:WhichKeyDesc_Annotate = "<Space>gb toggle git blame"
+let g:WhichKeyDesc_VcsShowHistoryForBlock = "<Space>gh show git history"
+let g:WhichKeyDesc_VcsShowTabbedFileHistory = "<Space>gh show git history"
+let g:WhichKeyDesc_lazygit = "<Space>gu lazygit"
+
+let g:WhichKeyDesc_goto = "g +[G]oto"
+let g:WhichKeyDesc_ShowUsages = "gf ShowUsages"
+let g:WhichKeyDesc_GotoImplementation = "gi GotoImplementation"
+let g:WhichKeyDesc_GotoSuperMethod = "gs GotoSuperMethod"
+let g:WhichKeyDesc_GotoDeclaration = "gd GotoDeclaration"
+let g:WhichKeyDesc_GotoNextError = "gj GotoNextError"
+let g:WhichKeyDesc_GotoPreviousError = "gk GotoPreviousError"
+
+let g:WhichKeyDesc_ui = "<Space>u +[U]i"
+let g:WhichKeyDesc_VimFindActionIdAction = "<Space>uV VimFindActionIdAction"
+let g:WhichKeyDesc_NERDTreeToggle = "<Space>ue toggle file tree"
+
+let g:WhichKeyDesc_harpoon = "<Space>h +[H]arpoon"
+let g:WhichKeyDesc_ShowHarpoon = "<Space>hh show harpoon"
+let g:WhichKeyDesc_SetHarpoon1 = "<Space>ha set harpoon 1"
+let g:WhichKeyDesc_SetHarpoon2 = "<Space>hs set harpoon 2"
+let g:WhichKeyDesc_SetHarpoon3 = "<Space>hd set harpoon 3"
+let g:WhichKeyDesc_SetHarpoon4 = "<Space>hf set harpoon 4"
+let g:WhichKeyDesc_SetHarpoon5 = "<Space>hg set harpoon 5"
+
+let g:WhichKeyDesc_GoToHarpoon1 = "<Space>hA go to harpoon 1"
+let g:WhichKeyDesc_GoToHarpoon2 = "<Space>hS go to harpoon 2"
+let g:WhichKeyDesc_GoToHarpoon3 = "<Space>hD go to harpoon 3"
+let g:WhichKeyDesc_GoToHarpoon4 = "<Space>hF go to harpoon 4"
+let g:WhichKeyDesc_GoToHarpoon5 = "<Space>hG go to harpoon 5"
+
+let g:WhicjKeyDesc_refreshrc = "<Space>rr +[R]efresh Vim[R]c"
+
+" Other Plugins
+Plug 'dbakker/vim-paragraph-motion' " Fix { } motions on paragraphs with only ' '
+Plug 'machakann/vim-highlightedyank' " Highlight the yank
+Plug 'tpope/vim-surround'
+Plug 'preservim/nerdtree'
 
 
+""" unsued stuff
 " " disabling tabs is recommended
 " " Splitter actions
 " " use "s" in nerdtree to open in vsplit, "i" to open in split
@@ -67,39 +166,17 @@ nmap <leader>cg <Action>(Generate)
 " map <C-l> <Action>(NextSplitter)
 " map <C-w>q <Action>(CloseContent)
 "
-" " Tab actions
-" map <M-q> <Action>(CloseContent)
-"
-"
 " nmap <C-k> <Action>(ParameterInfo)
 " imap <C-k> <Action>(ParameterInfo)
 "
-"
 " nmap <leader>q <Action>( CloseAllEditors )
-" nmap <leader>h :nohls<CR><esc>
 " nmap <leader>w <Action>(SaveAll)
 "
-" nmap <leader>ri <Action>(Inline)
+" nmap <leader>J <Action>(Inline)
 " nmap <leader>rR <Action>(RefactoringMenu)
-" nmap <leader>rr <Action>(RenameElement)
 " nmap <leader>rev <Action>(IntroduceVariable)
 " vmap <leader>rev <Action>(IntroduceVariable)
 " nmap <leader>rem <Action>(ExtractMethod)
 " vmap <leader>rem <Action>(ExtractMethod)
 " nmap <leader>rm <Action>(Move)
 " vmap <leader>rm <Action>(Move)
-" nmap <leader>rf <Action>(ReformatCode)
-"
-" Goto
-" map gt <Action>(GotoTest)
-
-" " Better scrolling
-" nnoremap <C-d> <C-d>zz
-" nnoremap <C-u> <C-u>zz
-"
-" nnoremap <A-j> :m .+1<CR>==
-" nnoremap <A-k> :m .-2<CR>==
-" inoremap <A-j> <Esc>:m .+1<CR>==gi
-" inoremap <A-k> <Esc>:m .-2<CR>==gi
-" vnoremap <A-j> :m '>+1<CR>gv=gv
-" vnoremap <A-k> :m '<-2<CR>gv=gv
