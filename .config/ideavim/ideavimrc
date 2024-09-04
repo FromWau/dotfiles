@@ -84,6 +84,9 @@ nmap <leader>ue :NERDTreeToggle<CR>
 
 " completion (use <C-z> and <C-y>)
 " actions need to be set in the keymap
+" Set Editor Actions -> Choose Lookup Item -> [Ctrl+z, Ctrl+y]
+" Set Editor Actions -> Choose Lookup Item Replace -> [Ctrl+z, Ctrl+y]
+" Plugins -> Github Copilot -> Github: Apply Completions to Editor -> [Ctrl+z, Ctrl+y]
 
 " reload vimrc
 nmap <leader>rr :source ~/.config/ideavim/ideavimrc <cr>
