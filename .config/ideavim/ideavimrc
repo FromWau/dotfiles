@@ -82,6 +82,16 @@ nmap <leader>hG :action GoToHarpoon5<CR>
 nmap <leader>uV <Action>(VimFindActionIdAction)
 nmap <leader>ue :NERDTreeToggle<CR>
 
+" split
+map <C-Left> <Action>(PrevSplitter)
+map <C-Right> <Action>(NextSplitter)
+map <C-Space> <Action>(MoveTabRight)
+map <A-Space> <Action>(Unsplit)
+
+" tab
+map <A-Left> <Action>(PreviousTab)
+map <A-Right> <Action>(NextTab)
+
 " completion (use <C-z> and <C-y>)
 " actions need to be set in the keymap
 " Set Editor Actions -> Choose Lookup Item -> [Ctrl+z, Ctrl+y]
