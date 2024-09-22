@@ -36,12 +36,13 @@ set -x LESSHISTFILE -
 set -x FZF_DEFAULT_COMMAND "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
 set -x DELTA_FEATURES "+side-by-side +dark +syntax-theme base16-256 +true-color +navigate"
 
+set -U fish_greeting
+
 fish_vi_key_bindings insert
 
 # fzf_key_bindings
 
 fish_add_path ~/.local/bin
-fish_add_path ~/.nix-profile/bin
 
 starship init fish | source
 
@@ -165,11 +166,11 @@ end
 
 function music-upload -d "Upload music to fromml@frommhund.xyz"
     fd cover music -x rm &&
-    rsync -vauP -e "ssh -p 2222" ~/music/ fromml@frommhund.xyz:/home/fromml/music/
+    rsync -vauP -e "ssh -p 2222" ~/Music/ fromml@frommhund.xyz:/home/fromml/music/
 end
 
 function music-download -d "Download music from fromml@frommhund.xyz"
-    rsync -vaP -e "ssh -p 2222" fromml@frommhund.xyz:/home/fromml/music/ ~/music/ && mpc update && mpc listall | mpc add
+    rsync -vaP -e "ssh -p 2222" fromml@frommhund.xyz:/home/fromml/music/ ~/Music/ && mpc update && mpc listall | mpc add
 end
 
 function mfzf -d "Search and play song"
