@@ -125,7 +125,7 @@ keybinding:
         jumpToBlock: ['1', '2', '3', '4', '5'] # goto the Nth block / panel
         nextMatch: 'n'
         prevMatch: 'N'
-        optionMenu: null # show help menu
+        optionMenu: <disabled> # show help menu
         optionMenu-alt1: '?' # show help menu
         select: '<space>'
         goInto: '<enter>'
@@ -141,7 +141,7 @@ keybinding:
         scrollDownMain-alt1: 'J' # main panel scroll down
         scrollUpMain-alt2: '<c-u>' # main panel scroll up
         scrollDownMain-alt2: '<c-d>' # main panel scroll down
-        executeCustomCommand: ':'
+        executeShellCommand: ':'
         createRebaseOptionsMenu: 'm'
         pushFiles: 'P'
         pullFiles: 'p'
