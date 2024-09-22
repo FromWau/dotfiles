@@ -63,9 +63,7 @@ updateBtop++() {
 
 updateWalfox() {
 	if ! command -v pywalfox &>/dev/null; then
-		echo "Pls install pywalfox via pip (fixes some errors)"
-		echo "pip install --index-url https://test.pypi.org/simple/ pywalfox==2.8.0rc1 --break-system-packages"
-		echo "pywalfox install"
+		echo "Pls install pywalfox via 'yay -S python-pywalfox'"
 	else
 		pywalfox dark
 		pywalfox update
