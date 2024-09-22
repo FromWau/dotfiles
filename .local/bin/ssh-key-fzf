@@ -24,6 +24,10 @@ setup-ssh-key() {
 	echo "4) Paste the key from your clipboard in the 'Key' field"
 }
 
+if [ ! -d "$HOME/.ssh" ]; then
+	mkdir -p "$HOME/.ssh"
+fi
+
 current_key=$(ssh-add -l)
 
 mapfile -t files < <(fd . --base-directory ~/.ssh/ --strip-cwd-prefix -E '*.pub' -E '*hosts*' -E 'config')

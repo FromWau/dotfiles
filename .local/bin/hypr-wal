@@ -78,6 +78,7 @@ upateHyprland() {
 
 updateAgs() {
 	cp "$HOME"/.cache/wal/colors.scss "$HOME"/.config/ags/colors.scss
+	ags -r "reloadScss()"
 }
 
 pic=$(changeWallpaper)
