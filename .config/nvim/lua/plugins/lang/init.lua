@@ -216,16 +216,8 @@ return {
     },
 
     { --Markdown
-        "iamcco/markdown-preview.nvim",
-        cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-        ft = { "markdown" },
-        build = function() vim.fn["mkdp#util#install"]() end,
-        keys = {
-            {
-                "<leader>cp",
-                "<cmd>MarkdownPreviewToggle<CR>",
-                desc = "Open Markdown [P]review",
-            },
-        },
+        "MeanderingProgrammer/render-markdown.nvim",
+        opts = {},
+        dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
     },
 }

@@ -66,12 +66,12 @@ local tools = {
         linter = {}, -- use plugin instead
     },
     typescript = {
-        lsp = { tsserver = {} },
+        lsp = { deno = {} },
         formatter = { { "prettierd", "prettier" } },
         linter = { "eslint" },
     },
     javascript = {
-        lsp = { tsserver = {} },
+        lsp = { deno = {} },
         formatter = { { "prettierd", "prettier" } },
         linter = { "eslint" },
     },

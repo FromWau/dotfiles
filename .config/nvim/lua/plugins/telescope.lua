@@ -53,6 +53,8 @@ return {
         pcall(require("telescope").load_extension, "ui-select")
         pcall(require("telescope").load_extension, "noice")
         pcall(require("telescope").load_extension, "media_files")
+        pcall(require("telescope").load_extension "advanced_git_search")
+        pcall(require("telescope").load_extension "neoclip")
 
         local builtin = require "telescope.builtin"
         local function nmap(keys, func, opts) vim.keymap.set("n", keys, func, opts) end

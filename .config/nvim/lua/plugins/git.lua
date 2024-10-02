@@ -2,14 +2,6 @@ return {
     {
         "lewis6991/gitsigns.nvim", -- Show Git changes in the sign column and enable line blame
         opts = {
-            signs = {
-                add = { text = "󰐗" },
-                change = { text = "" },
-                delete = { text = "󰍶" },
-                topdelete = { text = "‾" },
-                changedelete = { text = "󰏯" },
-                untracked = { text = "?" },
-            },
             on_attach = function(bufnr)
                 local gitsigns = require "gitsigns"
                 local function map(mode, keys, func, opts)
@@ -63,6 +55,16 @@ return {
                 map("n", "<leader>tb", gitsigns.toggle_current_line_blame, { desc = "[T]oggle git show [b]lame line" })
                 map("n", "<leader>tD", gitsigns.toggle_deleted, { desc = "[T]oggle git show [D]eleted" })
             end,
+        },
+    },
+
+    {
+        "aaronhallaert/advanced-git-search.nvim",
+        cmd = { "AdvancedGitSearch" },
+        dependencies = {
+            "nvim-telescope/telescope.nvim",
+            "tpope/vim-fugitive",
+            "tpope/vim-rhubarb",
         },
     },
 }
