@@ -62,7 +62,7 @@ local tools = {
                 },
             },
         },
-        formatter = {}, -- use plugin instead
+        formatter = { "rustfmt" }, -- use plugin instead
         linter = {}, -- use plugin instead
     },
     typescript = {

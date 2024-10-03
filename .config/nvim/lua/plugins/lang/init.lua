@@ -19,6 +19,10 @@ return {
         },
     },
 
+    {
+        "folke/neoconf.nvim",
+    },
+
     { "Bilal2453/luvit-meta", lazy = true },
 
     {
@@ -219,5 +223,12 @@ return {
         "MeanderingProgrammer/render-markdown.nvim",
         opts = {},
         dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
+    },
+
+    { -- Rust
+        "saecki/crates.nvim",
+        tag = "stable",
+        event = { "BufRead Cargo.toml" },
+        config = function() require("crates").setup() end,
     },
 }
