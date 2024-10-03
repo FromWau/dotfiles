@@ -76,6 +76,7 @@ abbr .... 'cd ../../..'
 abbr ags 'bash -c "cd ~/.config/ags/ && ags"'
 abbr skf 'ssh-key-fzf'
 abbr ncm 'ncmpcpp'
+abbr kit 'kitty --detach'
 
 # functions
 function nvim -d "Open nvim and handle arg path"
@@ -165,12 +166,12 @@ function clear-hypr -d "Clear temp settings in hyprland"
 end
 
 function music-upload -d "Upload music to fromml@frommhund.xyz"
-    fd cover music -x rm &&
+    fd cover ~/Music -x rm &&
     rsync -vauP -e "ssh -p 2222" ~/Music/ fromml@frommhund.xyz:/home/fromml/music/
 end
 
 function music-download -d "Download music from fromml@frommhund.xyz"
-    rsync -vaP -e "ssh -p 2222" fromml@frommhund.xyz:/home/fromml/music/ ~/Music/ && mpc update && mpc listall | mpc add
+    rsync -vaP -e "ssh -p 2222" fromml@frommhund.xyz:/home/fromml/music/ ~/Music/
 end
 
 function mfzf -d "Search and play song"
