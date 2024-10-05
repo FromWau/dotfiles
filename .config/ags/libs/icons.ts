@@ -183,4 +183,5 @@ export default {
         },
     },
     hyprwall: "color-picker-white-symbolic",
+    scale: "zoom-fit-best-symbolic",
 }

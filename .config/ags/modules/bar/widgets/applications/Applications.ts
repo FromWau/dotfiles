@@ -82,6 +82,18 @@ export const Applications = () =>
                 })
             )
 
+            childrean.push(
+                Widget.Button({
+                    class_name: "bar-item",
+                    on_clicked: () =>
+                        Utils.execAsync("toggle-scale").catch(() => {
+                            // User canceled program. Do nothing.
+                        }),
+                    tooltip_text: "Scale",
+                    child: Widget.Icon({ icon: icons.scale }),
+                })
+            )
+
             const trayItems = getSystemTrayItems()
 
             if (trayItems.length > 0) {
