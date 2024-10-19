@@ -92,7 +92,7 @@ response=${response:-Y}
 
 case "$response" in
 [Yy] | [Yy][Ee][Ss])
-    beet import "$save_dir" && beet fetchart && beet embedart && fd cover ~/music -x rm
+    beet import "$save_dir" && beet fetchart && beet embedart
     ;;
 [Nn] | [Nn][Oo])
     echo "Ready to import via ´beet import $save_dir´"
