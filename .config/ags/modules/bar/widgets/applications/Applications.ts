@@ -86,7 +86,7 @@ export const Applications = () =>
                 Widget.Button({
                     class_name: "bar-item",
                     on_clicked: () =>
-                        Utils.execAsync("toggle-scale").catch(() => {
+                        Utils.execAsync(["bash", "-c", "~/.config/hypr/scripts/toggle-scale.sh"]).catch(() => {
                             // User canceled program. Do nothing.
                         }),
                     tooltip_text: "Scale",

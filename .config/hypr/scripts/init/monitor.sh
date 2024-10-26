@@ -20,6 +20,7 @@ case "$HOSTNAME" in
 		cat <<EOF
 $info
 monitor=eDP-1, 2880x1800@90, 0x0, 1.6
+env=HYPR_MONITOR_eDP1, 1.6 #Default Scale
 EOF
 	)
 

@@ -156,7 +156,11 @@ function copy-content -d "Send file content to clipboard"
 end
 
 function clear-hypr -d "Clear temp settings in hyprland"
-    fd --base-directory ~/.config/hypr/conf/temp/ --strip-cwd-prefix -e conf -x ~/.config/hypr/scripts/update_file.sh "temp/{}" "clear" && swww restore
+    bash -c ~/.config/hypr/scripts/clear-temp.sh
+end
+
+function toggle-scale -d "Toggle the scale of the monitors"
+    bash -c ~/.config/hypr/scripts/toggle-scale.sh
 end
 
 function music-upload -d "Upload music to fromml@frommhund.xyz"
