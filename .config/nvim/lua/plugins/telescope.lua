@@ -65,8 +65,8 @@ return {
         nmap("<leader>fw", builtin.grep_string, { desc = "[F]ind current [W]ord" })
         nmap("<leader>fg", builtin.live_grep, { desc = "[F]ind by [G]rep" })
         nmap("<leader>fd", builtin.diagnostics, { desc = "[F]ind [D]iagnostics" })
-        nmap("<leader>fr", builtin.resume, { desc = "[F]ind [r]esume" })
-        nmap("<leader>fR", builtin.oldfiles, { desc = "[F]ind [R]ecent Files" })
+        nmap("<leader>fR", builtin.resume, { desc = "[F]ind [R]esume" })
+        nmap("<leader>fr", builtin.oldfiles, { desc = "[F]ind [r]ecent Files" })
         nmap("<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
 
         nmap(
