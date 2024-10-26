@@ -12,23 +12,23 @@ type Item = {
 // widget representing a power menu item
 const SessionMenuItem = (item: Item) =>
     Widget.Button({
+        class_name: "session-item",
         onClicked: item.onClicked,
         child: Widget.Box({
             children: [
                 Widget.Icon({
-                    className: "powermenuIcons",
                     icon: item.icon,
-                    size: 42,
+                    size: 32,
+                    css: "margin-right: 12px;",
                 }),
                 Widget.Label({
                     label: item.label,
-                    className: "smalltitle",
                 }),
             ],
         }),
     })
 
-// widget showing a list of PowerMenuItems
+// widget showing a list of SessionMenuItems
 const SessionMenu = ({ items }) => {
     const list = Widget.Box({
         vertical: true,
@@ -39,7 +39,7 @@ const SessionMenu = ({ items }) => {
 
     return Widget.Box({
         vertical: true,
-        css: `margin: 12px;`,
+        class_name: "session-menu",
         child: list,
     })
 }
@@ -58,9 +58,11 @@ export const SessionWindow = (monitor: number = 0): Gtk.Window =>
                 transitionDuration: 1000,
                 child: Widget.Box({
                     vertical: true,
+                    css: `margin: 12px;`,
                     children: [
                         Widget.Label({
-                            label: "Power Menu",
+                            class_name: "session-header",
+                            label: "Session Menu",
                         }),
                         SessionMenu({
                             items: [
@@ -91,7 +93,7 @@ export const SessionWindow = (monitor: number = 0): Gtk.Window =>
                                     },
                                 },
                                 {
-                                    label: "Sleep in 30minuts",
+                                    label: "Shutdown in 30minuts",
                                     icon: "preferences-system-time-symbolic",
                                     onClicked: () => {
                                         Utils.exec("shutdown 30")
