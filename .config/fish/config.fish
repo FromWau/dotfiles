@@ -156,7 +156,7 @@ function copy-content -d "Send file content to clipboard"
 end
 
 function clear-hypr -d "Clear temp settings in hyprland"
-    ~/.config/hypr/scripts/update_file.sh "temp/temp.conf" "clear" && swww restore
+    fd --base-directory ~/.config/hypr/conf/temp/ --strip-cwd-prefix -e conf -x ~/.config/hypr/scripts/update_file.sh "temp/{}" "clear" && swww restore
 end
 
 function music-upload -d "Upload music to fromml@frommhund.xyz"
