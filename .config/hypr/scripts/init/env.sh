@@ -6,7 +6,7 @@ test lspci || {
 }
 
 function write() {
-	~/.config/hypr/scripts/update_file.sh "$1" "$2"
+	~/.config/hypr/scripts/utils/update_file.sh "$1" "$2"
 }
 
 lspci | rg VGA | rg -i intel >/dev/null

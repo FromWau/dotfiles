@@ -6,7 +6,7 @@ test hyprctl || {
 }
 
 function write() {
-	~/.config/hypr/scripts/update_file.sh "$1" "$2"
+	~/.config/hypr/scripts/utils/update_file.sh "$1" "$2"
 }
 
 file=io/monitor.conf
@@ -20,7 +20,6 @@ case "$HOSTNAME" in
 		cat <<EOF
 $info
 monitor=eDP-1, 2880x1800@90, 0x0, 1.6
-env=HYPR_MONITOR_eDP1, 1.6 #Default Scale
 EOF
 	)
 
