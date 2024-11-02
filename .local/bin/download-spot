@@ -1,8 +1,33 @@
 #!/usr/bin/env bash
 
 save_dir="$HOME/music-triage"
-
 url=$1
+
+cleanup() {
+    echo "Interrupt received, stopping downloads..."
+    # Kill all background jobs
+    pkill -P $$ # Kills all child processes of this script
+    exit 1
+}
+
+ask_import() {
+    read -r -p "Import now with beets [Y/n]: " response
+    response=${response:-Y}
+
+    case "$response" in
+    [Yy] | [Yy][Ee][Ss])
+        beet import "$save_dir" && beet fetchart && beet embedart
+        ;;
+    [Nn] | [Nn][Oo])
+        echo "Ready to import via ´beet import $save_dir´"
+        ;;
+    *)
+        echo "Invalid response." && ask_import
+        ;;
+    esac
+}
+
+trap cleanup SIGINT
 
 echo "Fetching data..."
 data=$(curl --progress-bar \
@@ -17,8 +42,6 @@ if [ "$error" != "null" ]; then
     exit 1
 fi
 
-# echo "$data" | jq -r '.apiResponse.data'
-
 mapfile -t names < <(echo "$data" | jq -r '.apiResponse.data[].name')
 mapfile -t albums < <(echo "$data" | jq -r '.apiResponse.data[].album')
 mapfile -t album_names < <(echo "$data" | jq -r '.apiResponse.data[].album_name')
@@ -31,7 +54,7 @@ for i in "${!names[@]}"; do
 
     name="${names[$i]}"
     if [ "$name" == "null" ]; then
-        echo "Error: Name is null"
+        echo "[$((i + 1))/${#names[@]}] Error: Name is null"
         exit 1
     fi
 
@@ -49,17 +72,17 @@ for i in "${!names[@]}"; do
 
     artist="${artists[$i]}"
     if [ "$artist" == "null" ]; then
-        echo "Error: Artist is null"
+        echo "[$((i + 1))/${#names[@]}] Error: Artist is null"
         exit 1
     fi
 
     track_url="${track_urls[$i]}"
     if [ "$track_url" == "null" ]; then
-        echo "Error: URL is null"
+        echo "[$((i + 1))/${#names[@]}] Error: URL is null"
         exit 1
     fi
 
-    echo "Downloading: $name by $artist"
+    echo "[$((i + 1))/${#names[@]}] Downloading: $name by $artist"
     # echo "Artist: $artist"
     # echo "Album: $album"
     # echo "Name: $name"
@@ -72,32 +95,23 @@ for i in "${!names[@]}"; do
 
     error=$(echo "$result" | jq -r '.msg')
     if [ "$error" != "null" ]; then
-        echo "Skipping, Reason: $error"
+        echo "[$((i + 1))/${#names[@]}] Skipping, Reason: $error"
     fi
 
     mkdir -p "$save_dir/$artist/$album/"
 
     file_url=$(echo "$result" | jq -r .file_url)
-    curl --progress-bar \
-        --location "$file_url" \
-        --output "$save_dir/$artist/$album/$name.mp3"
+
+    (
+        curl --silent \
+            --location "$file_url" \
+            --output "$save_dir/$artist/$album/$name.mp3" &&
+            echo "[$((i + 1))/${#names[@]}] Download done: $name by $artist"
+    ) &
 done
 
+wait # Waits for all background downloads to finish
 echo "Done"
 echo "Files saved to: $save_dir"
-eza --icons --all --group-directories-first --color always --tree --ignore-glob ".git*" "$save_dir"
 
-read -r -p "Import now with beets [Y/n]: " response
-response=${response:-Y}
-
-case "$response" in
-[Yy] | [Yy][Ee][Ss])
-    beet import "$save_dir" && beet fetchart && beet embedart
-    ;;
-[Nn] | [Nn][Oo])
-    echo "Ready to import via ´beet import $save_dir´"
-    ;;
-*)
-    echo "Invalid response. Please enter Y or N."
-    ;;
-esac
+ask_import
