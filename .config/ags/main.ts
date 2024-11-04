@@ -43,6 +43,6 @@ reloadScss()
 loadUserData()
 
 App.config({
-    style: `${App.configDir}/style.css`,
+    style: `/tmp/ags/css/style.css`,
     windows: windows,
 })

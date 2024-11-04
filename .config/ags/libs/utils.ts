@@ -22,11 +22,11 @@ export const forActiveWorkspace = (
  * Recompile and reload the SCSS files
  */
 export const reloadScss = () => {
-    exec(`sass ${App.configDir}/scss/main.scss ${App.configDir}/style.css`)
+    exec(`sass ${App.configDir}/scss/main.scss /tmp/ags/css/style.css`)
 
     // Apply compiled css
     App.resetCss()
-    App.applyCss(`${App.configDir}/style.css`)
+    App.applyCss(`/tmp/ags/css/style.css`)
 }
 
 /**
