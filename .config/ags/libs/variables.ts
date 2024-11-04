@@ -51,6 +51,18 @@ export const ssh_agent_status = Variable("error:internal-error", {
     ],
 })
 
+export const is_scaled = Variable(false, {
+    poll: [
+        POLLING_INTERVAL,
+        [
+            "bash",
+            "-c",
+            `fd --base-directory "$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/temp/monitors" is_scaled -x cat | uniq | sort | head -1`,
+        ],
+        (out) => out === "true",
+    ],
+})
+
 export const runner_mode = Variable<
     "none" | "web" | "shell" | "apps" | "sshAgent" | "location"
 >("none")

@@ -8,6 +8,7 @@ import "modules/api/Api"
 import { RunnerWindow } from "modules/runner/Runner"
 import { show_runner } from "libs/variables"
 import { loadUserData } from "libs/UserData"
+import { DesktopWindow } from "modules/desktop/Desktop"
 
 const hyprland = await Service.import("hyprland")
 
@@ -20,6 +21,8 @@ const windows = (): Gtk.Window[] => {
     wins.push(MediaWindow(hyprland.active.monitor.id))
 
     wins.push(SessionWindow(hyprland.active.monitor.id))
+
+    // wins.push(DesktopWindow(hyprland.active.monitor.id))
 
     const runner = RunnerWindow(hyprland.active.monitor.id)
     runner.hook(show_runner, (self) => {
