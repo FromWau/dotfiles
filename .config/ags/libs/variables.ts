@@ -3,7 +3,7 @@ import { Application } from "types/service/applications"
 const POLLING_INTERVAL = 2000
 
 export const date = Variable("", {
-    poll: [POLLING_INTERVAL, "date '+%T;%a, %d. %_B(%m) %Y'"],
+    poll: [1000, "date '+%T;%a, %d. %_B(%m) %Y'"],
 })
 
 export const cpuUsage = Variable(0, {

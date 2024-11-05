@@ -1,0 +1,35 @@
+[config]
+version_check = true
+
+[config.wallpaper]
+command = "swww"
+arguments = ["img", 
+    "--transition-step", "255", 
+    "--transition-fps", "60", 
+    "--transition-type", "any", 
+    "--transition-bezier", ".4,.04,.2,1", 
+]
+set = false
+
+# [templates.css]
+# input_path = '~/.config/matugen/templates/colors.css'
+# output_path = 'colors.css'
+
+[templates.hyprland]
+input_path = '~/.config/matugen/templates/hyprland-colors.conf'
+output_path = '~/.config/hypr/colors.conf'
+post_hook = 'hyprctl reload'
+
+[templates.ags]
+input_path = '~/.config/matugen/templates/colors.scss'
+output_path = '~/.config/ags/scss/colors.scss'
+post_hook = 'ags -r "reloadScss()"'
+
+[templates.kitty]
+input_path = '~/.config/matugen/templates/kitty-colors.conf'
+output_path = '~/.config/kitty/colors.conf'
+
+[templates.starship]
+input_path = '~/.config/matugen/templates/starship-colors.toml'
+output_path = '~/.cache/matugen/starship.toml'
+post_hook = '~/.config/matugen/scripts/starship.sh'

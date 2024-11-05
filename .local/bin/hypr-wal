@@ -31,10 +31,6 @@ changeWallpaper() {
 	echo "$pic"
 }
 
-updateKitty() {
-	cp "$HOME"/.cache/wal/colors-kitty.conf "$HOME"/.config/kitty/current-theme.conf
-}
-
 updateCava() {
 	cp "$HOME"/.cache/wal/colors-cava.cava "$HOME"/.config/cava/config
 
@@ -70,23 +66,11 @@ updateWalfox() {
 	fi
 }
 
-upateHyprland() {
-	cp "$HOME"/.cache/wal/colors-hyprland.conf "$HOME"/.config/hypr/themes/wal.conf
-}
-
-updateAgs() {
-	cp "$HOME"/.cache/wal/colors.scss "$HOME"/.config/ags/colors.scss
-	ags -r "reloadScss()"
-}
-
 pic=$(changeWallpaper)
 
-wal --saturate 1.0 -i "$pic" --cols16 -n
+matugen -v image "$pic"
 
-updateKitty
-updateCava
-updateBtop++
-updateBat
-updateWalfox
-upateHyprland
-updateAgs
+# updateCava
+# updateBtop++
+# updateBat
+# updateWalfox

@@ -7,7 +7,7 @@
 .session-header {
     color: $primary;
     padding-bottom: 12px;
-    border-bottom: $color8 1px solid;
+    border-bottom: $on_primary 1px solid;
     font-size: 18px;
 }
 
@@ -20,7 +20,7 @@
     padding: 4px;
 
     &:hover {
-        background: $color8;
+        background: $on_primary;
         border-radius: 16px;
     }
 }
