@@ -11,9 +11,9 @@ arguments = ["img",
 ]
 set = false
 
-# [templates.css]
-# input_path = '~/.config/matugen/templates/colors.css'
-# output_path = 'colors.css'
+[templates.css]
+input_path = '~/.config/matugen/templates/colors.css'
+output_path = '~/.config/matugen/current-colors.css'
 
 [templates.hyprland]
 input_path = '~/.config/matugen/templates/hyprland-colors.conf'
@@ -33,3 +33,8 @@ output_path = '~/.config/kitty/colors.conf'
 input_path = '~/.config/matugen/templates/starship-colors.toml'
 output_path = '~/.cache/matugen/starship.toml'
 post_hook = '~/.config/matugen/scripts/starship.sh'
+
+[templates.fox]
+input_path = '~/.config/matugen/templates/fox-colors.json'
+output_path = '~/.cache/wal/colors.json'
+post_hook = 'pywalfox update'
