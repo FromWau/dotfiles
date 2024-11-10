@@ -9,6 +9,7 @@ right_format = """$all"""
 [character]
 success_symbol = "[❯](color9 bold)"
 error_symbol = "[❯](error)"
+vimcmd_symbol = "[❮](color8 bold)"
 
 [directory]
 truncation_length =      9
@@ -20,12 +21,12 @@ read_only =              ' '
 
 # Git
 [git_status]
-conflicted = "[󰚌${count}](red)" 
+conflicted = "[󰚌${count}](red)"
 up_to_date = "[✓](green)"
 ahead =      "[⇡${count}](yellow)"
 behind =     "[⇣${count}](red)"
-untracked =  "[+${count}](blue)" 
-staged =     "[+${count}](green)" 
+untracked =  "[+${count}](blue)"
+staged =     "[+${count}](green)"
 format =     '[\[$all_status$ahead_behind\]]($style) '
 
 # Languages
@@ -46,6 +47,7 @@ symbol = ' '
 
 [package]
 symbol = ' '
+
 
 # Themes
 [palettes.catppuccin_mocha]
@@ -77,17 +79,13 @@ mantle = "#181825"
 crust = "#11111b"
 
 [palettes.colors]
-color1 = '#93cdf6'
-color2 = '#00344d'
-color3 = '#c1c7ce'
-color4 = '#1c2024'
-color5 = '#00344d'
-color6 = '#101417'
-color7 = '#101417'
-color8 = '#93cdf6'
-color9 = '#cdc0e9'
+color1 = '#ffb4aa'
+color2 = '#561e19'
+color3 = '#d8c2bf'
+color4 = '#271d1c'
+color5 = '#561e19'
+color6 = '#1a1110'
+color7 = '#1a1110'
+color8 = '#ffb4aa'
+color9 = '#dfc38c'
 error = '#ffb4ab'
-red = '#ff0000'
-green = '#00ff00'
-yellow = '#ffff00'
-blue = '#0000ff'
