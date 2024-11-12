@@ -38,3 +38,8 @@ post_hook = '~/.config/matugen/scripts/starship.sh'
 input_path = '~/.config/matugen/templates/fox-colors.json'
 output_path = '~/.cache/wal/colors.json'
 post_hook = 'pywalfox update'
+
+[templates.bat]
+input_path = '~/.config/matugen/templates/bat-colors.tmTheme'
+output_path = '~/.config/bat/themes/matugen.tmTheme'
+post_hook = 'bat cache --build'
