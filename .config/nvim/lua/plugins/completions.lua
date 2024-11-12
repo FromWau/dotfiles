@@ -1,4 +1,5 @@
-return { -- Autocompletion
+return {
+    { -- Autocompletion
     "hrsh7th/nvim-cmp",
     event = "InsertEnter",
     dependencies = {
@@ -113,4 +114,7 @@ return { -- Autocompletion
             },
         }
     end,
+    },
+
+    { "b0o/schemastore.nvim", }
 }

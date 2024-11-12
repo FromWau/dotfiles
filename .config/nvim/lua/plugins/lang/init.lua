@@ -1,3 +1,4 @@
+require "plugins.lang.pre_config"
 local tools = require("utils.lang").getTables()
 
 local language_servers = tools.language_servers
@@ -81,7 +82,8 @@ return {
             autocmd = { enabled = true },
         },
     },
-    "kevinhwang91/nvim-ufo",
+
+    { "kevinhwang91/nvim-ufo", },
 
     { -- LSP Configuration & Plugins
         "neovim/nvim-lspconfig",

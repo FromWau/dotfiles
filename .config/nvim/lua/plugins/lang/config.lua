@@ -105,19 +105,45 @@ local tools = {
         formatter = { "ktlint" },
         linter = { "ktlint" },
     },
-    toml = {
-        lsp = { taplo = {} },
-        formatter = {},
-        linter = {},
-    },
     gradle = {
         lsp = { gradle_ls = {} },
         formatter = {},
         linter = {},
     },
     json = {
-        lsp = { jsonls = {} },
+        lsp = {
+            jsonls = {
+                settings = {
+                    json = {
+                        schemas = require("schemastore").json.schemas(),
+                        validate = { enable = true },
+                    },
+                },
+            },
+        },
         formatter = { "fixjson" },
+        linter = {},
+    },
+    yaml = {
+        lsp = {
+            yamlls = {
+                settings = {
+                    yaml = {
+                        schemaStore = {
+                            enable = false,
+                            url = "",
+                        },
+                        schemas = require("schemastore").yaml.schemas(),
+                    },
+                },
+            },
+        },
+        formatter = { "yamlfmt" },
+        linter = {},
+    },
+    toml = {
+        lsp = { taplo = {} },
+        formatter = {},
         linter = {},
     },
 }
