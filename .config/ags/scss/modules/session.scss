@@ -1,0 +1,26 @@
+.session {
+    background: $background;
+    min-height: 40px;
+    border-radius: 16px;
+}
+
+.session-header {
+    color: $primary;
+    padding-bottom: 12px;
+    border-bottom: $on_primary 1px solid;
+    font-size: 18px;
+}
+
+.session-menu {
+    margin-top: 12px;
+}
+
+.session-item {
+    color: $primary;
+    padding: 4px;
+
+    &:hover {
+        background: $on_primary;
+        border-radius: 16px;
+    }
+}
