@@ -34,6 +34,7 @@ function Right() {
 
 export default function Bar(gdkmonitor: Gdk.Monitor) {
     return <window
+        name="Bar"
         className="Bar"
         gdkmonitor={gdkmonitor}
         exclusivity={Astal.Exclusivity.EXCLUSIVE}
