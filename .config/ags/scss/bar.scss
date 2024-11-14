@@ -1,0 +1,15 @@
+window.Bar {
+    background: transparent;
+
+    > centerbox {
+        border-radius: 10px;
+        margin: 8px;
+    }
+
+    button {
+        background: $primary;
+        color: $on_primary;
+        border-radius: 8px;
+        margin: 2px;
+    }
+}

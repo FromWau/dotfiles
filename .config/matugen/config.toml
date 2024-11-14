@@ -23,7 +23,7 @@ post_hook = 'hyprctl reload'
 [templates.ags]
 input_path = '~/.config/matugen/templates/colors.scss'
 output_path = '~/.config/ags/scss/colors.scss'
-post_hook = 'ags -r "reloadScss()"'
+post_hook = 'ags request "rebuild_colors" --instance astal'
 
 [templates.kitty]
 input_path = '~/.config/matugen/templates/kitty-colors.conf'
