@@ -1,6 +1,7 @@
 import { App, Astal, Gtk, Gdk } from "astal/gtk3"
 import { Variable } from "astal"
 import Workspaces from "./modules/Workspaces"
+import { showPower } from "./../variables"
 
 const time = Variable("").poll(1000, "date '+%T %a, %d. %_B(%m) %Y'")
 
@@ -9,8 +10,8 @@ function Left() {
     return <box
         halign={Gtk.Align.START} >
         <button
-            onClicked={() => print("test")}>
-            Welcome to AGS!
+            onClicked={() => showPower.set(!showPower.get())}>
+            Arch
         </button>
         <Workspaces />
     </box>

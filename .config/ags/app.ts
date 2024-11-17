@@ -1,6 +1,7 @@
 import { App, Gdk, Gtk } from "astal/gtk3"
 import { exec } from "astal/process"
-import Bar from "./widget/Bar"
+import Bar from "./widget/bar/Bar"
+import Power from "./widget/power/Power"
 
 function main() {
     const bars = new Map<Gdk.Monitor, Gtk.Widget>()
@@ -18,6 +19,8 @@ function main() {
         bars.get(gdkmonitor)?.destroy()
         bars.delete(gdkmonitor)
     })
+
+    Power()
 }
 
 exec("sass ./scss/main.scss /tmp/ags/style.css")
