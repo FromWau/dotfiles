@@ -10,9 +10,31 @@ window.Bar {
     }
 
     button {
-        border-radius: $border_radius;
         color: $on_primary;
         background: $primary;
         margin: 2px;
+
+        &.active {
+            background: $on_primary;
+            color: $primary;
+        }
+
+        &:hover {
+            background: $inverse_primary;
+        }
+
+        &:first-child {
+            border-radius: 16px 0 0 16px;
+            padding-left: 16px;
+        }
+        &:last-child {
+            border-radius: 0 16px 16px 0;
+            padding-right: 16px;
+        }
+        &:first-child:last-child {
+            border-radius: 16px;
+            padding-left: 16px;
+            padding-right: 16px;
+        }
     }
 }

@@ -10,17 +10,17 @@ function Left() {
     return <box
         halign={Gtk.Align.START} >
         <button
-            onClicked={() => showPower.set(!showPower.get())}>
+            onClicked={() => showPower.set(!showPower.get())} >
             Arch
-        </button>
+        </button >
         <Workspaces />
-    </box>
+    </box >
 }
 
 function Middle() {
     return <box
         halign={Gtk.Align.CENTER} >
-    </box>
+    </box >
 }
 
 function Right() {
@@ -28,8 +28,8 @@ function Right() {
         halign={Gtk.Align.END} >
         <button
             onClick={() => { }} >
-            <label label={time()} />
-        </button>
+            {time()}
+        </button >
     </box>
 }
 
@@ -42,11 +42,11 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
         anchor={Astal.WindowAnchor.TOP
             | Astal.WindowAnchor.LEFT
             | Astal.WindowAnchor.RIGHT}
-        application={App}>
+        application={App} >
         <centerbox>
             <Left />
             <Middle />
             <Right />
-        </centerbox>
-    </window>
+        </centerbox >
+    </window >
 }

@@ -1,19 +1,20 @@
 window.Power {
     > revealer {
         padding: $gap_padding;
-    }
 
-    > revealer > box {
-        background: $background;
-        border-radius: $border_radius;
-        padding: 8px;
-    }
+        > box {
+            background: $background;
+            border-radius: $border_radius;
+            padding: 8px;
 
-    label {
-        background: $primary;
-        color: $on_primary;
-        border-radius: $border_radius;
-        margin: 2px;
+            > label {
+                background: $background;
+                color: $primary;
+                border-bottom: 2px solid $on_background;
+                margin: 2px;
+                padding: 8px;
+            }
+        }
     }
 
     button {

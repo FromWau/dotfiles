@@ -8,9 +8,9 @@ export default function Power() {
         className="Power"
         anchor={Astal.WindowAnchor.TOP | Astal.WindowAnchor.RIGHT}
         exclusivity={Astal.Exclusivity.EXCLUSIVE}
-        application={App}>
-        < PowerRevealer />
-    </window>
+        application={App} >
+        <PowerRevealer />
+    </window >
 }
 
 function PowerRevealer() {
@@ -20,35 +20,35 @@ function PowerRevealer() {
         transitionDuration={1000} >
         <box
             vertical={true}
-            halign={Gtk.Align.CENTER}>
-            < label label="Power" />
-            < box
+            halign={Gtk.Align.CENTER} >
+            <label label="Power" />
+            <box
                 vertical={true} >
                 <button
-                    onClicked={() => print("shutdown 0")}>
+                    onClicked={() => print("shutdown 0")} >
                     Power Off
-                </button>
+                </button >
                 <button
-                    onClicked={() => print("reboot")}>
+                    onClicked={() => print("reboot")} >
                     Reboot
-                </button>
+                </button >
                 <button
-                    onClicked={() => print("logout")}>
+                    onClicked={() => print("logout")} >
                     Logout
-                </button>
+                </button >
                 <button
-                    onClicked={() => print("suspend")}>
+                    onClicked={() => print("suspend")} >
                     Suspend
-                </button>
+                </button >
                 <button
-                    onClicked={() => print("shutdown 30m")}>
+                    onClicked={() => print("shutdown 30m")} >
                     Shutdown in 30 minutes
-                </button>
+                </button >
                 <button
-                    onClicked={() => print("suspend 30m")}>
+                    onClicked={() => print("suspend 30m")} >
                     Suspend in 30 minutes
-                </button>
-            </box>
-        </box>
-    </revealer>
+                </button >
+            </box >
+        </box >
+    </revealer >
 }

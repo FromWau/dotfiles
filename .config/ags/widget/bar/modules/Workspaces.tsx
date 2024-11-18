@@ -1,8 +1,6 @@
 import Hyprland from "gi://AstalHyprland"
 
-const hyprland = Hyprland.get_default()
-
-function get_workspaces() {
+function get_workspaces(hyprland: Hyprland.Hyprland) {
     const ws = hyprland.get_workspaces()
         .map((workspace) => {
             const name = workspace.get_name();
@@ -23,19 +21,25 @@ function get_workspaces() {
                     } else {
                         hyprland.dispatch("workspace", workspace_name);
                     }
+                }}
+                setup={(self) => {
+                    self.toggleClassName("active", hyprland.get_focused_workspace().get_name() == workspace_name)
+
+                    self.hook(hyprland, "notify::focused-workspace", () => {
+                        self.toggleClassName("active", hyprland.get_focused_workspace().get_name() == workspace_name)
+                    })
                 }} >
-                <label label={workspace_name} />
+                {workspace_name}
             </button >
         ))
 }
 
 export default function Workspaces() {
+    const hyprland = Hyprland.get_default()
     return <box
-        setup={(box) => {
-            hyprland.connect("workspace-added", () => box.children = get_workspaces());
-            hyprland.connect("workspace-removed", () => box.children = get_workspaces());
-        }}
-        children={get_workspaces()} >
+        name="Workspaces"
+        setup={(self) => self.hook(hyprland, "notify::workspaces", () => self.children = get_workspaces(hyprland))} >
+        {get_workspaces(hyprland)}
     </box >
 }
 
