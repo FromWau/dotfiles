@@ -2,8 +2,6 @@ window.Bar {
     background: transparent;
 
     > centerbox {
-        background: transparent;
-        border-radius: $border_radius;
         margin-left: $gap_padding;
         margin-right: $gap_padding;
         margin-top: $gap_padding;
@@ -13,28 +11,37 @@ window.Bar {
         color: $on_primary;
         background: $primary;
         margin: 2px;
+    }
 
-        &.active {
-            background: $on_primary;
-            color: $primary;
-        }
+    .Workspaces {
+        button {
+            color: $on_primary;
+            background: $primary;
+            margin: 2px;
+            border-radius: 0px;
 
-        &:hover {
-            background: $inverse_primary;
-        }
+            &.active {
+                background: $on_primary;
+                color: $primary;
+            }
 
-        &:first-child {
-            border-radius: 16px 0 0 16px;
-            padding-left: 16px;
-        }
-        &:last-child {
-            border-radius: 0 16px 16px 0;
-            padding-right: 16px;
-        }
-        &:first-child:last-child {
-            border-radius: 16px;
-            padding-left: 16px;
-            padding-right: 16px;
+            &:hover {
+                background: $inverse_primary;
+            }
+
+            &:first-child {
+                border-radius: 16px 0 0 16px;
+                padding-left: 16px;
+            }
+            &:last-child {
+                border-radius: 0 16px 16px 0;
+                padding-right: 16px;
+            }
+            &:first-child:last-child {
+                border-radius: 16px;
+                padding-left: 16px;
+                padding-right: 16px;
+            }
         }
     }
 }

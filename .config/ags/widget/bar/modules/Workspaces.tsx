@@ -38,6 +38,7 @@ export default function Workspaces() {
     const hyprland = Hyprland.get_default()
     return <box
         name="Workspaces"
+        className={"Workspaces"}
         setup={(self) => self.hook(hyprland, "notify::workspaces", () => self.children = get_workspaces(hyprland))} >
         {get_workspaces(hyprland)}
     </box >

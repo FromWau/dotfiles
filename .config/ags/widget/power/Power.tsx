@@ -1,5 +1,5 @@
 import { Astal, App, Gtk } from "astal/gtk3"
-import { bind } from "astal"
+import { bind, execAsync } from "astal"
 import { showPower } from "./../variables"
 
 export default function Power() {
@@ -25,28 +25,28 @@ function PowerRevealer() {
             <box
                 vertical={true} >
                 <button
-                    onClicked={() => print("shutdown 0")} >
+                    onClicked={() => execAsync("shutdown 0")} >
                     Power Off
                 </button >
                 <button
-                    onClicked={() => print("reboot")} >
+                    onClicked={() => execAsync("reboot")} >
                     Reboot
-                </button >
-                <button
-                    onClicked={() => print("logout")} >
-                    Logout
                 </button >
                 <button
                     onClicked={() => print("suspend")} >
                     Suspend
                 </button >
                 <button
-                    onClicked={() => print("shutdown 30m")} >
+                    onClicked={() => execAsync("shutdown 30m")} >
                     Shutdown in 30 minutes
                 </button >
                 <button
-                    onClicked={() => print("suspend 30m")} >
+                    onClicked={() => execAsync("suspend 30m")} >
                     Suspend in 30 minutes
+                </button >
+                <button
+                    onClicked={() => execAsync("bash -c ~/.config/hypr/scripts/toggle-scale.sh")} >
+                    Toggle Scale
                 </button >
             </box >
         </box >
