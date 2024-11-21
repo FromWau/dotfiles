@@ -1,0 +1,24 @@
+window.Runner {
+    > revealer {
+        padding: $gap_padding;
+    }
+
+    box {
+        background: $primary;
+    }
+
+    label {
+        background: $primary;
+        color: $on_primary;
+        border-bottom: 2px solid $on_background;
+        margin: 2px;
+        padding: 8px;
+    }
+
+    > scrollable > label {
+        background: $primary;
+        color: $on_primary;
+        margin: 2px;
+        padding: 8px;
+    }
+}

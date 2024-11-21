@@ -2,6 +2,7 @@ import { App, Gdk, Gtk } from "astal/gtk3"
 import { exec } from "astal/process"
 import Bar from "./widget/bar/Bar"
 import Power from "./widget/power/Power"
+import Runner from "./widget/runner/Runner"
 
 function main() {
     const bars = new Map<Gdk.Monitor, Gtk.Widget>()
@@ -21,6 +22,7 @@ function main() {
     })
 
     Power()
+    Runner()
 }
 
 exec("sass ./scss/main.scss /tmp/ags/style.css")
