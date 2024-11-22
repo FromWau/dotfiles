@@ -1,9 +1,8 @@
 import { App, Astal, Gtk, Gdk } from "astal/gtk3"
-import { Variable } from "astal"
 import Workspaces from "./modules/Workspaces"
 import { showPower } from "./../variables"
-
-const time = Variable("").poll(1000, "date '+%T %a, %d. %_B(%m) %Y'")
+import { Time } from "./modules/Time"
+import Battery from "./modules/Battery"
 
 
 function Left() {
@@ -26,10 +25,8 @@ function Middle() {
 function Right() {
     return <box
         halign={Gtk.Align.END} >
-        <button
-            onClick={() => { }} >
-            {time()}
-        </button >
+        <Battery />
+        <Time />
     </box>
 }
 

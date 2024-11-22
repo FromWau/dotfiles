@@ -13,6 +13,11 @@ window.Bar {
         margin: 2px;
     }
 
+    icon {
+        color: $on_primary;
+        font-size: 18px;
+    }
+
     .Workspaces {
         button {
             color: $on_primary;

@@ -22,7 +22,7 @@ function main() {
     })
 
     Power()
-    Runner()
+    // Runner()
 }
 
 exec("sass ./scss/main.scss /tmp/ags/style.css")
@@ -40,6 +40,7 @@ App.start({
             res("unknown request")
         }
     },
+    icons: `${SRC}/icons`,
     css: "/tmp/ags/style.css",
     main,
 })
