@@ -13,8 +13,10 @@ export default function BluetoothModule() {
                     <box>
                         <icon icon="bluetooth-symbolic" />
                         <box>
-                            <icon icon={d.get_icon()} />
-                            <label label={d.get_name()} />
+                            <icon
+                                icon={d.get_icon()}
+                                tooltipText={d.get_name()}
+                            />
                         </box>
                     </box>
                 </button>

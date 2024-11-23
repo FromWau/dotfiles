@@ -2,9 +2,11 @@ import { App, Astal, Gtk, Gdk } from "astal/gtk3"
 import Workspaces from "./modules/Workspaces"
 import { showPower } from "./../variables"
 import { Time } from "./modules/Time"
-import Battery from "./modules/Battery"
+import Battery from "gi://AstalBattery"
+import BatteryModule from "./modules/Battery"
 import Bluetooth from "./modules/Bluetooth"
 import Network from "./modules/Network"
+import { bind } from "astal"
 
 
 function Left() {
@@ -25,11 +27,18 @@ function Middle() {
 }
 
 function Right() {
+    var dynamicChildren = []
+
+    const isBattery = bind(Battery.get_default(), "is_battery")
+    if (isBattery.get()) {
+        dynamicChildren.push(<BatteryModule />)
+    }
+
     return <box
         halign={Gtk.Align.END} >
-        <Network />
+        {dynamicChildren}
         <Bluetooth />
-        <Battery />
+        <Network />
         <Time />
     </box>
 }
