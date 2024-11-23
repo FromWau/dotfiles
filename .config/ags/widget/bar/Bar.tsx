@@ -3,6 +3,8 @@ import Workspaces from "./modules/Workspaces"
 import { showPower } from "./../variables"
 import { Time } from "./modules/Time"
 import Battery from "./modules/Battery"
+import Bluetooth from "./modules/Bluetooth"
+import Network from "./modules/Network"
 
 
 function Left() {
@@ -25,6 +27,8 @@ function Middle() {
 function Right() {
     return <box
         halign={Gtk.Align.END} >
+        <Network />
+        <Bluetooth />
         <Battery />
         <Time />
     </box>
