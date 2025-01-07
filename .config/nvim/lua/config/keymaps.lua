@@ -1,8 +1,8 @@
 local function map(mode, keys, func, opts)
-    opts = opts or {}
-    opts.noremap = true
-    opts.silent = true
-    vim.keymap.set(mode, keys, func, opts)
+	opts = opts or {}
+	opts.noremap = true
+	opts.silent = true
+	vim.keymap.set(mode, keys, func, opts)
 end
 
 local function nmap(keys, func, opts) map("n", keys, func, opts) end
@@ -49,3 +49,7 @@ nmap("<leader>ul", function() require("lazy").show() end, { desc = "Show Lazy" }
 -- Window management
 nmap("<leader>sv", "<cmd>vsplit<CR>", { desc = "Split vertically" })
 nmap("<leader>sh", "<cmd>split<CR>", { desc = "Split horizontally" })
+
+-- quickfix
+nmap("<C-n>", "<cmd>cnext<CR>", { desc = "Next quickfix" })
+nmap("<C-p>", "<cmd>cprevious<CR>", { desc = "Previous quickfix" })

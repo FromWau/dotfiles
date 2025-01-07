@@ -1,21 +1,18 @@
 return {
-    "nvim-telescope/telescope.nvim", -- Fuzzy Finder (files, lsp, etc)
+    'nvim-telescope/telescope.nvim',
     event = "VimEnter",
-    branch = "0.1.x",
+    tag = '0.1.8',
     dependencies = {
-        "nvim-lua/plenary.nvim",
+        'nvim-lua/plenary.nvim',
+        { "nvim-tree/nvim-web-devicons", enabled = vim.g.have_nerd_font },
         {
             "nvim-telescope/telescope-fzf-native.nvim",
             build = "make",
             cond = function() return vim.fn.executable "make" == 1 end,
         },
-        "nvim-telescope/telescope-ui-select.nvim",
-        { "nvim-tree/nvim-web-devicons", enabled = vim.g.have_nerd_font },
         { "nvim-telescope/telescope-media-files.nvim", dependencies = "nvim-lua/popup.nvim" },
     },
     config = function()
-        local trouble = require "trouble.sources.telescope"
-
         require("telescope").setup {
             defaults = {
                 layout_strategy = "vertical",
@@ -32,9 +29,7 @@ return {
                         ["<c-up>"] = "preview_scrolling_up",
                         ["<ScrollWheelDown>"] = "preview_scrolling_down",
                         ["<c-down>"] = "preview_scrolling_down",
-                        ["<c-t>"] = trouble.open,
                     },
-                    n = { ["<c-t>"] = trouble.open },
                 },
             },
             pickers = {
@@ -42,21 +37,17 @@ return {
                 current_buffer_fuzzy_find = { sorting_strategy = "ascending" },
             },
             extensions = {
+                fzf = {},
                 media_files = {
                     filetypes = { "png", "webp", "jpg", "jpeg", "pdf" },
                 },
             },
         }
 
-        -- Enable telescope extensions, if they are installed
-        pcall(require("telescope").load_extension, "fzf")
-        pcall(require("telescope").load_extension, "ui-select")
-        pcall(require("telescope").load_extension, "noice")
-        pcall(require("telescope").load_extension, "media_files")
-        pcall(require("telescope").load_extension "advanced_git_search")
-        pcall(require("telescope").load_extension "neoclip")
+        require("telescope").load_extension('fzf')
+        require("telescope").load_extension("media_files")
 
-        local builtin = require "telescope.builtin"
+        local builtin = require('telescope.builtin')
         local function nmap(keys, func, opts) vim.keymap.set("n", keys, func, opts) end
 
         nmap("<leader>fh", builtin.help_tags, { desc = "[F]ind [H]elp" })
