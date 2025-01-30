@@ -14,7 +14,7 @@ return {
                         -- See the configuration section for more details
                         -- Load luvit types when the `vim.uv` word is found
                         { path = "${3rd}/luv/library", words = { "vim%.uv" } },
-                        { path = "snacks.nvim",        words = { "Snacks" } },
+                        { path = "snacks.nvim", words = { "Snacks" } },
                     },
                 },
             },
@@ -49,8 +49,7 @@ return {
                     end
 
                     if client.supports_method "textDocument/codeAction" then
-                        vim.keymap.set("n", "<leader>ca", function() vim.lsp.buf.code_action() end,
-                            { desc = "Code action" })
+                        vim.keymap.set("n", "<leader>ca", function() vim.lsp.buf.code_action() end, { desc = "Code action" })
                     end
 
                     if client.supports_method "textDocument/rename" then
@@ -81,8 +80,7 @@ return {
                 },
             }
 
-            vim.keymap.set("", "<leader>cf", function() require("conform").format { async = true } end,
-                { desc = "Format code" })
+            vim.keymap.set("", "<leader>cf", function() require("conform").format { async = true } end, { desc = "Format code" })
         end,
     },
 

@@ -41,9 +41,18 @@ local opts = {
             { icon = " ", desc = "New File", action = "ene | startinsert", key = "n" },
             { icon = "󱄽 ", desc = "Find Word", action = function() require("telescope.builtin").live_grep() end, key = "g" },
             { icon = " ", desc = "Recent Files", action = function() require("telescope.builtin").oldfiles() end, key = "r" },
-            { icon = "󰙅 ", desc = "File Browser", action = "Neotree toggle", key = "e" },
+            { icon = "󰙅 ", desc = "Open Oil", action = function() require("oil").toggle_float() end, key = "e" },
             { icon = "󰊳 ", desc = "Open Lazy", action = "Lazy", key = "l" },
             { icon = "󰺾 ", desc = "Open Mason", action = "Mason", key = "m" },
+            {
+                icon = " ",
+                desc = "Open Dadbod",
+                action = function()
+                    vim.cmd "DBUIToggle"
+                    vim.cmd "only"
+                end,
+                key = "d",
+            },
             { icon = "󰋗 ", desc = "Search Help", action = function() require("telescope.builtin").help_tags() end, key = "h" },
             {
                 icon = " ",
