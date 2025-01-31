@@ -22,31 +22,33 @@ function link_and_backup() {
 function link_config() {
     source_dir=~/Projects/dotfiles/.config/
     target_dir=~/.config/
-    folders=(ags anyrun bat beets btop dunst fastfetch fish git hypr ideavim kitty lazygit matugen mpd mpDris2 mpv ncmpcpp nvim pacman wal wget)
-    files=(starship.toml)
+    items=(
+        ags anyrun bat beets btop dunst fastfetch fish ghostty 
+        git hypr ideavim kitty lazygit matugen mpd mpDris2 mpv 
+        ncmpcpp npm nvim pacman systemd wal wget starship.toml
+    )
 
-    link_and_backup "$source_dir" "$target_dir" "${folders[@]}"
-    link_and_backup "$source_dir" "$target_dir" "${files[@]}"
+    link_and_backup "$source_dir" "$target_dir" "${items[@]}"
 }
 
 function link_local_bin() {
     source_dir=~/Projects/dotfiles/.local/bin/
     target_dir=~/.local/bin/
-    folders=()
-    files=(battery-notify download-spot find-similar-pics fix-bitwarden fzf-previewer git-reset-to-parent hypr-wal qr reddit-images screenshot ssh-key-fzf toggle-scale)
+    items=(
+        battery-notify download-spot find-similar-pics fix-bitwarden 
+        fzf-previewer git-reset-to-parent hypr-wal qr reddit-images 
+        screenshot ssh-key-fzf toggle-scale
+    )
 
-    link_and_backup "$source_dir" "$target_dir" "${folders[@]}"
-    link_and_backup "$source_dir" "$target_dir" "${files[@]}"
+    link_and_backup "$source_dir" "$target_dir" "${items[@]}"
 }
 
 function link_local_share() {
     source_dir=~/Projects/dotfiles/.local/share/
     target_dir=~/.local/share/
-    folders=(applications icons)
-    files=()
+    items=(applications icons)
 
-    link_and_backup "$source_dir" "$target_dir" "${folders[@]}"
-    link_and_backup "$source_dir" "$target_dir" "${files[@]}"
+    link_and_backup "$source_dir" "$target_dir" "${items[@]}"
 }
 
 link_config
