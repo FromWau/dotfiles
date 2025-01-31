@@ -30,7 +30,7 @@ EOF
 	content=$(
 		cat <<EOF
 $info
-monitor=Unknown-1, 2560x1440@120, 0x0, 1 # GPU USB-C to Docking Station
+monitor=HDMI-A-1, 2560x1440@120, 0x0, 1
 EOF
 	)
 
