@@ -18,6 +18,7 @@ truncate_to_repo =       false
 before_repo_root_style = "bold color1"
 repo_root_style =        "bold color3"
 read_only =              ' '
+use_logical_path =        false
 
 # Git
 [git_status]
