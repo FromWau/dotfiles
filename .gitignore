@@ -2,3 +2,5 @@
 .config/fish/completions
 
 .config/systemd/user/default.target.wants
+
+.local/share/icons/default
