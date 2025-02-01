@@ -2,7 +2,7 @@
 
 scale_factor=1.5
 hypr_dir="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE"
-info="# Auto generated
+info="# Auto generated"
 
 # ensures that the scaling number is not odd
 add_point_one_if_odd() {
