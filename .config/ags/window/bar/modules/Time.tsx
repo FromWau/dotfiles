@@ -1,4 +1,4 @@
-import { time } from "../../variables";
+import { time } from "../../../lib/variables";
 
 export function Time() {
     return <button

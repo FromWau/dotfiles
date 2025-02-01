@@ -1,19 +1,19 @@
 import { App, Gdk, Gtk } from "astal/gtk3"
 import { exec } from "astal/process"
-import Bar from "./widget/bar/Bar"
-import Power from "./widget/power/Power"
-import Runner from "./widget/runner/Runner"
+import BarWindow from "./window/bar/Bar"
+import PowerWindow from "./window/power/Power"
+import RunnerWindow from "./window/runner/Runner"
 
 function main() {
     const bars = new Map<Gdk.Monitor, Gtk.Widget>()
 
     // initialize
     for (const gdkmonitor of App.get_monitors()) {
-        bars.set(gdkmonitor, Bar(gdkmonitor))
+        bars.set(gdkmonitor, BarWindow(gdkmonitor))
     }
 
     App.connect("monitor-added", (_, gdkmonitor) => {
-        bars.set(gdkmonitor, Bar(gdkmonitor))
+        bars.set(gdkmonitor, BarWindow(gdkmonitor))
     })
 
     App.connect("monitor-removed", (_, gdkmonitor) => {
@@ -21,8 +21,8 @@ function main() {
         bars.delete(gdkmonitor)
     })
 
-    Power()
-    // Runner()
+    PowerWindow()
+    // RunnerWindow()
 }
 
 exec("sass ./scss/main.scss /tmp/ags/style.css")
@@ -34,10 +34,13 @@ function rebuild_colors() {
 
 App.start({
     requestHandler(request: string, res: (response: any) => void) {
-        if (request == "rebuild_colors") {
-            rebuild_colors()
-        } else {
-            res("unknown request")
+        switch (request) {
+            case "rebuild_colors":
+                rebuild_colors()
+                res("OK")
+                break
+            default:
+                res("unknown request")
         }
     },
     icons: `${SRC}/icons`,

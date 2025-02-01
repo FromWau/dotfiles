@@ -1,20 +1,19 @@
 import { App, Astal, Gtk, Gdk } from "astal/gtk3"
+import { bind } from "astal"
+import AstalBattery from "gi://AstalBattery"
+import { showPower } from "lib/variables"
 import Workspaces from "./modules/Workspaces"
-import { showPower } from "./../variables"
 import { Time } from "./modules/Time"
-import Battery from "gi://AstalBattery"
-import BatteryModule from "./modules/Battery"
+import Battery from "./modules/Battery"
 import Bluetooth from "./modules/Bluetooth"
 import Network from "./modules/Network"
-import { bind } from "astal"
-
+import Tray from "./modules/Tray"
 
 function Left() {
     return <box
         halign={Gtk.Align.START} >
         <button
             onClicked={() => showPower.set(!showPower.get())} >
-            Arch
         </button >
         <Workspaces />
     </box >
@@ -27,16 +26,12 @@ function Middle() {
 }
 
 function Right() {
-    var dynamicChildren = []
-
-    const isBattery = bind(Battery.get_default(), "is_battery")
-    if (isBattery.get()) {
-        dynamicChildren.push(<BatteryModule />)
-    }
-
     return <box
         halign={Gtk.Align.END} >
-        {dynamicChildren}
+        {
+            bind(AstalBattery.get_default(), "is_battery").as(b => b ? <Battery /> : <box />)
+        }
+        <Tray />
         <Bluetooth />
         <Network />
         <Time />

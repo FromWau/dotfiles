@@ -1,6 +1,6 @@
 import { Astal, App, Gtk } from "astal/gtk3"
 import { bind, execAsync } from "astal"
-import { showPower } from "./../variables"
+import { showPower } from "../../lib/variables"
 
 export default function Power() {
     return <window
