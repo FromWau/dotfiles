@@ -55,6 +55,30 @@ return {
                     if client.supports_method "textDocument/rename" then
                         vim.keymap.set("n", "<leader>cr", function() vim.lsp.buf.rename() end, { desc = "Code rename" })
                     end
+
+                    if client.supports_method "textDocument/definition" then
+                        vim.keymap.set("n", "gd", function() vim.lsp.buf.definition() end, { desc = "Goto definition" })
+                    end
+
+                    if client.supports_method "textDocument/typeDefinition" then
+                        vim.keymap.set("n", "gD", function() vim.lsp.buf.type_definition() end, { desc = "Goto type definition" })
+                    end
+
+                    if client.supports_method "textDocument/references" then
+                        vim.keymap.set("n", "gr", function() vim.lsp.buf.references() end, { desc = "Goto references" })
+                    end
+
+                    if client.supports_method "textDocument/implementation" then
+                        vim.keymap.set("n", "gi", function() vim.lsp.buf.implementation() end, { desc = "Goto implementation" })
+                    end
+
+                    if client.supports_method "textDocument/hover" then
+                        vim.keymap.set("n", "K", function() vim.lsp.buf.hover() end, { desc = "Hover" })
+                    end
+
+                    if client.supports_method "textDocument/inlayHint" then
+                        vim.keymap.set("n", "<leader>ch", function() vim.lsp.buf.inlay_hints() end, { desc = "Inlay hints" })
+                    end
                 end,
             })
         end,
