@@ -2,6 +2,7 @@ import { App, Gdk, Gtk } from "astal/gtk3"
 import { exec } from "astal/process"
 import BarWindow from "./window/bar/Bar"
 import PowerWindow from "./window/power/Power"
+import MediaWindow from "./window/media/Media"
 import RunnerWindow from "./window/runner/Runner"
 
 function main() {
@@ -22,6 +23,7 @@ function main() {
     })
 
     PowerWindow()
+    MediaWindow()
     // RunnerWindow()
 }
 

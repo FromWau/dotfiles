@@ -10,28 +10,24 @@ import Network from "./modules/Network"
 import Tray from "./modules/Tray"
 
 function Left() {
-    return <box
-        halign={Gtk.Align.START} >
-        <button
-            onClicked={() => showPower.set(!showPower.get())} >
-        </button >
+    return <box halign={Gtk.Align.START} >
+        <button onClicked={() => showPower.set(!showPower.get())}>
+            <icon icon="computer-symbolic" />
+        </button>
         <Workspaces />
     </box >
 }
 
 function Middle() {
-    return <box
-        halign={Gtk.Align.CENTER} >
-    </box >
+    return <box halign={Gtk.Align.CENTER} />
 }
 
 function Right() {
-    return <box
-        halign={Gtk.Align.END} >
+    return <box halign={Gtk.Align.END} >
+        <Tray />
         {
             bind(AstalBattery.get_default(), "is_battery").as(b => b ? <Battery /> : <box />)
         }
-        <Tray />
         <Bluetooth />
         <Network />
         <Time />
