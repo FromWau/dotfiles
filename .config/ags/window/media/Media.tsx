@@ -21,7 +21,7 @@ export default function Media() {
 function MediaRevealer() {
     return <revealer
         revealChild={bind(showMedia)}
-        transitionType={Gtk.RevealerTransitionType.SLIDE_LEFT}
+        transitionType={Gtk.RevealerTransitionType.SLIDE_UP}
         transitionDuration={1000}
     >
         <box vertical>
@@ -47,7 +47,7 @@ function PlayerItem({ player }: { player: AstalMpris.Player }) {
     )
 
 
-    return <box vertical>
+    return <box vertical className={"item"}>
         <box vertical>
             <box>
                 <icon halign={Gtk.Align.START} icon={bind(player, "entry").as(e =>

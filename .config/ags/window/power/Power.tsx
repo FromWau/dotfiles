@@ -22,25 +22,46 @@ function PowerRevealer() {
             <label label="Power" />
             <box
                 vertical={true} >
-                <button onClicked={() => showMedia.set(!showMedia.get())} >
+                <button onClicked={() => {
+                    showMedia.set(!showMedia.get())
+                    showPower.set(false)
+                }} >
                     Show Media
                 </button >
-                <button onClicked={() => execAsync("shutdown 0")} >
+                <button onClicked={() => {
+                    execAsync("shutdown 0")
+                    showPower.set(false)
+                }} >
                     Power Off
                 </button >
-                <button onClicked={() => execAsync("reboot")} >
+                <button onClicked={() => {
+                    execAsync("reboot")
+                    showPower.set(false)
+                }} >
                     Reboot
                 </button >
-                <button onClicked={() => print("suspend")} >
+                <button onClicked={() => {
+                    print("suspend")
+                    showPower.set(false)
+                }} >
                     Suspend
                 </button >
-                <button onClicked={() => execAsync("shutdown 30m")} >
+                <button onClicked={() => {
+                    execAsync("shutdown 30m")
+                    showPower.set(false)
+                }} >
                     Shutdown in 30 minutes
                 </button >
-                <button onClicked={() => execAsync("suspend 30m")} >
+                <button onClicked={() => {
+                    execAsync("suspend 30m")
+                    showPower.set(false)
+                }} >
                     Suspend in 30 minutes
                 </button >
-                <button onClicked={() => execAsync("bash -c ~/.config/hypr/scripts/toggle-scale.sh")} >
+                <button onClicked={() => {
+                    execAsync("bash -c ~/.config/hypr/scripts/toggle-scale.sh")
+                    showPower.set(false)
+                }} >
                     Toggle Scale
                 </button >
             </box >

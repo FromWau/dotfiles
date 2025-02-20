@@ -1,0 +1,20 @@
+window.Media {
+  background: transparent;
+
+  revealer {
+    box {
+      margin: $gap_padding;
+      background: $background;
+      border-radius: 16px;
+    }
+  }
+
+  .item {
+    box {
+      background: $inverse_primary;
+      border-radius: 16px;
+      margin: 8px;
+      padding: 8px;
+    }
+  }
+}
