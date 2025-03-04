@@ -1,18 +1,18 @@
 local lang_conf = {
     lua = {
-        lsps = { "lua_ls" },
+        lsps = { lua_ls = {} },
         formatters = { "stylua" },
     },
     sh = {
-        lsps = { "bashls" },
+        lsps = { bashls = {} },
         formatters = { "shfmt" },
     },
     typescript = {
-        lsps = { "ts_ls" },
+        lsps = { ts_ls = {} },
         formatters = { "prettierd", "prettier" },
     },
     rust = {
-        lsp = {
+        lsps = {
             rust_analyzer = {
                 settings = {
                     ["rust-analyzer"] = {
@@ -41,30 +41,30 @@ local lang_conf = {
                 },
             },
         },
-        formatter = { "rustfmt" },
+        formatters = { "rustfmt" },
     },
-    -- python = {
-    --     lsp = { "pyright" },
-    --     formatter = { "black" },
+    -- python = { -- try maybe astral python stuff
+    --     lsps = { pyright = {} },
+    --     formatters = { "black" },
     -- },
     --  kotlin = {
-    --     lsp = { "kotlin_language_server" },
-    --     formatter = { "ktlint" },
+    --     lsps = { kotlin_language_server = {} },
+    --     formatters = { "ktlint" },
     -- },
     -- gradle = {
-    --     lsp = { "gradle_ls" },
-    --     formatter = {},
+    --     lsps = { gradle_ls = {} },
+    --     formatters = {},
     -- },
     -- css = {
-    --     lsp = { "cssls" },
-    --     formatter = { "prettierd", "prettier" },
+    --     lsps = { cssls = {} },
+    --     formatters = { "prettierd", "prettier" },
     -- },
     scss = {
-        lsp = { "cssls" },
-        formatter = { "prettierd", "prettier" },
+        lsps = { cssls = {} },
+        formatters = { "prettierd", "prettier" },
     },
     toml = {
-        lsps = { "taplo" },
+        lsps = { taplo = {} },
         formatters = {},
     },
     json = {

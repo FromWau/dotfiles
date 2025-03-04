@@ -33,8 +33,11 @@ return {
             capabilities = vim.tbl_deep_extend("force", capabilities, require("blink.cmp").get_lsp_capabilities())
 
             for _, servers in pairs(lang_conf.lsps) do
-                for _, server in pairs(servers) do
-                    require("lspconfig")[server].setup { capabilities = capabilities }
+                for server, config_table in pairs(servers) do
+                    require("lspconfig")[server].setup {
+                        capabilities = capabilities,
+                        settings = config_table
+                    }
                 end
             end
 
