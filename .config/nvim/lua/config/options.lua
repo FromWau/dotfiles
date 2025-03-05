@@ -26,7 +26,7 @@ opt.hlsearch = true
 opt.ignorecase = true
 opt.smartcase = true
 
-opt.spell = true
+opt.spell = false
 opt.spelllang = { "en", "de" }
 
 opt.tabstop = 4

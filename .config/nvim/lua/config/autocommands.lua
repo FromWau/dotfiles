@@ -43,3 +43,10 @@ vim.api.nvim_create_autocmd("FileType", {
         end)
     end,
 })
+
+-- Enable spell checking for markdown and text files
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "markdown", "text" },
+    command = "setlocal spell"
+})
+
