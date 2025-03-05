@@ -37,7 +37,7 @@ nmap <leader>ar <Action>(Run)
 
 " code actions
 nmap <leader>cf <Action>(ReformatCode)
-nmap <leader>cr <Action>RenameElement)
+nmap <leader>cr <Action>(RenameElement)
 nmap <leader>co <Action>(OptimizeImports)
 nmap <leader>cg <Action>(Generate)
 nmap <leader>ca <Action>(ShowIntentionActions)
