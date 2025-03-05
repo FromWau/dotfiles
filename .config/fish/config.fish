@@ -43,6 +43,7 @@ fish_vi_key_bindings insert
 # fzf_key_bindings
 
 fish_add_path ~/.local/bin
+fish_add_path ~/.local/share/npm/bin
 
 starship init fish | source
 

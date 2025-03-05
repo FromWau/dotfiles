@@ -75,6 +75,10 @@ local lang_conf = {
         lsps = {},
         formatters = { "yamlfmt" },
     },
+    http = {
+        lsps = { kulala_ls = {} }, -- install on system: npm install -g @mistweaverco/kulala-ls
+        formatters = { "kulala-fmt" },
+    },
 }
 
 local lsps = {}

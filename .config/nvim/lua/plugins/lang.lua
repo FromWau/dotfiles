@@ -18,14 +18,28 @@ return {
                     },
                 },
             },
-            { "williamboman/mason.nvim", config = true },
+            {
+                "williamboman/mason.nvim",
+                config = true,
+                keys = {
+                    { "<leader>um", "<CMD>Mason<CR>", desc = "Open Mason" },
+                },
+            },
             "saghen/blink.cmp",
             "williamboman/mason-lspconfig.nvim",
         },
         config = function()
+            -- Filter out kulala_ls -> can not installed via mason for now
+            local ensure_installed = {}
+            local x = lang_conf.lsps
+            for _, server in ipairs(x) do
+                if server ~= "kulala_ls" then table.insert(ensure_installed, server) end
+            end
+
             require("mason").setup {}
             require("mason-lspconfig").setup {
-                ensure_installed = lang_conf.lsps,
+                ensure_installed = ensure_installed,
+                -- ensure_installed = lang_conf.lsps,
                 automatic_installation = true,
             }
 
@@ -36,7 +50,7 @@ return {
                 for server, config_table in pairs(servers) do
                     require("lspconfig")[server].setup {
                         capabilities = capabilities,
-                        settings = config_table
+                        settings = config_table,
                     }
                 end
             end

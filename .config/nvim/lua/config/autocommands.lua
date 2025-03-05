@@ -50,3 +50,10 @@ vim.api.nvim_create_autocmd("FileType", {
     command = "setlocal spell"
 })
 
+
+-- Set .http files to use the http filetype
+vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
+    pattern = "*.http",
+    command = "setfiletype http"
+})
+
