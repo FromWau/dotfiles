@@ -68,8 +68,8 @@ local lang_conf = {
         formatters = {},
     },
     json = {
-        lsps = {},
-        formatters = { "fixjson" },
+        lsps = { biome = {} },
+        formatters = { "biome" },
     },
     yaml = {
         lsps = {},
