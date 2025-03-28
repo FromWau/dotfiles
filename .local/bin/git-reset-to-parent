@@ -1,48 +1,118 @@
 #!/usr/bin/env bash
 
-current_branch=$(git branch --show-current)
-parrent_branch=$(git log --oneline | rg -e "Merge .* into $current_branch" | head -1 | cut -d "'" -f2)
+set -e # Exit on any error
 
-if [ parrent_branch == "" ]; then
-    echo "No parent branch found."
+# Function to get the current parent branch
+get_parent_branch() {
+    local current_branch="$1"
+    local parent_branches
+    parent_branches=$(git log --oneline | rg -o "Merge .* into $current_branch" | cut -d "'" -f2 | awk '!seen[$0]++')
+
+    if [ "$(echo "$parent_branches" | wc -l)" -gt 1 ]; then
+        echo "$(echo "$parent_branches" | fzf --prompt="Select parent branch: ")"
+    elif [ -n "$parent_branches" ]; then
+        echo "$parent_branches"
+    else
+        echo ""
+    fi
+}
+
+# Function to stash changes if any exist
+stash_changes() {
+    if git status --porcelain | grep -q .; then
+        # Stash changes and suppress the output
+        git stash push -m "Backup before resetting files." &>/dev/null
+        echo "🔒 Your local changes have been stashed."
+        return 0
+    else
+        echo "✅ No local changes to stash."
+        return 1
+    fi
+}
+
+# Function to get the list of modified files between the current and parent branch
+get_files_to_reset() {
+    local parent_branch="$1"
+    git diff "$parent_branch" --name-only
+}
+
+# Function to reset or delete selected files
+reset_files() {
+    local parent_branch="$1"
+    local selected_files="$2"
+
+    reset_count=0
+    deleted_count=0
+
+    for file in $selected_files; do
+        if git checkout "$parent_branch" -- "$file"; then
+            reset_count=$((reset_count + 1))
+            echo "✅ Reset $file to its parent version."
+        else
+            deleted_count=$((deleted_count + 1))
+            git rm --cached "$file"
+            echo "⚠️ File not found in parent branch. Deleting file."
+        fi
+    done
+
+    echo "🔧 Summary: Reset $reset_count file(s), deleted $deleted_count file(s)."
+}
+
+# Function to pop the stash if it was created
+pop_stash() {
+    if git stash list | grep -q "Backup before resetting files"; then
+        echo "🔄 Popping the stash..."
+        git stash pop &>/dev/null || echo "No stash to pop or error occurred."
+        echo "🔄 Your stashed changes have been restored."
+    fi
+}
+
+# Main script
+
+current_branch=$(git branch --show-current)
+
+# Get the parent branch
+parent_branch=$(get_parent_branch "$current_branch")
+
+if [ -z "$parent_branch" ]; then
+    echo "❌ No parent branch found."
     exit 1
 fi
 
-files=$(git diff $parrent_branch --name-only)
+# Stash changes if any
+stash_changes && stash_created=true || stash_created=false
 
-selected_files=$(echo "$files" | fzf -d "|" --cycle -i -m --reverse)
+# Get the files to reset
+files=$(get_files_to_reset "$parent_branch")
 
-# |
-# --preview "
-#
-# set parent_file \"\$(git show $parent:{} 2>/dev/null)\"
-# if test -z \$parent_file
-# set parent_file \"\"
-# end
-#
-# echo \"p: \$parent_file\"
-#
-# if test -f {}
-#
-# echo  \"c: \$(cat \$parent_file)\"
-# cat \$parent_file | git diff --no-index - {}
-# else
-#
-# echo  \"c: \$(cat \$parent_file)\"
-# cat \$parent_file | git diff --no-index - {}
-# end
-# "
+if [ -z "$files" ]; then
+    echo "✅ No modified files found."
+else
+    # Ensure colors display correctly in fzf
+    export LESS=-R
 
-if [! -n "$selected_files" ]; then
-    echo "No files selected."
-    exit 0
+    # Check if delta is installed
+    if command -v delta &>/dev/null; then
+        diff_cmd="git diff --color=always $parent_branch -- {} | delta --paging=never --width=$(tput cols)"
+    else
+        diff_cmd="git diff --color=always $parent_branch -- {}"
+    fi
+
+    # Select files using fzf with delta preview
+    selected_files=$(echo "$files" | fzf --cycle -i -m --reverse \
+        --prompt="Select files to reset: " \
+        --preview "$diff_cmd" \
+        --preview-window=right:70%:wrap ||
+        true)
+
+    if [ -z "$selected_files" ]; then
+        echo "⚠️ No files selected."
+    else
+        reset_files "$parent_branch" "$selected_files"
+    fi
 fi
 
-for file in $selected_files; do
-    if [ git checkout "$parent" -- "$file" ]; then
-        echo "Reset $file to its parent version."
-    else
-        echo "File not found in parent branch. Deleting file."
-        git rm --cached "$file"
-    fi
-done
+# Pop the stash if created
+if [ "$stash_created" = true ]; then
+    pop_stash
+fi
