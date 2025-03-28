@@ -43,22 +43,10 @@ local lang_conf = {
         },
         formatters = { "rustfmt" },
     },
-    -- python = { -- try maybe astral python stuff
-    --     lsps = { pyright = {} },
-    --     formatters = { "black" },
-    -- },
-    --  kotlin = {
-    --     lsps = { kotlin_language_server = {} },
-    --     formatters = { "ktlint" },
-    -- },
-    -- gradle = {
-    --     lsps = { gradle_ls = {} },
-    --     formatters = {},
-    -- },
-    -- css = {
-    --     lsps = { cssls = {} },
-    --     formatters = { "prettierd", "prettier" },
-    -- },
+    python = {
+        lsps = { pyright = {} },
+        formatters = { "black" },
+    },
     scss = {
         lsps = { cssls = {} },
         formatters = { "prettierd", "prettier" },
