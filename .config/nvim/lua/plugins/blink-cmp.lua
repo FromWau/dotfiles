@@ -5,10 +5,14 @@ return {
         "rafamadriz/friendly-snippets",
         "giuxtaposition/blink-cmp-copilot",
         "xzbdmw/colorful-menu.nvim",
+        {
+            "Kaiser-Yang/blink-cmp-dictionary",
+            dependencies = { "nvim-lua/plenary.nvim" },
+        },
     },
     opts = {
         sources = {
-            default = { "lsp", "path", "snippets", "buffer", "copilot", "dadbod", "markdown" },
+            default = { "lsp", "dictionary", "path", "snippets", "buffer", "copilot", "dadbod", "markdown" },
             providers = {
                 copilot = {
                     name = "copilot",
@@ -36,6 +40,28 @@ return {
                     module = "render-markdown.integ.blink",
                     fallbacks = { "lsp" },
                 },
+                dictionary = {
+                    module = "blink-cmp-dictionary",
+                    name = "Dict",
+                    min_keyword_length = 2,
+                    opts = {
+                        dictionary_files = {
+                            vim.fn.expand "/usr/share/hunspell/de_AT.dic",
+                            vim.fn.expand "/usr/share/hunspell/en_US.dic",
+                            vim.fn.expand "~/.config/nvim/dict/custom_words.txt",
+                        },
+                        separate_output = function(output)
+                            local items = {}
+                            -- Iterate over each line in the output
+                            for line in output:gmatch "[^\r\n]+" do
+                                -- Extract the base word before the '/' and insert it into items
+                                local word = line:match "([^/]+)" -- Match everything before '/'
+                                if word then table.insert(items, word) end
+                            end
+                            return items
+                        end,
+                    },
+                },
             },
         },
 
@@ -56,6 +82,15 @@ return {
         signature = { enabled = false },
 
         completion = {
+            documentation = {
+                auto_show = true,
+                auto_show_delay_ms = 250,
+                treesitter_highlighting = true,
+                window = {
+                    border = "rounded",
+                },
+            },
+
             ghost_text = {
                 enabled = true,
                 show_with_selection = true,
