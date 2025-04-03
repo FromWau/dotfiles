@@ -37,7 +37,7 @@ function link_local_bin() {
     items=(
         battery-notify download-spot find-similar-pics fix-bitwarden 
         fzf-previewer git-reset-to-parent hypr-wal qr reddit-images 
-        screenshot ssh-key-fzf toggle-scale
+        screenshot ssh-key-fzf toggle-scale forwarding
     )
 
     link_and_backup "$source_dir" "$target_dir" "${items[@]}"

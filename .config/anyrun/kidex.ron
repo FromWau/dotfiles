@@ -1,0 +1,20 @@
+Config(
+  ignored: [], 
+  directories: [
+    WatchDir(
+      path: "/home/fromml/Downloads", 
+      recurse: true, 
+      ignored: [], 
+    ),
+    WatchDir(
+      path: "/home/fromml/.config", 
+      recurse: true,
+      ignored: [], 
+    ),
+    WatchDir(
+      path: "/home/fromml/Projects", 
+      recurse: true,
+      ignored: [], 
+    ),
+  ],
+)
