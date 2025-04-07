@@ -34,7 +34,7 @@ input_path = '~/.config/matugen/templates/bat-colors.tmTheme'
 output_path = '~/.config/bat/themes/matugen.tmTheme'
 post_hook = 'bat cache --build'
 
-[templates.ghostty]
-input_path = '~/.config/matugen/templates/ghostty-colors'
-output_path = '~/.config/ghostty/themes/matugen'
-post_hook = 'notify-send "Ghostty needs config reload, press <Ctrl+.>" "As of now need to reload ghostty manually" --app-name "Ghostty" --icon /usr/share/icons/hicolor/32x32/apps/com.mitchellh.ghostty.png'
+# [templates.ghostty]
+# input_path = '~/.config/matugen/templates/ghostty-colors'
+# output_path = '~/.config/ghostty/themes/matugen'
+# post_hook = 'notify-send "Ghostty needs config reload, press <Ctrl+.>" "As of now need to reload ghostty manually" --app-name "Ghostty" --icon /usr/share/icons/hicolor/32x32/apps/com.mitchellh.ghostty.png'
