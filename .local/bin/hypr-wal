@@ -1,76 +1,43 @@
 #!/usr/bin/env bash
 
-changeWallpaper() {
-	mapfile -t monitors < <(hyprctl monitors -j | jq -r '.[].name')
+pics=()
+monitors=()
 
-	pics=()
-	if ! command -v find-similar-pics &>/dev/null; then
-		mapfile -t pics < <(fd ".png|.jpg|.jpeg" ~/Pictures/wallpapers/ | shuf -n ${#monitors[@]})
-	else
-		rand_pic=$(fd ".png|.jpg|.jpeg" ~/Pictures/wallpapers/ | shuf -n 1)
-		pics[0]=$rand_pic
+pics_for_monitors() {
+    mapfile -t monitors < <(hyprctl monitors -j | jq -r '.[].name')
 
-		if [ ! ${#monitors[@]} -eq 1 ]; then
-			mapfile -t similar_pics < <(find-similar-pics "$rand_pic" ~/Pictures/wallpapers/ -s -n $((${#monitors[@]} - 1)))
+    if ! command -v find-similar-pics &>/dev/null; then
+        mapfile -t pics < <(fd ".png|.jpg|.jpeg" ~/Pictures/wallpapers/ | shuf -n ${#monitors[@]})
+    else
+        rand_pic=$(fd ".png|.jpg|.jpeg" ~/Pictures/wallpapers/ | shuf -n 1)
+        pics[0]=$rand_pic
 
-			pics+=("${similar_pics[@]}")
-		fi
-	fi
+        if [ ! ${#monitors[@]} -eq 1 ]; then
+            mapfile -t similar_pics < <(find-similar-pics "$rand_pic" ~/Pictures/wallpapers/ -s -n $((${#monitors[@]} - 1)))
 
-	for i in "${!monitors[@]}"; do
-		monitor=${monitors[$i]}
-		pic=${pics[$i]}
+            pics+=("${similar_pics[@]}")
+        fi
+    fi
 
-		swww img -o "$monitor" "$pic" \
-			--transition-step 255 \
-			--transition-fps 60 \
-			--transition-type=any \
-			--transition-bezier .4,.04,.2,1
-	done
-
-	echo "$pic"
+    echo "$pic"
 }
 
-updateCava() {
-	cp "$HOME"/.cache/wal/colors-cava.cava "$HOME"/.config/cava/config
+change_wallpaper() {
+    for i in "${!monitors[@]}"; do
+        monitor=${monitors[$i]}
+        pic=${pics[$i]}
 
-	# refresh cava if running
-	[[ $(pidof cava) != "" ]] && pkill -USR1 cava
+        swww img -o "$monitor" "$pic" \
+            --transition-step 255 \
+            --transition-fps 90 \
+            --transition-type=any \
+            --transition-bezier .4,.04,.2,1
+    done
 }
 
-updateBat() {
-	enabledTheme=$(rg -e "--theme=" "$HOME"/.config/bat/config | rg -v "#")
-	if [[ $(echo "$enabledTheme" | wc -w) -eq 1 ]]; then
-		[[ ! $(echo "$enabledTheme" | rg -e "--theme=\"base16-256\"") ]] &&
-			echo "Pls run following line to include 'base16-256' theme for bat" &&
-			echo "echo '--theme=\"base16-256\"' >> $HOME/.config/bat/config"
+pics_for_monitors
 
-	else
-		echo "Warning multiple themes are set for bat."
-		echo "Pls run following line to uncomment unwanted themes and to include the 'base16-256' theme for bat"
-		echo "sed -i '/--theme/s/^/#/g' $HOME/.config/bat/config &&
-	        echo '--theme=\"base16-256\"' >> $HOME/.config/bat/config"
-	fi
-}
-
-updateBtop++() {
-	sed -i '/^color_theme = /c\color_theme = "TTY"' "$HOME"/.config/btop/btop.conf
-}
-
-updateWalfox() {
-	if ! command -v pywalfox &>/dev/null; then
-		echo "Pls install pywalfox via 'yay -S python-pywalfox'"
-	else
-		pywalfox dark
-		pywalfox update
-	fi
-}
-
-pic=$(changeWallpaper)
-
+pic=${pics[0]}
 matugen -v image "$pic"
 
-# updateCava
-# updateBtop++
-# updateBat
-# updateWalfox
+change_wallpaper
