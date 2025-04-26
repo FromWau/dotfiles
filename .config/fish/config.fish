@@ -53,9 +53,9 @@ zoxide init fish | source
 # abbr
 abbr icat 'kitty +kitten icat'
 abbr mirror 'sudo reflector --country AT --latest 50 --sort rate --save /etc/pacman.d/mirrorlist'
-abbr ls 'eza --icons --all --group-directories-first --color always'
-abbr ll 'eza --icons --all --group-directories-first --color always --long'
-abbr llh 'eza --icons --all --group-directories-first --color always --long | head -10'
+abbr ls 'eza --icons --all --group-directories-first --color always --sort oldest'
+abbr ll 'eza --icons --all --group-directories-first --color always --long --sort oldest'
+abbr llh 'eza --icons --all --group-directories-first --color always --long --sort newest | head -10'
 abbr tree 'eza --icons --all --group-directories-first --color always --tree --ignore-glob ".git*"'
 abbr ps procs
 abbr grep rg
