@@ -29,89 +29,17 @@ ask_import() {
 
 trap cleanup SIGINT
 
-echo "Fetching data..."
-data=$(curl --progress-bar \
-    --location 'https://spotymate.com/api/get-metadata' \
-    --header 'Content-Type: application/json' \
-    --data "{\"url\":\"$url\"}")
-
-error=$(echo "$data" | jq -r '.apiResponse.error')
-
-if [ "$error" != "null" ]; then
-    echo "Error: $error"
+# Check if zotify is installed
+if ! command -v zotify &>/dev/null; then
+    echo "zotify is not installed. Please install it via 'python -m pip install git+https://github.com/DraftKinner/zotify.git'"
     exit 1
 fi
 
-mapfile -t names < <(echo "$data" | jq -r '.apiResponse.data[].name')
-mapfile -t albums < <(echo "$data" | jq -r '.apiResponse.data[].album')
-mapfile -t album_names < <(echo "$data" | jq -r '.apiResponse.data[].album_name')
-mapfile -t artists < <(echo "$data" | jq -r '.apiResponse.data[].artist')
-mapfile -t track_urls < <(echo "$data" | jq -r '.apiResponse.data[].url')
-
-current_album=${album_names[0]}
-
-for i in "${!names[@]}"; do
-
-    name="${names[$i]}"
-    if [ "$name" == "null" ]; then
-        echo "[$((i + 1))/${#names[@]}] Error: Name is null"
-        exit 1
-    fi
-
-    album="${albums[$i]}"
-    if [ "$album" == "null" ]; then
-        album=${album_names[$i]}
-        if [ "$album" == "null" ]; then
-            album="$current_album"
-        else
-            current_album="$album"
-        fi
-    else
-        current_album="$album"
-    fi
-
-    artist="${artists[$i]}"
-    if [ "$artist" == "null" ]; then
-        echo "[$((i + 1))/${#names[@]}] Error: Artist is null"
-        exit 1
-    fi
-
-    track_url="${track_urls[$i]}"
-    if [ "$track_url" == "null" ]; then
-        echo "[$((i + 1))/${#names[@]}] Error: URL is null"
-        exit 1
-    fi
-
-    echo "[$((i + 1))/${#names[@]}] Downloading: $name by $artist"
-    # echo "Artist: $artist"
-    # echo "Album: $album"
-    # echo "Name: $name"
-    # echo "-----------------"
-
-    result=$(curl --silent \
-        --location 'https://spotymate.com/api/download-track' \
-        --header 'Content-Type: application/json' \
-        --data "{\"url\":\"$track_url\"}")
-
-    error=$(echo "$result" | jq -r '.msg')
-    if [ "$error" != "null" ]; then
-        echo "[$((i + 1))/${#names[@]}] Skipping, Reason: $error"
-    fi
-
-    mkdir -p "$save_dir/$artist/$album/"
-
-    file_url=$(echo "$result" | jq -r .file_url)
-
-    (
-        curl --silent \
-            --location "$file_url" \
-            --output "$save_dir/$artist/$album/$name.mp3" &&
-            echo "[$((i + 1))/${#names[@]}] Download done: $name by $artist"
-    ) &
-done
-
-wait # Waits for all background downloads to finish
-echo "Done"
-echo "Files saved to: $save_dir"
+zotify \
+    --library $save_dir \
+    --audio-format mp3 \
+    --download-quality very_high \
+    --output "{artist}/{album}/{track}" \
+    $url
 
 ask_import
