@@ -2,6 +2,10 @@
 
 set -e # Exit on any error
 
+get_default_branch() {
+    git symbolic-ref refs/remotes/origin/HEAD | sed 's#^refs/remotes/origin/##'
+}
+
 # Function to get the current parent branch
 get_parent_branch() {
     local current_branch="$1"
@@ -13,7 +17,7 @@ get_parent_branch() {
     elif [ -n "$parent_branches" ]; then
         echo "$parent_branches"
     else
-        echo ""
+        get_default_branch
     fi
 }
 
