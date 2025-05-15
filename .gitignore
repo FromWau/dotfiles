@@ -14,3 +14,9 @@
 
 # Temp
 .config/hypr/conf/temp
+
+# AndoridStudio
+.config/Google/**
+!/.config/Google/**/settings.zip
+!/.config/Google/
+!/.config/Google/**/
