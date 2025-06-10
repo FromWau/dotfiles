@@ -10,7 +10,7 @@ export default function BatteryModule() {
     return <button>
         <box>
             <label label={batPercentage.as(p => `${p}%`)} />
-            <icon icon={bind(batIcon)} />
+            <image iconName={bind(batIcon)} />
         </box>
     </button>
 }

@@ -1,51 +1,112 @@
-import { App, Gdk, Gtk } from "astal/gtk3"
-import { exec } from "astal/process"
-import BarWindow from "./window/bar/Bar"
-import PowerWindow from "./window/power/Power"
-import MediaWindow from "./window/media/Media"
-import RunnerWindow from "./window/runner/Runner"
+import { App, Astal, Gdk } from "astal/gtk4"
+import Bar from "./widget/bar/Bar"
+import { exec, Gio, GLib } from "astal"
 
-function main() {
-    const bars = new Map<Gdk.Monitor, Gtk.Widget>()
+const windows = new Map<Gdk.Monitor, Astal.Window[]>()
+const dataDir = GLib.get_user_data_dir() + "/ags"
 
-    // initialize
-    for (const gdkmonitor of App.get_monitors()) {
-        bars.set(gdkmonitor, BarWindow(gdkmonitor))
-    }
-
-    App.connect("monitor-added", (_, gdkmonitor) => {
-        bars.set(gdkmonitor, BarWindow(gdkmonitor))
-    })
-
-    App.connect("monitor-removed", (_, gdkmonitor) => {
-        bars.get(gdkmonitor)?.destroy()
-        bars.delete(gdkmonitor)
-    })
-
-    PowerWindow()
-    MediaWindow()
-    // RunnerWindow()
+function makeWindowsForMonitor(monitor: Gdk.Monitor) {
+    return [Bar(monitor)] as Astal.Window[]
 }
 
-exec("sass ./scss/main.scss /tmp/ags/style.css")
+function main() {
+    for (const monitor of App.get_monitors()) {
+        windows.set(monitor, makeWindowsForMonitor(monitor))
+    }
+
+    const display = Gdk.Display.get_default()!
+    const monitors = display.get_monitors() as Gio.ListModel<Gdk.Monitor>
+    monitors.connect(
+        "items-changed",
+        (monitorModel, position, idxRemoved, idxAdded) => {
+            console.log("monitors changed!", position, idxRemoved, idxAdded)
+
+            const prevSet = new Set(windows.keys())
+            const currSet = new Set<Gdk.Monitor>()
+            let i = 0
+            while (true) {
+                const monitor = monitorModel.get_item(i) as Gdk.Monitor | null
+                i++
+                if (monitor) {
+                    currSet.add(monitor)
+                } else {
+                    break
+                }
+            }
+
+            // Compute removed: monitors in prevSet but not in currSet
+            const removed = new Set<Gdk.Monitor>()
+            for (const monitor of prevSet) {
+                if (!currSet.has(monitor)) {
+                    removed.add(monitor)
+                }
+            }
+
+            // Compute added: monitors in currSet but not in prevSet
+            const added = new Set<Gdk.Monitor>()
+            for (const monitor of currSet) {
+                if (!prevSet.has(monitor)) {
+                    added.add(monitor)
+                }
+            }
+
+            // remove early, before anything else has a chance to break
+            for (const monitor of removed) {
+                const windowsToRemove = windows.get(monitor) ?? []
+                for (const window of windowsToRemove) {
+                    window.destroy()
+                }
+            }
+
+            display.sync()
+            console.log(
+                "prevSet:",
+                Array.from(prevSet).map((mon) => mon.description)
+            )
+            console.log(
+                "currSet:",
+                Array.from(currSet).map((mon) => mon.description)
+            )
+            console.log(
+                "removed:",
+                Array.from(removed).map((mon) => mon.description)
+            )
+            console.log(
+                "added:",
+                Array.from(added).map((mon) => mon.description)
+            )
+
+            for (const monitor of added) {
+                windows.set(monitor, makeWindowsForMonitor(monitor))
+            }
+        }
+    )
+
+    rebuild_colors()
+}
 
 function rebuild_colors() {
-    exec("sass ./scss/main.scss /tmp/ags/style.css")
-    App.apply_css("/tmp/ags/style.css")
+    exec(`sass ./scss/main.scss ${dataDir}/style.css`)
+    App.apply_css(`${dataDir}/style.css`)
+}
+
+function requestHandler(
+    request: string,
+    response: (response: any) => void
+): void {
+    switch (request) {
+        case "rebuild_colors":
+            rebuild_colors()
+            response("OK")
+            break
+        default:
+            response("unknown request")
+    }
 }
 
 App.start({
-    requestHandler(request: string, res: (response: any) => void) {
-        switch (request) {
-            case "rebuild_colors":
-                rebuild_colors()
-                res("OK")
-                break
-            default:
-                res("unknown request")
-        }
-    },
-    icons: `${SRC}/icons`,
-    css: "/tmp/ags/style.css",
-    main,
+    icons: `icons`,
+    requestHandler: requestHandler,
+    css: `${dataDir}/style.css`,
+    main: main,
 })
