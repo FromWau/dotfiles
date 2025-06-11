@@ -1,5 +1,6 @@
 import Bluetooth from "gi://AstalBluetooth"
 import { bind } from "astal/binding";
+import { execAsync } from "astal";
 
 
 export default function BluetoothModule() {
@@ -9,12 +10,12 @@ export default function BluetoothModule() {
         {bind(bluetooth, "devices").as(devices => devices
             .filter(d => d.get_connected())
             .map(d =>
-                <button>
+                <button onClicked={() => execAsync("blueberry")} >
                     <box>
-                        <icon icon="bluetooth-symbolic" />
+                        <image iconName="bluetooth-symbolic" />
                         <box>
-                            <icon
-                                icon={d.get_icon()}
+                            <image
+                                iconName={d.get_icon()}
                                 tooltipText={d.get_name()}
                             />
                         </box>
@@ -24,4 +25,3 @@ export default function BluetoothModule() {
         )}
     </box>
 }
-

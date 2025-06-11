@@ -30,7 +30,7 @@ EOF
 	content=$(
 		cat <<EOF
 $info
-monitor=HDMI-A-1, 2560x1440@120, 0x0, 1
+monitor=HDMI-A-1, 2560x1440@120, 0x0, 1, bitdepth, 10, cm, hdr, sdrbrightness, 1.1, sdrsaturation, 0.8
 EOF
 	)
 

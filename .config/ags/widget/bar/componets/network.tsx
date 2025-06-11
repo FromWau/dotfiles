@@ -7,14 +7,14 @@ export default function NetworkModule() {
 
     const netIcon = bind(network, "primary").as(p => {
         switch (p) {
-            case Network.Primary.WIRED: return <icon icon={network.wired.iconName} />
+            case Network.Primary.WIRED: return <image iconName={network.wired.iconName} />
 
-            case Network.Primary.WIFI: return <icon
-                icon={network.wifi.iconName}
+            case Network.Primary.WIFI: return <image
+                iconName={network.wifi.iconName}
                 tooltipText={network.wifi.ssid}
             />
 
-            default: return <icon icon="network-offline" />
+            default: return <image iconName="network-offline" />
         }
     })
 
