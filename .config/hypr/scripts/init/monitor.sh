@@ -19,7 +19,7 @@ case "$HOSTNAME" in
 	content=$(
 		cat <<EOF
 $info
-monitor=eDP-1, 2880x1800@90, 0x0, 1.6
+monitor=eDP-1, 2880x1800@90, 0x0, 1.5, bitdepth, 10, cm, hdr, sdrbrightness, 1.2, sdrsaturation, 0.98
 EOF
 	)
 
