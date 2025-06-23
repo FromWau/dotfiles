@@ -1,15 +1,15 @@
 local lang_conf = {
     lua = {
         lsps = { lua_ls = {} },
-        formatters = { "stylua" },
+        formatters = { stylua = {} },
     },
     sh = {
         lsps = { bashls = {} },
-        formatters = { "shfmt" },
+        formatters = { shfmt = {} },
     },
     typescript = {
         lsps = { ts_ls = {} },
-        formatters = { "prettierd", "prettier" },
+        formatters = { prettierd = {}, prettier = {} },
     },
     rust = {
         lsps = {
@@ -41,15 +41,15 @@ local lang_conf = {
                 },
             },
         },
-        formatters = { "rustfmt" },
+        formatters = { rustfmt = {} },
     },
     python = {
         lsps = { pyright = {} },
-        formatters = { "black" },
+        formatters = { black = {} },
     },
     scss = {
         lsps = { cssls = {} },
-        formatters = { "prettierd", "prettier" },
+        formatters = { prettierd = {}, prettier = {} },
     },
     toml = {
         lsps = { taplo = {} },
@@ -57,15 +57,26 @@ local lang_conf = {
     },
     json = {
         lsps = { biome = {} },
-        formatters = { "biome" },
+        formatters = { biome = {} },
     },
     yaml = {
         lsps = {},
-        formatters = { "yamlfmt" },
+        formatters = {
+            yamlfmt = {
+                prepend_args = {
+                    "-formatter", "type=basic",
+                    "-formatter", "include_document_start=true",
+                    "-formatter", "eof_newline=true",
+                    "-formatter", "indent=2",
+                    "-formatter", "retain_line_breaks=true",
+                    "-formatter", "trim_trailing_whitespace=true",
+                },
+            },
+        },
     },
     http = {
         lsps = { kulala_ls = {} }, -- install on system: npm install -g @mistweaverco/kulala-ls
-        formatters = { "kulala-fmt" },
+        formatters = { ["kulala-fmt"] = {} },
     },
 }
 

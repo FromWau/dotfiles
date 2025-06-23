@@ -31,8 +31,7 @@ return {
         config = function()
             -- Filter out kulala_ls -> can not installed via mason for now
             local ensure_installed = {}
-            local x = lang_conf.lsps
-            for _, server in ipairs(x) do
+            for _, server in ipairs(lang_conf.lsps) do
                 if server ~= "kulala_ls" then table.insert(ensure_installed, server) end
             end
 
@@ -114,8 +113,20 @@ return {
             require("mason").setup {}
             require("mason-conform").setup {}
 
+            local formatters_by_ft = {}
+            local formatters = {}
+
+            for ft, fmts in pairs(lang_conf.formatters) do
+                formatters_by_ft[ft] = formatters_by_ft[ft] or {}
+                for name, config in pairs(fmts) do
+                    table.insert(formatters_by_ft[ft], name)
+                    formatters[name] = config -- map formatter name to its config
+                end
+            end
+
             require("conform").setup {
-                formatters_by_ft = lang_conf.formatters,
+                formatters_by_ft = formatters_by_ft,
+                formatters = formatters,
                 default_format_opts = {
                     lsp_format = "fallback",
                 },
