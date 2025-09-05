@@ -77,6 +77,8 @@ abbr .... 'cd ../../..'
 abbr skf 'ssh-key-fzf'
 abbr ncm 'ncmpcpp'
 abbr kit 'kitty --detach'
+abbr ccat 'cat'
+abbr cld 'rm -rf ./*'
 
 # functions
 function nvim -d "Open nvim and handle arg path"
