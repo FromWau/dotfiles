@@ -11,13 +11,13 @@ export default function Power() {
             <button onClicked={() => execAsync("reboot")} >
                 Reboot
             </button >
-            <button onClicked={() => print("suspend")} >
+            <button onClicked={() => execAsync("suspend 0")} >
                 Suspend
             </button >
-            <button onClicked={() => execAsync("shutdown 30m")} >
+            <button onClicked={() => execAsync("shutdown 30")} >
                 Shutdown in 30 minutes
             </button >
-            <button onClicked={() => execAsync("suspend 30m")} >
+            <button onClicked={() => execAsync("suspend 30")} >
                 Suspend in 30 minutes
             </button >
             <button onClicked={() => execAsync("bash -c ~/.config/hypr/scripts/toggle-scale.sh")} >
