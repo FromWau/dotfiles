@@ -26,6 +26,7 @@ function link_config() {
         ags anyrun bat beets btop dunst fastfetch fish ghostty 
         git hypr ideavim kitty lazygit matugen mpd mpDris2 mpv 
         ncmpcpp npm nvim pacman systemd wal wget starship.toml
+        tealdeer
     )
 
     link_and_backup "$source_dir" "$target_dir" "${items[@]}"
