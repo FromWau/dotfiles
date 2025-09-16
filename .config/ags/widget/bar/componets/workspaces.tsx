@@ -63,7 +63,7 @@ export default function Workspaces() {
         {
             bind(hyprland, "workspaces").as((ws) =>
                 ws.sort((a, b) => a.name.localeCompare(b.name))
-                    .filter((ws) => ws.name !== "special:special")
+                    .filter((ws) => ws.name !== "special:special" && ws.name !== "special:__TEMP")
                     .map((ws) => WorkspaceButton(ws))
             )
         }
