@@ -43,7 +43,7 @@ return {
                 dictionary = {
                     module = "blink-cmp-dictionary",
                     name = "Dict",
-                    min_keyword_length = 2,
+                    min_keyword_length = 5,
                     opts = {
                         dictionary_files = {
                             vim.fn.expand "/usr/share/hunspell/de_AT.dic",
