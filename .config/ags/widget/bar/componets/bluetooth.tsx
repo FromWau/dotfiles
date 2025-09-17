@@ -1,6 +1,7 @@
 import Bluetooth from "gi://AstalBluetooth"
 import { bind, execAsync, Variable } from "astal";
 import { Gtk } from "astal/gtk4";
+import { numberToPercent } from "../../../utils/format";
 
 
 
@@ -31,6 +32,15 @@ function BtDevice(device: Bluetooth.Device): Gtk.Widget {
         <image iconName={bind(device, "icon")} />
         <label
             label={bind(device, "name")}
+            hexpand
+            halign={Gtk.Align.START}
+        />
+        <label
+            label={bind(device, "batteryPercentage").as(p => {
+                if (p == null || p === -1) return ""
+                return `${numberToPercent(p, 0)}`
+            })
+            }
             hexpand
             halign={Gtk.Align.START}
         />
@@ -69,7 +79,32 @@ export default function BluetoothModule(): Gtk.Widget {
         }
     )
 
-    return <menubutton>
+    const connectedDevName = bind(bluetooth, "devices")
+        .as(devices => devices
+            ?.find(d => d.connected)
+            ?.name
+        )
+
+    const connectedDevBattery = bind(bluetooth, "devices")
+        .as(devices => devices
+            ?.find(d => d.connected)
+            ?.batteryPercentage
+        );
+
+
+    const tooltipConnectedDevice = Variable.derive(
+        [bind(connectedDevName), bind(connectedDevBattery)],
+        (name, batteryPercent) => {
+            const str = `Connected to ${name}`
+
+            if (batteryPercent == null || batteryPercent === -1) return str
+            return str + ` ${numberToPercent(batteryPercent, 0)}`
+        }
+    )
+
+
+    return <menubutton
+        tooltip_text={bind(tooltipConnectedDevice)} >
         <image iconName={bind(icon)} />
         <popover>
             <Menu />
