@@ -80,15 +80,26 @@ local lang_conf = {
     },
 }
 
-local lsps = {}
-local formatters = {}
+local lsps, formatters, formatters_by_ft = {}, {}, {}
 
-for language, config in pairs(lang_conf) do
-    if config.lsps then lsps[language] = config.lsps end
-    if config.formatters then formatters[language] = config.formatters end
+for ft, config in pairs(lang_conf) do
+    for server, opts in pairs(config.lsps or {}) do
+        if opts.settings then
+            lsps[server] = { settings = opts.settings }
+        else
+            lsps[server] = nil
+        end
+    end
+
+    formatters_by_ft[ft] = {}
+    for fmt, opts in pairs(config.formatters or {}) do
+        table.insert(formatters_by_ft[ft], fmt)
+        formatters[fmt] = opts
+    end
 end
 
 return {
     lsps = lsps,
     formatters = formatters,
+    formatters_by_ft = formatters_by_ft,
 }

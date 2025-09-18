@@ -30,10 +30,9 @@ return {
         },
         config = function()
             -- Filter out kulala_ls -> can not installed via mason for now
-            local ensure_installed = {}
-            for _, server in ipairs(lang_conf.lsps) do
-                if server ~= "kulala_ls" then table.insert(ensure_installed, server) end
-            end
+            local ensure_installed = vim.tbl_filter(function(server)
+                return server ~= "kulala_ls" -- system-only
+            end, vim.tbl_keys(lang_conf.lsps))
 
             require("mason").setup {}
             require("mason-lspconfig").setup {
@@ -45,13 +44,10 @@ return {
             local capabilities = vim.lsp.protocol.make_client_capabilities()
             capabilities = vim.tbl_deep_extend("force", capabilities, require("blink.cmp").get_lsp_capabilities())
 
-            for _, servers in pairs(lang_conf.lsps) do
-                for server, config_table in pairs(servers) do
-                    require("lspconfig")[server].setup {
-                        capabilities = capabilities,
-                        settings = config_table,
-                    }
-                end
+            for server, opts in pairs(lang_conf.lsps) do
+                local setup_opts = { capabilities = capabilities }
+                if opts and opts.settings then setup_opts.settings = opts.settings end
+                require("lspconfig")[server].setup(setup_opts)
             end
 
             vim.api.nvim_create_autocmd("LspAttach", {
@@ -113,23 +109,10 @@ return {
             require("mason").setup {}
             require("mason-conform").setup {}
 
-            local formatters_by_ft = {}
-            local formatters = {}
-
-            for ft, fmts in pairs(lang_conf.formatters) do
-                formatters_by_ft[ft] = formatters_by_ft[ft] or {}
-                for name, config in pairs(fmts) do
-                    table.insert(formatters_by_ft[ft], name)
-                    formatters[name] = config -- map formatter name to its config
-                end
-            end
-
             require("conform").setup {
-                formatters_by_ft = formatters_by_ft,
-                formatters = formatters,
-                default_format_opts = {
-                    lsp_format = "fallback",
-                },
+                formatters_by_ft = lang_conf.formatters_by_ft,
+                formatters = lang_conf.formatters,
+                default_format_opts = { lsp_format = "fallback" },
             }
 
             vim.keymap.set("", "<leader>cf", function() require("conform").format { async = true } end, { desc = "Format code" })
