@@ -23,10 +23,10 @@ function link_config() {
     source_dir=~/Projects/dotfiles/.config/
     target_dir=~/.config/
     items=(
-        ags anyrun bat beets btop dunst fastfetch fish ghostty 
-        git hypr ideavim kitty lazygit matugen mpd mpDris2 mpv 
-        ncmpcpp npm nvim pacman systemd wal wget starship.toml
-        tealdeer
+        ags bat beets btop dunst fastfetch fish git hypr 
+        ideavim kitty lazygit matugen mpd mpDris2 mpv 
+        ncmpcpp npm nvim pacman systemd wal walker wget 
+        starship.toml tealdeer
     )
 
     link_and_backup "$source_dir" "$target_dir" "${items[@]}"
@@ -38,7 +38,7 @@ function link_local_bin() {
     items=(
         battery-notify download-spot find-similar-pics fix-bitwarden 
         fzf-previewer git-reset-to-parent hypr-wal qr reddit-images 
-        screenshot ssh-key-fzf toggle-scale forwarding
+        ssh-key-fzf toggle-scale forwarding
     )
 
     link_and_backup "$source_dir" "$target_dir" "${items[@]}"
