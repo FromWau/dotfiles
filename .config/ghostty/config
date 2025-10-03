@@ -2,14 +2,16 @@
 
 ## FONT
 font-family = "FiraCode Nerd Font"
-font-size = 11
+font-size = 10
 
 ## WINDOW DECORATION
-window-decoration = false
+window-decoration = none
 
 ## PADDING
 window-padding-x = 8
 window-padding-y = 8
+window-padding-balance = true
+window-padding-color = extend
 
 ## QoL
 copy-on-select = clipboard
@@ -17,9 +19,8 @@ link-url = true
 quick-terminal-position = top
 quick-terminal-screen = main
 quick-terminal-autohide = true
-gtk-single-instance = true
 confirm-close-surface = false
-
+quit-after-last-window-closed = false
 
 ## THEME
 theme = matugen

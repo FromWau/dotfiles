@@ -47,11 +47,10 @@ keybind = ctrl+minus=decrease_font_size:1
 # Windows
 #keybind = ctrl+shift+n=new_window
 #keybind = ctrl+shift+w=close_window
+keybind = global:ctrl+backquote=toggle_quick_terminal
 
 # QoL
 keybind = ctrl+comma=open_config
 keybind = ctrl+period=reload_config
 keybind = ctrl+shift+a=select_all
-keybind = ctrl+shift+q=quit
-keybind = ctrl+shift+enter=toggle_split_zoom
 keybind = ctrl+shift+i=inspector:toggle
