@@ -2,7 +2,7 @@
 
 ## FONT
 font-family = "FiraCode Nerd Font"
-font-size = 10
+font-size = 11
 
 ## WINDOW DECORATION
 window-decoration = none
@@ -21,6 +21,10 @@ quick-terminal-screen = main
 quick-terminal-autohide = true
 confirm-close-surface = false
 quit-after-last-window-closed = false
+gtk-single-instance = true
+
+## NOTIFICATIONS
+app-notifications = no-config-reload,no-clipboard-copy
 
 ## THEME
 theme = matugen
