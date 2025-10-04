@@ -20,3 +20,5 @@
 !/.config/Google/**/settings.zip
 !/.config/Google/
 !/.config/Google/**/
+.config/ags/scss/colors.scss
+.config/btop/btop.conf
