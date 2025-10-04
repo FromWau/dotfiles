@@ -5,6 +5,11 @@ version_check = true
 input_path = '~/.config/matugen/templates/colors.css'
 output_path = '~/.config/matugen/current-colors.css'
 
+[templates.dunst]
+input_path = '~/.config/matugen/templates/dunstrc-colors'
+output_path = '~/.config/dunst/dunstrc'
+post_hook = 'dunstctl reload'
+
 [templates.hyprland]
 input_path = '~/.config/matugen/templates/hyprland-colors.conf'
 output_path = '~/.config/hypr/colors.conf'
@@ -15,6 +20,11 @@ input_path = '~/.config/matugen/templates/colors.scss'
 output_path = '~/.config/ags/scss/colors.scss'
 post_hook = 'ags request "rebuild_colors" --instance astal'
 
+[templates.fox]
+input_path = '~/.config/matugen/templates/fox-colors.json'
+output_path = '~/.cache/wal/colors.json'
+post_hook = 'pywalfox update'
+
 [templates.kitty]
 input_path = '~/.config/matugen/templates/kitty-colors.conf'
 output_path = '~/.config/kitty/colors.conf'
@@ -23,11 +33,6 @@ output_path = '~/.config/kitty/colors.conf'
 input_path = '~/.config/matugen/templates/starship-colors.toml'
 output_path = '~/.cache/matugen/starship.toml'
 post_hook = '~/.config/matugen/scripts/starship.sh'
-
-[templates.fox]
-input_path = '~/.config/matugen/templates/fox-colors.json'
-output_path = '~/.cache/wal/colors.json'
-post_hook = 'pywalfox update'
 
 [templates.bat]
 input_path = '~/.config/matugen/templates/bat-colors.tmTheme'
@@ -38,3 +43,11 @@ post_hook = 'bat cache --build'
 input_path = '~/.config/matugen/templates/ghostty-colors'
 output_path = '~/.config/ghostty/themes/matugen'
 post_hook = 'systemctl reload --user app-com.mitchellh.ghostty.service'
+
+[templates.gtk3]
+input_path = '~/.config/matugen/templates/gtk-colors.css'
+output_path = '~/.config/gtk-3.0/color.css'
+
+[templates.gtk4]
+input_path = '~/.config/matugen/templates/gtk-colors.css'
+output_path = '~/.config/gtk-4.0/gtk.css'
