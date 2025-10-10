@@ -39,19 +39,19 @@ input_path = '~/.config/matugen/templates/bat-colors.tmTheme'
 output_path = '~/.config/bat/themes/matugen.tmTheme'
 post_hook = 'bat cache --build'
 
-[templates.ghostty]
-input_path = '~/.config/matugen/templates/ghostty-colors'
-output_path = '~/.config/ghostty/themes/matugen'
-post_hook = 'systemctl reload --user app-com.mitchellh.ghostty.service'
+# [templates.ghostty]
+# input_path = '~/.config/matugen/templates/ghostty-colors'
+# output_path = '~/.config/ghostty/themes/matugen'
+# post_hook = 'systemctl reload --user app-com.mitchellh.ghostty.service'
 
-[templates.gtk3]
-input_path = '~/.config/matugen/templates/gtk-colors.css'
-output_path = '~/.config/gtk-3.0/color.css'
+# [templates.gtk3]
+# input_path = '~/.config/matugen/templates/gtk-colors.css'
+# output_path = '~/.config/gtk-3.0/color.css'
 
-[templates.gtk4]
-input_path = '~/.config/matugen/templates/gtk-colors.css'
-output_path = '~/.config/gtk-4.0/gtk.css'
+# [templates.gtk4]
+# input_path = '~/.config/matugen/templates/gtk-colors.css'
+# output_path = '~/.config/gtk-4.0/gtk.css'
 
 [templates.walker]
-input_path = '~/.config/matugen/templates/colors.scss'
-output_path = '~/.config/walker/themes/colors.scss'
+input_path = '~/.config/matugen/templates/colors.css'
+output_path = '~/.config/walker/themes/matugen/colors.css'
