@@ -1,10 +1,10 @@
-import { execAsync } from "astal"
-import { Gtk } from "astal/gtk4"
+import { Gtk } from "ags/gtk4";
+import { execAsync } from "ags/process";
 
-export default function Power() {
-    return <box vertical halign={Gtk.Align.CENTER} >
+function Menu() {
+    return <box orientation={Gtk.Orientation.VERTICAL} halign={Gtk.Align.CENTER} >
         <label label="Power" />
-        <box vertical spacing={4}>
+        <box orientation={Gtk.Orientation.VERTICAL} spacing={4}>
             <button onClicked={() => execAsync("shutdown 0")} >
                 Power Off
             </button >
@@ -25,4 +25,13 @@ export default function Power() {
             </button >
         </box >
     </box >
+}
+
+export default function Power() {
+    return <menubutton>
+        <image iconName="power" />
+        <popover>
+            <Menu />
+        </popover>
+    </menubutton>
 }

@@ -18,7 +18,7 @@ post_hook = 'hyprctl reload'
 [templates.ags]
 input_path = '~/.config/matugen/templates/colors.scss'
 output_path = '~/.config/ags/scss/colors.scss'
-post_hook = 'ags request "rebuild_colors" --instance astal'
+post_hook = 'ags request theme update'
 
 [templates.fox]
 input_path = '~/.config/matugen/templates/fox-colors.json'

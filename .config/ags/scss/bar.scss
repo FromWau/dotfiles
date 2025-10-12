@@ -1,36 +1,38 @@
-// https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gtk/theme/Adwaita/_colors-public.scss
-$fg-color: #{"@theme_fg_color"};
-$bg-color: #{"@theme_bg_color"};
+.Bar {
+  background: transparent;
+  font-weight: bold;
 
-window.Bar {
-    background: transparent;
-    color: $fg-color;
-    font-weight: bold;
+  > centerbox {
+    margin-left: $gap_padding;
+    margin-right: $gap_padding;
+    margin-top: $gap_padding;
+  }
 
-    > centerbox {
-        margin-left: $gap_padding;
-        margin-right: $gap_padding;
-        margin-top: $gap_padding;
+  button {
+    color: $on_primary;
+    background: $primary;
+    margin: 0 4px;
+    outline: none;
+
+    &.focused {
+      color: $on_primary_container;
+      background: $primary_container;
     }
 
-    button {
-        color: $on_primary;
-        background: $primary;
-        margin: 0 4px;
-        outline: none;
-
-        &.focused {
-            color: $on_primary_container;
-            background: $primary_container;
-        }
-
-        &:hover {
-            color: $on_primary_container;
-            background: $inverse_primary;
-        }
+    &:hover {
+      color: $on_primary_container;
+      background: $inverse_primary;
     }
+  }
 
-    image {
-        color: $on_primary;
-    }
+  label {
+    color: $on_primary;
+    background: $primary;
+    margin: 0 4px;
+  }
+
+  image {
+    color: $on_primary;
+    background: $primary;
+  }
 }

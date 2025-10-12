@@ -1,5 +1,10 @@
 {
-  "devDependencies": {
-    "typescript": "5.7.1-rc"
+  "dependencies": {
+    "ags": "*",
+    "gnim": "*"
+  },
+  "prettier": {
+    "semi": false,
+    "tabWidth": 4
   }
 }
