@@ -3,10 +3,10 @@ close_when_open = true          # close walker when invoking while already opene
 click_to_close = true           # closes walker if clicking outside of the main content area
 selection_wrap = false          # wrap list if at bottom or top
 global_argument_delimiter = "#" # query: firefox#https://benz.dev => part after delimiter will be ignored when querying. this should be the same as in the elephant config
-keep_open_modifier = "shift"    # won't close on activation, but rather select the next item in the list
 exact_search_prefix = "'"       # disable fuzzy searching
 theme = "default"               # theme to use
 disable_mouse = false           # disable mouse (on input and list only)
+debug = false                   # enables debug printing for some stuff, f.e. keybinds
 
 [shell]
 anchor_top = true
@@ -34,6 +34,10 @@ default = [
   "websearch",
 ] # providers to be queried by default
 empty = ["desktopapplications"] # providers to be queried when query is empty
+max_results = 50 # global max results
+
+[providers.sets] # define your own defaults/empty sets of providers
+[providers.max_results_provider] # define max results per provider in here
 
 [[providers.prefixes]]
 prefix = ";"
@@ -66,7 +70,7 @@ provider = "clipboard"
 [providers.clipboard]
 time_format = "%d.%m. - %H:%M" # format for the clipboard item date
 
-[providers.actions]
+[providers.actions] # This will be MERGED/OVEWRITTEN with what the user specifies
 dmenu = [{ action = "select", default = true, bind = "Return" }]
 
 providerlist = [
@@ -74,7 +78,7 @@ providerlist = [
 ]
 
 bluetooth = [
-  { action = "find", global = true, bind = "ctrl f", after = "ClearReload" },
+  { action = "find", global = true, bind = "ctrl f", after = "AsyncClearReload" },
   { action = "trust", bind = "ctrl t", after = "AsyncReload" },
   { action = "untrust", bind = "ctrl t", after = "AsyncReload" },
   { action = "pair", bind = "Return", after = "AsyncReload" },
@@ -101,7 +105,7 @@ websearch = [
 
 desktopapplications = [
   { action = "start", default = true, bind = "Return" },
-  { action = "start", label = "open+next", bind = "shift Return", after = "KeepOpen" },
+  { action = "start:keep", label = "open+next", bind = "shift Return", after = "KeepOpen" },
   { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "AsyncReload" },
   { action = "pin", bind = "ctrl p", after = "AsyncReload" },
   { action = "unpin", bind = "ctrl p", after = "AsyncReload" },
