@@ -30,16 +30,15 @@ ask_import() {
 trap cleanup SIGINT
 
 # Check if zotify is installed
-if ! command -v zotify &>/dev/null; then
-    echo "zotify is not installed. Please install it via 'python -m pip install git+https://github.com/DraftKinner/zotify.git'"
+if ! command -v spotdl &>/dev/null; then
+    echo "spotdl is not installed. Please install it via 'yay -S spotdl'"
     exit 1
 fi
 
-zotify \
-    --library $save_dir \
-    --audio-format mp3 \
-    --download-quality very_high \
-    --output "{artist}/{album}/{track}" \
-    $url
+spotdl --user-auth \
+    --bitrate auto \
+    --format flac \
+    --output "$save_dir/{artist}/{album}/{title}.{output-ext}" \
+    'https://open.spotify.com/playlist/1QhO1lmOPLyeiwUch5a3H6?si=4rSxOcmoQBeenUWygnIS3Q'
 
 ask_import
