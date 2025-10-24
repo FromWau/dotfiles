@@ -44,11 +44,11 @@ return {
             local capabilities = vim.lsp.protocol.make_client_capabilities()
             capabilities = vim.tbl_deep_extend("force", capabilities, require("blink.cmp").get_lsp_capabilities())
 
-            for server, opts in pairs(lang_conf.lsps) do
-                local setup_opts = { capabilities = capabilities }
-                if opts and opts.settings then setup_opts.settings = opts.settings end
-                require("lspconfig")[server].setup(setup_opts)
-            end
+            -- for server, opts in pairs(lang_conf.lsps) do
+            --     local setup_opts = { capabilities = capabilities }
+            --     if opts and opts.settings then setup_opts.settings = opts.settings end
+            --     require("lspconfig")[server].setup(setup_opts)
+            -- end
 
             vim.api.nvim_create_autocmd("LspAttach", {
                 callback = function(args)

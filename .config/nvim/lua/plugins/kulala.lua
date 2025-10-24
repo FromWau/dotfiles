@@ -1,11 +1,11 @@
 return {
-    {
-        "mistweaverco/kulala.nvim",
-        ft = { "http" },
-        opts = {
-            global_keymaps = true,
-        },
-    },
+    -- {
+    --     "mistweaverco/kulala.nvim",
+    --     ft = { "http" },
+    --     opts = {
+    --         global_keymaps = true,
+    --     },
+    -- },
 
     -- GraphQL completion
     -- {
