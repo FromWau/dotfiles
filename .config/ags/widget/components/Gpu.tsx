@@ -29,7 +29,7 @@ export default function Gpu() {
         <With value={gpu}>
             {
                 (gpu) => gpu !== undefined && (
-                    <box>
+                    <box spacing={8}>
                         <label label={`GPU: ${gpu.gpuUtil}`} />
                         <label label={`VRAM: ${gpu.memUtil}`} />
                     </box>

@@ -10,15 +10,13 @@ export default function Battery() {
     const hasBattery = createBinding(battery, "is_battery")
 
     return (
-        <box>
-            <With value={hasBattery}>
-                {(hasBattery) => hasBattery && (
-                    <box>
-                        <image iconName={batIcon} />
-                        <label label={batPercentage} />
-                    </box>
-                )}
-            </With>
-        </box >
+        <With value={hasBattery}>
+            {(hasBattery) => hasBattery && (
+                <box spacing={8}>
+                    <image iconName={batIcon} />
+                    <label label={batPercentage} />
+                </box>
+            )}
+        </With>
     )
 }

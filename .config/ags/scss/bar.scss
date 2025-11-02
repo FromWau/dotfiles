@@ -1,38 +1,102 @@
 .Bar {
   background: transparent;
   font-weight: bold;
+}
 
-  > centerbox {
-    margin-left: $gap_padding;
-    margin-right: $gap_padding;
-    margin-top: $gap_padding;
-  }
+/* Centerbox container with elevation */
+.Bar centerbox {
+  margin-left: $gap_padding;
+  margin-right: $gap_padding;
+  margin-top: $gap_padding;
+  background: transparent;
+  border-radius: 12px;
+  padding: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
 
-  button {
-    color: $on_primary;
-    background: $primary;
-    margin: 0 4px;
-    outline: none;
+/* Workspace buttons with primary colors */
+.Bar button {
+  color: $on_primary_container;
+  background: $primary_container;
+  margin: 0 2px;
+  border-radius: 6px;
+  outline: none;
+  transition: all 200ms ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
 
-    &.focused {
-      color: $on_primary_container;
-      background: $primary_container;
-    }
+.Bar button.addworkspacebutton {
+  padding: 0 4px;
+}
 
-    &:hover {
-      color: $on_primary_container;
-      background: $inverse_primary;
-    }
-  }
+.Bar button.focused {
+  color: $on_primary;
+  background: $primary;
+  box-shadow: 0 0 12px rgba(187, 207, 129, 0.4);
+  transform: translateY(-1px);
+}
 
-  label {
-    color: $on_primary;
-    background: $primary;
-    margin: 0 4px;
-  }
+.Bar button:hover {
+  color: $on_primary;
+  background: $primary_fixed_dim;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(187, 207, 129, 0.3);
+}
 
-  image {
-    color: $on_primary;
-    background: $primary;
-  }
+.Bar button:active {
+  transform: translateY(0);
+}
+
+/* System info labels with secondary colors */
+.Bar label {
+  color: $on_secondary_container;
+  background: $secondary_container;
+  margin: 0 2px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 150ms ease;
+}
+
+/* Remove label padding/background when inside buttons */
+.Bar button label {
+  background: transparent;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  line-height: 1;
+}
+
+.Bar label:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Menubutton icons with tertiary colors */
+.Bar image {
+  color: $on_tertiary_container;
+  background: $tertiary_container;
+  padding: 2px;
+  border-radius: 6px;
+  transition: all 200ms ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Remove image padding/background when inside buttons */
+.Bar button image {
+  background: transparent;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.Bar image:hover {
+  color: $on_tertiary;
+  background: $tertiary_fixed_dim;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 8px rgba(32, 78, 71, 0.3);
+}
+
+.Bar image:active {
+  transform: translateY(0) scale(1.0);
 }

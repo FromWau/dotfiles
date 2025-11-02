@@ -44,7 +44,7 @@ export default function Workspaces() {
     )
 
     return (
-        <box>
+        <box spacing={8}>
             <button
                 cssClasses={specialWsHasClients.as(hasClients => [hasClients ? "focused" : "", "specialworkspacebutton"])}
                 onClicked={() => {
@@ -59,7 +59,7 @@ export default function Workspaces() {
 
             <With value={workspaces}>
                 {ws => (
-                    <button onClicked={() => execAsync(`hyprctl dispatch workspace ${ws.length}`)}>
+                    <button cssClasses={["addworkspacebutton"]} onClicked={() => execAsync(`hyprctl dispatch workspace ${ws.length}`)}>
                         <label label="+" />
                     </button>
                 )}
