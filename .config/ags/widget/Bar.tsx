@@ -8,7 +8,7 @@ import Cpu from "./components/Cpu"
 import Ram from "./components/Ram"
 import Gpu from "./components/Gpu"
 import Tray from "./components/Tray"
-import Power from "./components/Power"
+import Session from "./components/Session"
 import Network from "./components/Network"
 import Workspaces from "./components/Workspaces"
 import Bluetooth from "./components/Bluetooth"
@@ -35,7 +35,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
                 <box $type="end" hexpand halign={Gtk.Align.END} spacing={8}>
                     <Bluetooth />
                     <Network />
-                    <Power />
+                    <Session />
                     <Tray />
                     <Weather />
                     <Cpu />
