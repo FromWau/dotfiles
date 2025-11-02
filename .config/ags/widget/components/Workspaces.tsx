@@ -27,35 +27,34 @@ export default function Workspaces() {
     const workspaces = createBinding(hyprland, "workspaces")
     const clients = createBinding(hyprland, "clients")
 
-    const specialWs = createComputed(
+    const specialWsHasClients = createComputed(
         [workspaces, clients], (ws, _) => {
             const specialWorkspace = ws.find((ws) => ws.name === "special:special")
-            const hasClients = specialWorkspace ? specialWorkspace.clients.length > 0 : false
+            return specialWorkspace ? specialWorkspace.clients.length > 0 : false
+        }
+    )
 
-            return <button
-                cssClasses={[hasClients ? "focused" : "", "specialworkspacebutton"]}
+    const filteredWorkspaces = workspaces.as(ws =>
+        ws.sort((a, b) => {
+                const numA = parseInt(a.name) || 0
+                const numB = parseInt(b.name) || 0
+                return numA - numB
+            })
+            .filter((ws) => ws.name !== "special:special" && ws.name !== "special:__TEMP")
+    )
+
+    return (
+        <box>
+            <button
+                cssClasses={specialWsHasClients.as(hasClients => [hasClients ? "focused" : "", "specialworkspacebutton"])}
                 onClicked={() => {
                     execAsync(`hyprctl dispatch togglespecialworkspace ""`)
                 }}>
                 <image iconName="workspace" />
             </button>
-        }
-    )
 
-    const wsButtons = workspaces(ws =>
-        ws.sort((a, b) => a.name.localeCompare(b.name))
-            .filter((ws) => ws.name !== "special:special" && ws.name !== "special:__TEMP")
-            .map((ws) => WorkspaceButton(ws))
-    )
-
-    return (
-        <box>
-            <With value={specialWs}>
-                {specialWs => specialWs}
-            </With>
-
-            <For each={wsButtons}>
-                {btn => btn}
+            <For each={filteredWorkspaces}>
+                {(ws) => WorkspaceButton(ws)}
             </For>
 
             <With value={workspaces}>

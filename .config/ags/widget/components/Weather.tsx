@@ -7,21 +7,36 @@ import { readFile } from "ags/file"
 
 const configDir = GLib.get_user_config_dir() + "/ags"
 
-function buildUrlFromConfig(): string {
-    const url = new URL("https://api.open-meteo.com/v1/forecast")
+const WEATHER_POLL_INTERVAL = (5).minutes
 
-    const config = JSON.parse(readFile(`${configDir}/config.json`))
-    const { latitude, longitude, timezone } = config.weather
+function buildUrlFromConfig(): string | undefined {
+    try {
+        const url = new URL("https://api.open-meteo.com/v1/forecast")
 
-    url.searchParams.set("latitude", latitude)
-    url.searchParams.set("longitude", longitude)
-    url.searchParams.set("current", "temperature_2m")
-    url.searchParams.set("timezone", timezone)
-    return url.toString()
+        const config = JSON.parse(readFile(`${configDir}/config.json`))
+        const { latitude, longitude, timezone } = config?.weather ?? {}
+
+        if (!latitude || !longitude || !timezone) {
+            console.error("Weather config missing required fields: latitude, longitude, or timezone")
+            return undefined
+        }
+
+        url.searchParams.set("latitude", latitude)
+        url.searchParams.set("longitude", longitude)
+        url.searchParams.set("current", "temperature_2m")
+        url.searchParams.set("timezone", timezone)
+        return url.toString()
+    } catch (err) {
+        console.error("Failed to build weather URL from config:", err)
+        return undefined
+    }
 }
 
+const weatherUrl = buildUrlFromConfig()
+
 async function fetchTemp(): Promise<string | undefined> {
-    const res = await fetch(buildUrlFromConfig())
+    if (!weatherUrl) return undefined
+    const res = await fetch(weatherUrl)
     if (!res.ok) return undefined
     const json = await res.json()
 
@@ -35,12 +50,12 @@ async function fetchTemp(): Promise<string | undefined> {
 }
 
 export default function Weather() {
-    const temp: Accessor<string | undefined> = createPoll(undefined, (5).minutes, () => fetchTemp())
+    const temp: Accessor<string | undefined> = createPoll(undefined, WEATHER_POLL_INTERVAL, () => fetchTemp())
 
     return (
         <box>
             <With value={temp}>
-                {(temp) => <label label={temp} />}
+                {(temp) => <label label={temp ?? "Loading..."} />}
             </With>
         </box>
     )

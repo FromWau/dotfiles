@@ -1,33 +1,39 @@
 import { exec } from "ags/process"
 import { createPoll } from "ags/time"
 import { With } from "gnim"
+import "./../../utils/time.ts"
 
-function getGpuUsage() {
-    const gpu = exec([
+const GPU_POLL_INTERVAL = (1).seconds
+
+interface GpuStats {
+    gpuUtil: string
+    memUtil: string
+}
+
+function getGpuUsage(): GpuStats | undefined {
+    const result = exec([
         "bash",
         "-c",
-        `nvtop -s | jq '.[].gpu_util'`
+        `nvtop -s | jq -r '.[0] | if . == null then "null" else "\\(.gpu_util),\\(.mem_util)" end'`
     ])
-    if (gpu === "null") return undefined
+    if (result === "null") return undefined
 
-    const mem = exec([
-        "bash",
-        "-c",
-        `nvtop -s | jq '.[].mem_util'`
-
-    ])
-    if (mem === "null") return undefined
-
-    return `${gpu}%/${mem}%`
+    const [gpuUtil, memUtil] = result.split(',')
+    return { gpuUtil, memUtil }
 }
 
 export default function Gpu() {
-    const gpu = createPoll(undefined, (1).seconds, () => getGpuUsage())
+    const gpu = createPoll(undefined, GPU_POLL_INTERVAL, () => getGpuUsage())
 
     return <box>
         <With value={gpu}>
             {
-                (gpu) => gpu !== undefined && <label label={`Gpu: ${gpu}`} />
+                (gpu) => gpu !== undefined && (
+                    <box>
+                        <label label={`GPU: ${gpu.gpuUtil}`} />
+                        <label label={`VRAM: ${gpu.memUtil}`} />
+                    </box>
+                )
             }
         </With>
     </box>

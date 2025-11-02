@@ -20,12 +20,18 @@ function BtDevice(device: AstalBluetooth.Device): Gtk.Widget {
 
     function handleClick() {
         if (device.get_connected()) {
-            device.disconnect_device(() => { });
+            device.disconnect_device((result, err) => {
+                if (err) console.error("Bluetooth disconnect failed:", err)
+            });
         } else if (device.get_paired()) {
-            device.connect_device(() => { });
+            device.connect_device((result, err) => {
+                if (err) console.error("Bluetooth connect failed:", err)
+            });
         } else {
             device.pair();
-            device.connect_device(() => { });
+            device.connect_device((result, err) => {
+                if (err) console.error("Bluetooth connect failed:", err)
+            });
         }
     }
 
@@ -58,7 +64,7 @@ function Menu() {
     const btDevices = createBinding(bluetooth, "devices").as(devices =>
         (devices ?? [])
             .filter(device => (device.name ?? "") !== "")
-            .sort(device => device.connected ? 0 : 1)
+            .sort((a, b) => (b.connected ? 1 : 0) - (a.connected ? 1 : 0))
             .map(device => BtDevice(device))
     )
 
@@ -111,7 +117,7 @@ export default function Bluetooth(): Gtk.Widget {
 
     return (
         <menubutton
-            tooltip_text={tooltipConnectedDevice} >
+            tooltipText={tooltipConnectedDevice} >
             <image iconName={icon} />
             <popover>
                 <Menu />
