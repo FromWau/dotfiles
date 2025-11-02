@@ -1,5 +1,6 @@
 import app from "ags/gtk4/app"
 import Bar from "./widget/Bar"
+import Settings from "./widget/Settings"
 import { For, This, createBinding } from "ags"
 import GLib from "gi://GLib"
 import { exec } from "ags/process"
@@ -15,6 +16,9 @@ function main() {
     buildTheme()
 
     const monitors = createBinding(app, "monitors")
+
+    // Create Settings window
+    Settings()
 
     return (
         <For each={monitors}>
