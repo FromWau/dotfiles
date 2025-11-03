@@ -12,7 +12,7 @@ post_hook = 'dunstctl reload'
 
 [templates.hyprland]
 input_path = '~/.config/matugen/templates/hyprland-colors.conf'
-output_path = '~/.config/hypr/colors.conf'
+output_path = '~/.config/hypr/conf/colors.conf'
 post_hook = 'hyprctl reload'
 
 [templates.ags]
