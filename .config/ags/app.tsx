@@ -4,6 +4,7 @@ import Settings from "./widget/Settings"
 import { For, This, createBinding } from "ags"
 import GLib from "gi://GLib"
 import { exec } from "ags/process"
+import { setMouseMode, mouseModeEnabled } from "./utils/mouseMode"
 
 const dataDir = GLib.get_user_data_dir() + "/ags"
 
@@ -41,11 +42,23 @@ function requestHandler(argv: string[], response: (response: string) => void) {
                 case "update":
                     buildTheme()
                     response("OK")
-                    break;
+                    break
                 default:
                     response("unknown theme arg")
             }
-            break;
+            break
+
+        case "mousemode":
+            if (args.length === 0) {
+                // Return current state
+                response(mouseModeEnabled.get() ? "true" : "false")
+            } else {
+                // Set state
+                const enabled = args[0] === "true"
+                setMouseMode(enabled)
+                response(`Mouse mode ${enabled ? "enabled" : "disabled"}`)
+            }
+            break
 
         default:
             response("unknown cmd")

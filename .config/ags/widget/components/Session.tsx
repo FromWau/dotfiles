@@ -130,10 +130,10 @@ export default function Session() {
                             }}
                         />
                         <ActionButton
-                            icon="video-display-symbolic"
-                            label="Toggle Scale"
+                            icon="input-mouse-symbolic"
+                            label="Mouse Mode"
                             onClick={() => {
-                                execAsync("bash -c ~/.config/hypr/scripts/toggle-scale.sh")
+                                execAsync("bash -c ~/.config/hypr/scripts/toggle-mouse-mode.sh")
                                 closePopover()
                             }}
                         />

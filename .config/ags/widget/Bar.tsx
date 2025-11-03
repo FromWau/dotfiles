@@ -12,6 +12,9 @@ import Session from "./components/Session"
 import Network from "./components/Network"
 import Workspaces from "./components/Workspaces"
 import Bluetooth from "./components/Bluetooth"
+import AppLauncher from "./components/AppLauncher"
+import MouseModeIndicator from "./components/MouseModeIndicator"
+import { mouseModeEnabled } from "../utils/mouseMode"
 
 export default function Bar(gdkmonitor: Gdk.Monitor) {
     return (
@@ -26,11 +29,14 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
             $={(self) => onCleanup(() => self.destroy())}
         >
             <centerbox cssName="centerbox">
-                <box $type="start" hexpand halign={Gtk.Align.START} >
+                <box $type="start" hexpand halign={Gtk.Align.START} spacing={8}>
                     <Workspaces />
+                    <AppLauncher />
                 </box>
 
-                <box $type="center" />
+                <box $type="center">
+                    <MouseModeIndicator />
+                </box>
 
                 <box $type="end" hexpand halign={Gtk.Align.END} spacing={8}>
                     <Bluetooth />
@@ -38,9 +44,11 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
                     <Session />
                     <Tray />
                     <Weather />
-                    <Cpu />
-                    <Ram />
-                    <Gpu />
+                    <box visible={mouseModeEnabled.as((enabled) => !enabled)} spacing={8}>
+                        <Cpu />
+                        <Ram />
+                        <Gpu />
+                    </box>
                     <Battery />
                     <Time />
                 </box>
