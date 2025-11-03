@@ -8,7 +8,7 @@
 # Colors
 .config/bat/themes
 .config/ghostty/themes
-.config/hypr/colors.conf
+.config/hypr/conf/colors.conf
 .config/kitty/colors.conf
 .config/matugen/current-colors.css
 
@@ -24,3 +24,4 @@
 .config/btop/btop.conf
 .config/dunst/dunstrc
 .config/walker/themes/matugen/colors.css
+.config/ags/config.json
