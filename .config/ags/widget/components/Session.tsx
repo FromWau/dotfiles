@@ -125,7 +125,7 @@ export default function Session() {
                             icon="applications-graphics-symbolic"
                             label="Generate Theme"
                             onClick={() => {
-                                execAsync("~/.local/bin/hypr-wal")
+                                execAsync("hypr-wal")
                                 closePopover()
                             }}
                         />
