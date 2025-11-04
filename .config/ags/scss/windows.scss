@@ -1,0 +1,78 @@
+/* Settings Windows Styling */
+window {
+  background: $surface_container;
+  color: $on_surface;
+
+  box {
+    background: transparent;
+  }
+
+  label {
+    color: $on_surface;
+  }
+
+  button {
+    color: $on_primary_container;
+    background: $primary_container;
+    border-radius: 6px;
+    padding: 8px;
+    transition: all 200ms ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      color: $on_primary;
+      background: $primary_fixed_dim;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    label {
+      background: transparent;
+    }
+
+    image {
+      background: transparent;
+    }
+  }
+
+  entry {
+    color: $on_surface;
+    background: $surface_container_high;
+    border: 1px solid $outline_variant;
+    border-radius: 6px;
+    padding: 8px;
+    caret-color: $primary;
+
+    &:focus {
+      border-color: $primary;
+      box-shadow: 0 0 8px rgba(247, 188, 112, 0.3);
+    }
+  }
+
+  scrolledwindow {
+    background: transparent;
+  }
+
+  /* Monitor Settings specific */
+  .monitor-box {
+    padding: 8px;
+    background: transparentize($secondary_container, 0.5);
+    border: 2px solid $outline_variant;
+    border-radius: 8px;
+    transition: all 200ms ease;
+
+    &.focused {
+      background: transparentize($primary_container, 0.3);
+      border-color: $primary;
+      box-shadow: 0 0 12px transparentize($primary, 0.6);
+    }
+
+    label {
+      background: transparent;
+    }
+  }
+}

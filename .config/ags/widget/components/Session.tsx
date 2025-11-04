@@ -122,6 +122,14 @@ export default function Session() {
                             }}
                         />
                         <ActionButton
+                            icon="video-display-symbolic"
+                            label="Monitor Settings"
+                            onClick={() => {
+                                (globalThis as any).showMonitorSettings?.()
+                                closePopover()
+                            }}
+                        />
+                        <ActionButton
                             icon="applications-graphics-symbolic"
                             label="Generate Theme"
                             onClick={() => {
