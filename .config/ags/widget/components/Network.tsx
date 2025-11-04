@@ -67,7 +67,7 @@ function NetworkMenu(popover: any) {
 
                 <With value={activeConnection}>
                     {(active) => active && (
-                        <box orientation={Gtk.Orientation.VERTICAL} spacing={4} css="margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
+                        <box orientation={Gtk.Orientation.VERTICAL} spacing={4} css="margin-top: 8px; padding: 8px; border-radius: 6px;" class="overlay-light">
                             <label
                                 label="Connected to:"
                                 halign={Gtk.Align.START}

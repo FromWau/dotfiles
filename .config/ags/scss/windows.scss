@@ -17,13 +17,13 @@ window {
     border-radius: 6px;
     padding: 8px;
     transition: all 200ms ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px $shadow_medium;
 
     &:hover {
       color: $on_primary;
       background: $primary_fixed_dim;
       transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 8px $shadow_strong;
     }
 
     &:active {
@@ -49,7 +49,7 @@ window {
 
     &:focus {
       border-color: $primary;
-      box-shadow: 0 0 8px rgba(247, 188, 112, 0.3);
+      box-shadow: 0 0 8px $primary_glow_30;
     }
   }
 
@@ -75,4 +75,17 @@ window {
       background: transparent;
     }
   }
+}
+
+/* Utility classes for common transparent overlays */
+box.overlay-light {
+  background: $overlay_light_05;
+}
+
+box.overlay-light-subtle {
+  background: $overlay_light_03;
+}
+
+box.overlay-dark {
+  background: $overlay_dark_20;
 }

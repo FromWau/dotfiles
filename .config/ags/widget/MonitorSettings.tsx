@@ -165,7 +165,8 @@ export default function MonitorSettings() {
                 <box
                     orientation={Gtk.Orientation.HORIZONTAL}
                     spacing={8}
-                    css="padding: 16px; background: rgba(0, 0, 0, 0.2);"
+                    css="padding: 16px;"
+                    class="overlay-dark"
                 >
                     <label
                         label="Monitor Layout"

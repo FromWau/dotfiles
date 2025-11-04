@@ -168,7 +168,8 @@ function BluetoothMenu(popover: any) {
                                         <box
                                             orientation={Gtk.Orientation.VERTICAL}
                                             spacing={4}
-                                            css="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;"
+                                            css="padding: 8px; border-radius: 6px;"
+                                            class="overlay-light"
                                         >
                                             <box spacing={8}>
                                                 <image iconName={getDeviceIcon(device.icon)} />

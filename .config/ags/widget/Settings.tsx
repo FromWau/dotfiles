@@ -2,10 +2,12 @@ import app from "ags/gtk4/app"
 import { Gtk } from "ags/gtk4"
 import { readFile, writeFile } from "ags/file"
 import { fetch } from "ags/fetch"
+import { exec, execAsync } from "ags/process"
 import GLib from "gi://GLib"
 
 const configDir = GLib.get_user_config_dir() + "/ags"
 const configPath = `${configDir}/config.json`
+const wallpaperDir = GLib.get_home_dir() + "/Pictures/wallpapers"
 
 interface Config {
     weather?: {
@@ -13,6 +15,10 @@ interface Config {
         longitude?: number
         timezone?: string
         city?: string
+    }
+    theme?: {
+        currentWallpaper?: string
+        cursorTheme?: string
     }
 }
 
@@ -31,6 +37,43 @@ function saveConfig(config: Config) {
         console.log("Config saved successfully")
     } catch (err) {
         console.error("Failed to save config:", err)
+    }
+}
+
+function getWallpapers(): string[] {
+    try {
+        const output = exec(`fd -e png -e jpg -e jpeg . ${wallpaperDir}`)
+        return output.split('\n').filter(line => line.trim()).sort()
+    } catch (err) {
+        console.error("Failed to get wallpapers:", err)
+        return []
+    }
+}
+
+async function applyTheme(wallpaperPath: string): Promise<boolean> {
+    try {
+        console.log("Applying theme from wallpaper:", wallpaperPath)
+        await execAsync(`matugen -v image "${wallpaperPath}"`)
+
+        // Update wallpapers on all monitors
+        const monitors = JSON.parse(exec('hyprctl monitors -j'))
+        for (const monitor of monitors) {
+            await execAsync(`swww img -o "${monitor.name}" "${wallpaperPath}" --transition-step 255 --transition-fps 90 --transition-type=any --transition-bezier .4,.04,.2,1`)
+        }
+
+        return true
+    } catch (err) {
+        console.error("Failed to apply theme:", err)
+        return false
+    }
+}
+
+function getCurrentCursorTheme(): string {
+    try {
+        const output = exec('gsettings get org.gnome.desktop.interface cursor-theme')
+        return output.replace(/'/g, '').trim()
+    } catch (err) {
+        return "Unknown"
     }
 }
 
@@ -103,8 +146,13 @@ export default function Settings() {
     let tzLabel: any
     let saveButton: any
     let settingsWindow: any
+    let wallpaperDropdown: any
+    let themeStatusLabel: any
+    let cursorThemeLabel: any
+    let applyThemeButton: any
 
     let fetchedCoords: { latitude: number, longitude: number, timezone: string } | null = null
+    const wallpapers = getWallpapers()
 
     async function handleLookup() {
         const city = cityEntry.text.trim()
@@ -167,6 +215,48 @@ export default function Settings() {
         settingsWindow.hide()
     }
 
+    async function handleApplyTheme() {
+        const selectedIndex = wallpaperDropdown.selected
+        if (selectedIndex < 0 || selectedIndex >= wallpapers.length) {
+            themeStatusLabel.label = "❌ Please select a wallpaper"
+            return
+        }
+
+        const wallpaperPath = wallpapers[selectedIndex]
+        themeStatusLabel.label = "🎨 Applying theme..."
+        applyThemeButton.sensitive = false
+
+        const success = await applyTheme(wallpaperPath)
+
+        if (success) {
+            themeStatusLabel.label = "✅ Theme applied successfully!"
+            cursorThemeLabel.label = `Current cursor: ${getCurrentCursorTheme()}`
+
+            const newConfig: Config = {
+                ...config,
+                theme: {
+                    currentWallpaper: wallpaperPath,
+                    cursorTheme: getCurrentCursorTheme(),
+                }
+            }
+            saveConfig(newConfig)
+        } else {
+            themeStatusLabel.label = "❌ Failed to apply theme"
+        }
+
+        applyThemeButton.sensitive = true
+    }
+
+    function handleRandomTheme() {
+        if (wallpapers.length === 0) {
+            themeStatusLabel.label = "❌ No wallpapers found"
+            return
+        }
+        const randomIndex = Math.floor(Math.random() * wallpapers.length)
+        wallpaperDropdown.selected = randomIndex
+        handleApplyTheme()
+    }
+
     // Global function to show settings
     ;(globalThis as any).showSettings = () => {
         if (settingsWindow) {
@@ -188,10 +278,10 @@ export default function Settings() {
         <Gtk.Window
             visible={false}
             application={app}
-            title="AGS Weather Settings"
+            title="AGS Settings"
             modal={true}
-            defaultWidth={400}
-            defaultHeight={300}
+            defaultWidth={500}
+            defaultHeight={400}
             onCloseRequest={(self) => {
                 self.hide()
                 return true
@@ -200,7 +290,12 @@ export default function Settings() {
                 settingsWindow = self
             }}
         >
-                <box orientation={Gtk.Orientation.VERTICAL} spacing={16} css="padding: 24px;">
+            <Gtk.Notebook
+                css="padding: 8px;"
+                $={(self) => {
+                    // Weather tab
+                    const weatherBox = (
+                        <box orientation={Gtk.Orientation.VERTICAL} spacing={16} css="padding: 24px;">
                     <label label="Weather Settings" css="font-size: 18px; font-weight: bold;" />
 
                     <box orientation={Gtk.Orientation.VERTICAL} spacing={12}>
@@ -234,7 +329,8 @@ export default function Settings() {
                             visible={false}
                             orientation={Gtk.Orientation.VERTICAL}
                             spacing={4}
-                            css="margin-top: 8px; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;"
+                            css="margin-top: 8px; padding: 12px; border-radius: 8px;"
+                            class="overlay-light"
                             $={(self) => {
                                 previewBox = self
                             }}
@@ -311,6 +407,101 @@ export default function Settings() {
                         </button>
                     </box>
                 </box>
+                    ) as Gtk.Widget
+
+                    // Theme tab
+                    const themeBox = (
+                        <box orientation={Gtk.Orientation.VERTICAL} spacing={16} css="padding: 24px;">
+                    <label label="Theme Settings" css="font-size: 18px; font-weight: bold;" />
+
+                    <box orientation={Gtk.Orientation.VERTICAL} spacing={12}>
+                        <box orientation={Gtk.Orientation.VERTICAL} spacing={4}>
+                            <label label="Select Wallpaper:" halign={Gtk.Align.START} />
+                            <Gtk.DropDown
+                                model={Gtk.StringList.new(wallpapers.map(p => GLib.path_get_basename(p)))}
+                                selected={wallpapers.findIndex(w => w === config.theme?.currentWallpaper)}
+                                $={(self) => {
+                                    wallpaperDropdown = self
+                                }}
+                            />
+                            <label
+                                label={`Found ${wallpapers.length} wallpapers in ${wallpaperDir}`}
+                                halign={Gtk.Align.START}
+                                css="font-size: 11px; opacity: 0.6; margin-top: 4px;"
+                            />
+                        </box>
+
+                        <box spacing={8}>
+                            <button
+                                hexpand
+                                onClicked={handleApplyTheme}
+                                $={(self) => {
+                                    applyThemeButton = self
+                                }}
+                            >
+                                <label label="🎨 Apply Theme" />
+                            </button>
+                            <button onClicked={handleRandomTheme}>
+                                <label label="🎲 Random" />
+                            </button>
+                        </box>
+
+                        <label
+                            label=""
+                            halign={Gtk.Align.START}
+                            css="font-size: 12px; margin-top: 4px;"
+                            $={(self) => {
+                                themeStatusLabel = self
+                            }}
+                        />
+
+                        {config.theme?.currentWallpaper && (
+                            <box orientation={Gtk.Orientation.VERTICAL} spacing={4} css="margin-top: 8px;">
+                                <label
+                                    label="Currently applied:"
+                                    halign={Gtk.Align.START}
+                                    css="font-size: 12px; opacity: 0.7;"
+                                />
+                                <label
+                                    label={`Wallpaper: ${GLib.path_get_basename(config.theme.currentWallpaper)}`}
+                                    halign={Gtk.Align.START}
+                                    css="font-size: 11px; opacity: 0.6;"
+                                />
+                            </box>
+                        )}
+
+                        <box orientation={Gtk.Orientation.VERTICAL} spacing={4} css="margin-top: 8px;">
+                            <label
+                                label={`Current cursor: ${getCurrentCursorTheme()}`}
+                                halign={Gtk.Align.START}
+                                css="font-size: 11px; opacity: 0.7;"
+                                $={(self) => {
+                                    cursorThemeLabel = self
+                                }}
+                            />
+                            <label
+                                label="Cursor theme updates automatically based on wallpaper colors"
+                                halign={Gtk.Align.START}
+                                css="font-size: 10px; opacity: 0.5;"
+                            />
+                        </box>
+                    </box>
+
+                    <box spacing={8} halign={Gtk.Align.END}>
+                        <button onClicked={handleCancel}>
+                            <label label="Close" />
+                        </button>
+                    </box>
+                </box>
+                    ) as Gtk.Widget
+
+                    // Append pages to notebook
+                    const weatherLabel = Gtk.Label.new("Weather")
+                    const themeLabel = Gtk.Label.new("Theme")
+                    self.append_page(weatherBox, weatherLabel)
+                    self.append_page(themeBox, themeLabel)
+                }}
+            />
         </Gtk.Window>
     )
 }

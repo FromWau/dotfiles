@@ -42,8 +42,8 @@ function requestHandler(argv: string[], response: (response: string) => void) {
         case "theme":
             switch (args[0]) {
                 case "update":
-                    buildTheme()
                     response("OK")
+                    buildTheme()
                     break
                 default:
                     response("unknown theme arg")

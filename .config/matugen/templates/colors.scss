@@ -5,3 +5,19 @@
 <* for name, value in colors *>
 ${{name}}: {{value.default.hex}};
 <* endfor *>
+
+// Helper variables for transparent overlays and shadows
+$overlay_light_05: rgba($on_surface, 0.05);
+$overlay_light_03: rgba($on_surface, 0.03);
+$overlay_dark_20: rgba($scrim, 0.2);
+$overlay_dark_30: rgba($scrim, 0.3);
+$shadow_soft: rgba($shadow, 0.15);
+$shadow_medium: rgba($shadow, 0.2);
+$shadow_strong: rgba($shadow, 0.3);
+
+// Glow effects based on theme colors
+$primary_glow_30: rgba($primary, 0.3);
+$primary_glow_40: rgba($primary, 0.4);
+$primary_glow_60: rgba($primary, 0.6);
+$secondary_glow_30: rgba($secondary, 0.3);
+$tertiary_glow_30: rgba($tertiary, 0.3);

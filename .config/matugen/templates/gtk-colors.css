@@ -1,13 +1,102 @@
-@define-color accent_color {{colors.primary_fixed_dim.default.hex}}
-@define-color accent_fg_color {{colors.on_primary_fixed.default.hex}}
-@define-color accent_bg_color {{colors.primary_fixed_dim.default.hex}}
-@define-color window_bg_color {{colors.surface_dim.default.hex}}
-@define-color window_fg_color {{colors.on_surface.default.hex}}
-@define-color headerbar_bg_color {{colors.surface_dim.default.hex}}
-@define-color headerbar_fg_color {{colors.on_surface.default.hex}}
-@define-color popover_bg_color {{colors.surface_dim.default.hex}}
-@define-color popover_fg_color {{colors.on_surface.default.hex}}
-@define-color view_bg_color {{colors.surface.default.hex}}
-@define-color view_fg_color {{colors.on_surface.default.hex}}
-@define-color card_bg_color {{colors.surface.default.hex}}
-@define-color card_fg_color {{colors.on_surface.default.hex}}
+/*
+ * GTK Color Overrides
+ * Generated with Matugen from wallpaper
+ */
+
+/* Primary/Accent Colors */
+@define-color accent_color {{colors.primary.default.hex}};
+@define-color accent_bg_color {{colors.primary.default.hex}};
+@define-color accent_fg_color {{colors.on_primary.default.hex}};
+
+/* Window Colors */
+@define-color window_bg_color {{colors.surface.default.hex}};
+@define-color window_fg_color {{colors.on_surface.default.hex}};
+
+/* Headerbar Colors */
+@define-color headerbar_bg_color {{colors.surface_container.default.hex}};
+@define-color headerbar_fg_color {{colors.on_surface.default.hex}};
+@define-color headerbar_backdrop_color {{colors.surface_dim.default.hex}};
+
+/* Sidebar Colors */
+@define-color sidebar_bg_color {{colors.surface_container_low.default.hex}};
+@define-color sidebar_fg_color {{colors.on_surface_variant.default.hex}};
+@define-color sidebar_border_color {{colors.outline_variant.default.hex}};
+@define-color sidebar_backdrop_color {{colors.surface_dim.default.hex}};
+
+/* View/Content Colors */
+@define-color view_bg_color {{colors.surface.default.hex}};
+@define-color view_fg_color {{colors.on_surface.default.hex}};
+
+/* Card Colors */
+@define-color card_bg_color {{colors.surface_container.default.hex}};
+@define-color card_fg_color {{colors.on_surface.default.hex}};
+@define-color card_shade_color {{colors.surface_container_high.default.hex}};
+
+/* Popover/Dialog Colors */
+@define-color popover_bg_color {{colors.surface_container_high.default.hex}};
+@define-color popover_fg_color {{colors.on_surface.default.hex}};
+@define-color dialog_bg_color {{colors.surface_container_highest.default.hex}};
+@define-color dialog_fg_color {{colors.on_surface.default.hex}};
+
+/* Secondary Colors */
+@define-color secondary_color {{colors.secondary.default.hex}};
+@define-color secondary_bg_color {{colors.secondary_container.default.hex}};
+@define-color secondary_fg_color {{colors.on_secondary_container.default.hex}};
+
+/* Tertiary Colors */
+@define-color tertiary_color {{colors.tertiary.default.hex}};
+@define-color tertiary_bg_color {{colors.tertiary_container.default.hex}};
+@define-color tertiary_fg_color {{colors.on_tertiary_container.default.hex}};
+
+/* Success Colors */
+@define-color success_color {{colors.tertiary.default.hex}};
+@define-color success_bg_color {{colors.tertiary_container.default.hex}};
+@define-color success_fg_color {{colors.on_tertiary_container.default.hex}};
+
+/* Warning Colors */
+@define-color warning_color {{colors.secondary.default.hex}};
+@define-color warning_bg_color {{colors.secondary_container.default.hex}};
+@define-color warning_fg_color {{colors.on_secondary_container.default.hex}};
+
+/* Error/Destructive Colors */
+@define-color error_color {{colors.error.default.hex}};
+@define-color error_bg_color {{colors.error_container.default.hex}};
+@define-color error_fg_color {{colors.on_error_container.default.hex}};
+@define-color destructive_color {{colors.error.default.hex}};
+@define-color destructive_bg_color {{colors.error_container.default.hex}};
+@define-color destructive_fg_color {{colors.on_error_container.default.hex}};
+
+/* Border and Outline Colors */
+@define-color borders {{colors.outline_variant.default.hex}};
+@define-color border_color {{colors.outline_variant.default.hex}};
+@define-color outline_color {{colors.outline.default.hex}};
+
+/* Scrollbar Colors */
+@define-color scrollbar_outline_color {{colors.outline.default.hex}};
+
+/* Thumbnail Colors */
+@define-color thumbnail_bg_color {{colors.surface_container_highest.default.hex}};
+@define-color thumbnail_fg_color {{colors.on_surface.default.hex}};
+
+/* Shade Colors */
+@define-color shade_color {{colors.scrim.default.hex}};
+@define-color scrim_color {{colors.scrim.default.hex}};
+
+/* Inverse Colors */
+@define-color inverse_surface {{colors.inverse_surface.default.hex}};
+@define-color inverse_on_surface {{colors.inverse_on_surface.default.hex}};
+@define-color inverse_primary {{colors.inverse_primary.default.hex}};
+
+/* Switch/Toggle Overrides for proper contrast */
+switch:checked {
+    background-color: {{colors.primary.default.hex}};
+}
+
+switch:checked slider {
+    background-color: {{colors.on_primary.default.hex}};
+    border-color: {{colors.on_primary.default.hex}};
+}
+
+switch slider {
+    background-color: {{colors.outline.default.hex}};
+}

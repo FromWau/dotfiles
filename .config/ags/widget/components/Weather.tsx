@@ -135,7 +135,7 @@ function WeatherPopover({ weather }: { weather: WeatherData }) {
             <label label="Weather" halign={Gtk.Align.START} css="font-weight: bold;" />
 
             {/* Current Weather */}
-            <box orientation={Gtk.Orientation.VERTICAL} spacing={4} css="padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
+            <box orientation={Gtk.Orientation.VERTICAL} spacing={4} css="padding: 8px; border-radius: 6px;" class="overlay-light">
                 <box spacing={8}>
                     <image iconName={currentWeather.icon} css="font-size: 32px;" />
                     <box orientation={Gtk.Orientation.VERTICAL} spacing={2} hexpand>
@@ -174,7 +174,7 @@ function WeatherPopover({ weather }: { weather: WeatherData }) {
                 {weather.daily.map((day) => {
                     const info = getWeatherInfo(day.weatherCode)
                     return (
-                        <box spacing={8} css="padding: 6px; background: rgba(255, 255, 255, 0.03); border-radius: 4px;">
+                        <box spacing={8} css="padding: 6px; border-radius: 4px;" class="overlay-light-subtle">
                             <label
                                 label={formatDate(day.date)}
                                 halign={Gtk.Align.START}
@@ -194,6 +194,16 @@ function WeatherPopover({ weather }: { weather: WeatherData }) {
                     )
                 })}
             </box>
+
+            {/* Settings Button */}
+            <button
+                onClicked={() => {
+                    ;(globalThis as any).showSettings?.()
+                }}
+                css="margin-top: 8px;"
+            >
+                <label label="⚙️ Settings" />
+            </button>
         </box>
     )
 }

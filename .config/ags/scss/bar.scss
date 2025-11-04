@@ -1,6 +1,8 @@
 .Bar {
   background: transparent;
   font-weight: bold;
+  border: none;
+  outline: none;
 }
 
 /* Centerbox container with elevation */
@@ -11,7 +13,9 @@
   background: transparent;
   border-radius: 12px;
   padding: 2px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: none;
+  outline: none;
+  /* box-shadow: 0 4px 12px $shadow_strong; */ /* Commented out - creates visible border on transparent bar */
 }
 
 /* Workspace buttons with primary colors */
@@ -21,8 +25,8 @@
   margin: 0 2px;
   border-radius: 6px;
   outline: none;
-  transition: all 200ms ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  box-shadow: 0 2px 4px $shadow_medium;
 }
 
 .Bar button.addworkspacebutton {
@@ -32,15 +36,16 @@
 .Bar button.focused {
   color: $on_primary;
   background: $primary;
-  box-shadow: 0 0 12px rgba(187, 207, 129, 0.4);
+  box-shadow: 0 0 12px $primary_glow_40;
   transform: translateY(-1px);
 }
 
-.Bar button:hover {
-  color: $on_primary;
-  background: $primary_fixed_dim;
+.Bar button:hover,
+.Bar button.focused:hover {
+  color: $on_tertiary;
+  background: $tertiary_fixed_dim;
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(187, 207, 129, 0.3);
+  box-shadow: 0 4px 8px $shadow_strong;
 }
 
 .Bar button:active {
@@ -54,11 +59,12 @@
   margin: 0 2px;
   padding: 2px 6px;
   border-radius: 6px;
-  transition: all 150ms ease;
+  transition: transform 200ms ease, box-shadow 200ms ease;
 }
 
-/* Remove label padding/background when inside buttons */
-.Bar button label {
+/* Remove label padding/background/margin when inside buttons */
+.Bar button label,
+.Bar menubutton button label {
   background: transparent;
   margin: 0;
   padding: 0;
@@ -66,9 +72,10 @@
   line-height: 1;
 }
 
-.Bar label:hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
+/* Button hover affects inner labels */
+.Bar button:hover label,
+.Bar menubutton:hover button label {
+  color: inherit;
 }
 
 /* Menubutton icons with tertiary colors */
@@ -77,8 +84,8 @@
   background: $tertiary_container;
   padding: 2px;
   border-radius: 6px;
-  transition: all 200ms ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  box-shadow: 0 2px 4px $shadow_soft;
 }
 
 /* Remove image padding/background when inside buttons */
@@ -90,15 +97,24 @@
   box-shadow: none;
 }
 
-.Bar image:hover {
-  color: $on_tertiary;
-  background: $tertiary_fixed_dim;
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 8px rgba(32, 78, 71, 0.3);
+/* Button hover affects inner images */
+.Bar button:hover image,
+.Bar box > menubutton:hover > button image {
+  color: inherit;
+  transform: none;
+  background: transparent;
 }
 
-.Bar image:active {
-  transform: translateY(0) scale(1.0);
+/* Menubuttons hover - applies to Weather, Tray, Session, Network, Bluetooth */
+.Bar box > menubutton:hover > button {
+  color: $on_tertiary;
+  background: $tertiary_fixed_dim;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px $shadow_strong;
+}
+
+.Bar box > menubutton:active > button {
+  transform: translateY(0);
 }
 
 /* Mouse Mode Indicator - highlighted status button */
@@ -106,20 +122,25 @@
   color: $on_primary;
   background: $primary;
   padding: 4px 12px;
-  box-shadow: 0 0 12px rgba(187, 207, 129, 0.4);
+  box-shadow: 0 0 12px $primary_glow_40;
   animation: pulse 2s ease-in-out infinite;
 }
 
 .Bar button.mouse-mode-indicator:hover {
-  box-shadow: 0 0 16px rgba(187, 207, 129, 0.6);
+  box-shadow: 0 0 16px $primary_glow_60;
   transform: translateY(-2px) scale(1.02);
+}
+
+.Bar button.mouse-mode-indicator:active {
+  box-shadow: 0 0 10px $primary_glow_40;
+  transform: translateY(-0.5px) scale(1.01);
 }
 
 @keyframes pulse {
   0%, 100% {
-    box-shadow: 0 0 12px rgba(187, 207, 129, 0.4);
+    box-shadow: 0 0 12px $primary_glow_40;
   }
   50% {
-    box-shadow: 0 0 20px rgba(187, 207, 129, 0.6);
+    box-shadow: 0 0 20px $primary_glow_60;
   }
 }
