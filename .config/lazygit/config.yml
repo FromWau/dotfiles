@@ -48,9 +48,9 @@ gui:
   border: 'rounded' # one of 'single' | 'double' | 'rounded' | 'hidden'
   nerdFontsVersion: "3"
 git:
-  paging:
-    colorArg: always
-    pager: export DELTA_FEATURES=+''; delta --paging=never --dark
+  pagers:
+    - colorArg: always
+      pager: export DELTA_FEATURES=+''; delta --paging=never --dark
   commit:
     signOff: false
     verbose: default # one of 'default' | 'always' | 'never'
@@ -179,7 +179,7 @@ keybinding:
     viewResetOptions: 'D'
     fetch: 'f'
     toggleTreeView: '`'
-    openMergeTool: 'M'
+    openMergeOptions: 'M'
     openStatusFilter: '<c-b>'
   branches:
     createPullRequest: 'o'
