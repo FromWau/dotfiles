@@ -5,7 +5,7 @@ import MonitorSettings from "./widget/MonitorSettings"
 import { For, This, createBinding } from "ags"
 import GLib from "gi://GLib"
 import { exec } from "ags/process"
-import { setMouseMode, mouseModeEnabled } from "./utils/mouseMode"
+import { setMouseMode, toggleMouseMode, syncMouseMode, mouseModeEnabled } from "./utils/mouseMode"
 
 const dataDir = GLib.get_user_data_dir() + "/ags"
 
@@ -54,11 +54,22 @@ function requestHandler(argv: string[], response: (response: string) => void) {
             if (args.length === 0) {
                 // Return current state
                 response(mouseModeEnabled.get() ? "true" : "false")
-            } else {
-                // Set state
+            } else if (args[0] === "toggle") {
+                // Toggle mouse mode
+                const newState = toggleMouseMode()
+                response(`Mouse mode ${newState ? "enabled" : "disabled"}`)
+            } else if (args[0] === "sync") {
+                // Sync/reapply current state
+                syncMouseMode()
+                const currentState = mouseModeEnabled.get()
+                response(`Mouse mode synced (${currentState ? "enabled" : "disabled"})`)
+            } else if (args[0] === "true" || args[0] === "false") {
+                // Set state explicitly
                 const enabled = args[0] === "true"
                 setMouseMode(enabled)
                 response(`Mouse mode ${enabled ? "enabled" : "disabled"}`)
+            } else {
+                response("unknown mousemode arg (use: toggle, sync, true, false, or no arg to get state)")
             }
             break
 

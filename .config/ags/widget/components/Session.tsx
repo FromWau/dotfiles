@@ -141,7 +141,7 @@ export default function Session() {
                             icon="input-mouse-symbolic"
                             label="Mouse Mode"
                             onClick={() => {
-                                execAsync("bash -c ~/.config/hypr/scripts/toggle-mouse-mode.sh")
+                                execAsync("ags request mousemode toggle")
                                 closePopover()
                             }}
                         />

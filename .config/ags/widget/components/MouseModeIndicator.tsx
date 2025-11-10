@@ -5,7 +5,7 @@ export default function MouseModeIndicator() {
     return (
         <button
             visible={mouseModeEnabled.as((enabled) => enabled)}
-            onClicked={() => execAsync("bash -c ~/.config/hypr/scripts/toggle-mouse-mode.sh")}
+            onClicked={() => execAsync("ags request mousemode toggle")}
             cssClasses={["mouse-mode-indicator"]}
             tooltipText="Click to disable Mouse Mode"
         >
