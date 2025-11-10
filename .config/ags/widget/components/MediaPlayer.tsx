@@ -36,6 +36,22 @@ function PlayerControls(player: AstalMpris.Player) {
     const canPause = createBinding(player, "canPause")
     const identity = createBinding(player, "identity")
 
+    // Try artUrl first, fallback to coverArt
+    const artUrl = createBinding(player, "artUrl")
+    const coverArt = createBinding(player, "coverArt")
+
+    // Process the art URL to handle file:// URLs
+    const processedArt = createComputed([artUrl, coverArt], (url, cover) => {
+        const art = url || cover
+        if (!art) return null
+
+        // Convert file:// URLs to regular paths
+        if (art.startsWith("file://")) {
+            return decodeURIComponent(art.substring(7))
+        }
+        return art
+    })
+
     // Position update polling
     let positionPollInterval: number | null = null
 
@@ -90,24 +106,49 @@ function PlayerControls(player: AstalMpris.Player) {
                 css="font-size: 10px; opacity: 0.6; text-transform: uppercase; font-weight: bold;"
             />
 
-            {/* Track Info */}
-            <box orientation={Gtk.Orientation.VERTICAL} spacing={2}>
-                <label
-                    label={title.as(t => t || "No track")}
-                    halign={Gtk.Align.START}
-                    css="font-weight: bold; font-size: 13px;"
-                    wrap
-                    ellipsize={3}  // ELLIPSIZE_END
-                    maxWidthChars={40}
-                />
-                <label
-                    label={artist.as(a => a || "Unknown artist")}
-                    halign={Gtk.Align.START}
-                    css="opacity: 0.7; font-size: 11px;"
-                    wrap
-                    ellipsize={3}
-                    maxWidthChars={40}
-                />
+            {/* Cover Art and Track Info */}
+            <box spacing={12}>
+                {/* Cover Art */}
+                <box
+                    css="min-width: 150px; min-height: 150px; max-width: 150px; max-height: 150px; border-radius: 8px; overflow: hidden;"
+                    class="overlay-light"
+                >
+                    <With value={processedArt}>
+                        {(art) => art ? (
+                            <image
+                                file={art}
+                                pixelSize={150}
+                                css="border-radius: 8px;"
+                            />
+                        ) : (
+                            <image
+                                iconName="music-note-symbolic"
+                                pixelSize={64}
+                                css="margin: auto; opacity: 0.3;"
+                            />
+                        )}
+                    </With>
+                </box>
+
+                {/* Track Info */}
+                <box orientation={Gtk.Orientation.VERTICAL} spacing={2} valign={Gtk.Align.CENTER}>
+                    <label
+                        label={title.as(t => t || "No track")}
+                        halign={Gtk.Align.START}
+                        css="font-weight: bold; font-size: 13px;"
+                        wrap
+                        ellipsize={3}  // ELLIPSIZE_END
+                        maxWidthChars={30}
+                    />
+                    <label
+                        label={artist.as(a => a || "Unknown artist")}
+                        halign={Gtk.Align.START}
+                        css="opacity: 0.7; font-size: 11px;"
+                        wrap
+                        ellipsize={3}
+                        maxWidthChars={30}
+                    />
+                </box>
             </box>
 
             {/* Seek Bar */}
