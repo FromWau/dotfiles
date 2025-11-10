@@ -11,15 +11,28 @@ interface GpuStats {
 }
 
 function getGpuUsage(): GpuStats | undefined {
-    const result = exec([
-        "bash",
-        "-c",
-        `nvtop -s | jq -r '.[0] | if . == null then "null" else "\\(.gpu_util),\\(.mem_util)" end'`
-    ])
-    if (result === "null") return undefined
+    try {
+        const result = exec([
+            "bash",
+            "-c",
+            `nvtop -s 2>/dev/null | jq -r '.[0] | if . == null then "null" else "\\(.gpu_util),\\(.mem_util)" end' 2>/dev/null || echo "null"`
+        ])
 
-    const [gpuUtil, memUtil] = result.split(',')
-    return { gpuUtil, memUtil }
+        if (!result || result.trim() === "null" || result.trim() === "") {
+            return undefined
+        }
+
+        const parts = result.trim().split(',')
+        if (parts.length !== 2) {
+            return undefined
+        }
+
+        const [gpuUtil, memUtil] = parts
+        return { gpuUtil, memUtil }
+    } catch (e) {
+        // Silently handle errors - GPU monitoring is not critical
+        return undefined
+    }
 }
 
 export default function Gpu() {
