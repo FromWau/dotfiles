@@ -14,7 +14,7 @@ try {
 
     // Set properties after construction
     instance.bars = 12
-    instance.framerate = 60
+    instance.framerate = 24  // Reduced from 60 to 24 FPS for better performance
     instance.autosens = true
 
     cava = instance
@@ -37,9 +37,20 @@ function CavaVisualization() {
 
                 self.set_size_request(width, height)
 
+                // Cache color to avoid querying style context on every draw
+                let cachedColor: { red: number; green: number; blue: number; alpha: number } | null = null
+
+                const updateColor = () => {
+                    const styleContext = self.get_style_context()
+                    const color = styleContext.get_color()
+                    cachedColor = { red: color.red, green: color.green, blue: color.blue, alpha: color.alpha }
+                }
+
+                updateColor()
+
                 self.set_draw_func((_, cr, w, h) => {
                     const values = cava!.values
-                    if (!values || values.length === 0) return
+                    if (!values || values.length === 0 || !cachedColor) return
 
                     const barWidth = w / values.length
 
@@ -70,10 +81,8 @@ function CavaVisualization() {
                     cr.lineTo(w, h)
                     cr.closePath()
 
-                    // Get theme foreground color
-                    const styleContext = self.get_style_context()
-                    const color = styleContext.get_color()
-                    cr.setSourceRGBA(color.red, color.green, color.blue, color.alpha * 0.8)
+                    // Use cached color
+                    cr.setSourceRGBA(cachedColor.red, cachedColor.green, cachedColor.blue, cachedColor.alpha * 0.8)
                     cr.fill()
                 })
 
@@ -134,19 +143,8 @@ function PlayerControls(player: AstalMpris.Player) {
         return art
     })
 
-    // Position update polling
-    let positionPollInterval: number | null = null
-
-    // Poll position updates every second
-    positionPollInterval = setInterval(() => {
-        // This will trigger reactive updates
-    }, 1000)
-
-    onCleanup(() => {
-        if (positionPollInterval) {
-            clearInterval(positionPollInterval)
-        }
-    })
+    // Note: Position updates are handled reactively by MPRIS bindings
+    // No manual polling needed as position binding auto-updates
 
     const handlePlayPause = () => {
         if (player.canPause && player.playbackStatus === AstalMpris.PlaybackStatus.PLAYING) {

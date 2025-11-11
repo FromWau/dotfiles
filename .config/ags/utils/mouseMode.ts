@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "ags/file"
 import GLib from "gi://GLib"
-import { createPoll } from "ags/time"
-import { exec, execAsync } from "ags/process"
+import { execAsync } from "ags/process"
+import { createState } from "gnim"
 import "./../utils/time"
 
 const statePath = GLib.get_user_data_dir() + "/ags/mouse-mode.json"
@@ -46,9 +46,9 @@ function roundToQuarter(num: number): number {
     return Math.round(num * 4) / 4
 }
 
-function getMonitors(): MonitorInfo[] {
+async function getMonitors(): Promise<MonitorInfo[]> {
     try {
-        const output = exec("hyprctl monitors -j")
+        const output = await execAsync("hyprctl monitors -j")
         const monitors = JSON.parse(output)
         return monitors.map((m: any) => ({
             name: m.name,
@@ -105,8 +105,8 @@ function getExtraMonitorSettings(monitorName: string): string {
     return ""
 }
 
-function applyMouseMode(enabled: boolean) {
-    const monitors = getMonitors()
+async function applyMouseMode(enabled: boolean) {
+    const monitors = await getMonitors()
     if (monitors.length === 0) {
         console.error("No monitors found")
         return
@@ -147,7 +147,7 @@ function applyMouseMode(enabled: boolean) {
     try {
         // Use the update_file.sh script to write config
         const scriptPath = `${GLib.getenv("HOME")}/.config/hypr/scripts/utils/update_file.sh`
-        exec(`bash "${scriptPath}" "temp/monitor_scale.conf" "${content.replace(/"/g, '\\"')}"`)
+        await execAsync(`bash "${scriptPath}" "temp/monitor_scale.conf" "${content.replace(/"/g, '\\"')}"`)
     } catch (err) {
         console.error("Failed to write monitor config:", err)
     }
@@ -155,7 +155,7 @@ function applyMouseMode(enabled: boolean) {
     // Update cursor size
     const cursorSize = enabled ? CURSOR_SIZE_LARGE : CURSOR_SIZE_NORMAL
     try {
-        exec(`hyprctl setcursor Bibata-Modern-Ice ${cursorSize}`)
+        await execAsync(`hyprctl setcursor Bibata-Modern-Ice ${cursorSize}`)
     } catch (err) {
         console.error("Failed to set cursor size:", err)
     }
@@ -173,17 +173,21 @@ function applyMouseMode(enabled: boolean) {
     })
 }
 
-// Use createPoll to check state periodically (updates every 100ms)
-export const mouseModeEnabled = createPoll(loadState(), (100).milliseconds, () => loadState())
+// Load initial state from disk once on startup
+const initialState = loadState()
+const [mouseModeEnabled, setMouseModeEnabledInternal] = createState(initialState)
+export { mouseModeEnabled }
 
 export function toggleMouseMode() {
-    const newState = !loadState()
+    const newState = !mouseModeEnabled()
+    setMouseModeEnabledInternal(newState)
     saveState(newState)
     applyMouseMode(newState)
     return newState
 }
 
 export function setMouseMode(enabled: boolean) {
+    setMouseModeEnabledInternal(enabled)
     saveState(enabled)
     applyMouseMode(enabled)
 }

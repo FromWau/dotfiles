@@ -1,18 +1,18 @@
-import { exec } from "ags/process"
+import { execAsync } from "ags/process"
 import { createPoll } from "ags/time"
 import { With } from "gnim"
 import "./../../utils/time.ts"
 
-const GPU_POLL_INTERVAL = (1).seconds
+const GPU_POLL_INTERVAL = (2).seconds  // Increased from 1s to reduce CPU usage
 
 interface GpuStats {
     gpuUtil: string
     memUtil: string
 }
 
-function getGpuUsage(): GpuStats | undefined {
+async function getGpuUsage(): Promise<GpuStats | undefined> {
     try {
-        const result = exec([
+        const result = await execAsync([
             "bash",
             "-c",
             `nvtop -s 2>/dev/null | jq -r '.[0] | if . == null then "null" else "\\(.gpu_util),\\(.mem_util)" end' 2>/dev/null || echo "null"`

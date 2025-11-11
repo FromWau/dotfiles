@@ -4,11 +4,11 @@ import Settings from "./widget/Settings"
 import MonitorSettings from "./widget/MonitorSettings"
 import { For, This, createBinding } from "ags"
 import GLib from "gi://GLib"
-import { exec } from "ags/process"
+import { execAsync } from "ags/process"
 import { setMouseMode, toggleMouseMode, syncMouseMode, mouseModeEnabled } from "./utils/mouseMode"
 import { PATHS, validatePaths } from "./utils/paths"
 
-function buildTheme() {
+async function buildTheme() {
     const scssPath = PATHS.config.scss
     const cssPath = PATHS.data.css
 
@@ -20,7 +20,7 @@ function buildTheme() {
         }
 
         // Build SCSS to CSS (suppress deprecation warnings with --quiet-deps)
-        exec(`sass --quiet-deps "${scssPath}" "${cssPath}"`)
+        await execAsync(`sass --quiet-deps "${scssPath}" "${cssPath}"`)
 
         // Validate output was created
         if (!GLib.file_test(cssPath, GLib.FileTest.EXISTS)) {
@@ -87,7 +87,7 @@ function requestHandler(argv: string[], response: (response: string) => void) {
         case "mousemode":
             if (args.length === 0) {
                 // Return current state
-                response(mouseModeEnabled.get() ? "true" : "false")
+                response(mouseModeEnabled() ? "true" : "false")
             } else if (args[0] === "toggle") {
                 // Toggle mouse mode
                 const newState = toggleMouseMode()
@@ -95,7 +95,7 @@ function requestHandler(argv: string[], response: (response: string) => void) {
             } else if (args[0] === "sync") {
                 // Sync/reapply current state
                 syncMouseMode()
-                const currentState = mouseModeEnabled.get()
+                const currentState = mouseModeEnabled()
                 response(`Mouse mode synced (${currentState ? "enabled" : "disabled"})`)
             } else if (args[0] === "true" || args[0] === "false") {
                 // Set state explicitly

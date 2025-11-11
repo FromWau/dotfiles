@@ -1,12 +1,12 @@
-import { exec } from "ags/process"
+import { execAsync } from "ags/process"
 import { createPoll } from "ags/time"
 import { Accessor } from "gnim"
 import "./../../utils/time.ts"
 
-const RAM_POLL_INTERVAL = (1).seconds
+const RAM_POLL_INTERVAL = (2).seconds  // Increased from 1s to reduce CPU usage
 
-function getRamUsage() {
-    return exec([
+async function getRamUsage() {
+    return execAsync([
         "bash",
         "-c",
         `free -m | awk '/Mem:/ {printf "Free: %.1f GB / Available: %.1f GB", $4/1024, $7/1024}'`,
