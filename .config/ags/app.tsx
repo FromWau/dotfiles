@@ -6,15 +6,49 @@ import { For, This, createBinding } from "ags"
 import GLib from "gi://GLib"
 import { exec } from "ags/process"
 import { setMouseMode, toggleMouseMode, syncMouseMode, mouseModeEnabled } from "./utils/mouseMode"
-
-const dataDir = GLib.get_user_data_dir() + "/ags"
+import { PATHS, validatePaths } from "./utils/paths"
 
 function buildTheme() {
-    exec(`sass ./scss/main.scss ${dataDir}/style.css`)
-    app.apply_css(`${dataDir}/style.css`)
+    const scssPath = PATHS.config.scss
+    const cssPath = PATHS.data.css
+
+    try {
+        // Validate SCSS file exists
+        if (!GLib.file_test(scssPath, GLib.FileTest.EXISTS)) {
+            console.error(`SCSS file not found: ${scssPath}`)
+            return
+        }
+
+        // Build SCSS to CSS (suppress deprecation warnings with --quiet-deps)
+        exec(`sass --quiet-deps "${scssPath}" "${cssPath}"`)
+
+        // Validate output was created
+        if (!GLib.file_test(cssPath, GLib.FileTest.EXISTS)) {
+            console.error("CSS output file not created")
+            return
+        }
+
+        // Apply CSS
+        app.apply_css(cssPath)
+        console.log("Theme built successfully")
+    } catch (err) {
+        console.error("Failed to build theme:", err)
+        // Try to apply existing CSS if available
+        if (GLib.file_test(cssPath, GLib.FileTest.EXISTS)) {
+            console.log("Applying existing CSS file")
+            app.apply_css(cssPath)
+        }
+    }
 }
 
 function main() {
+    // Validate paths on startup
+    const pathErrors = validatePaths()
+    if (pathErrors.length > 0) {
+        console.error("Path validation failed:")
+        pathErrors.forEach((err) => console.error(`  - ${err}`))
+    }
+
     buildTheme()
 
     const monitors = createBinding(app, "monitors")
@@ -79,7 +113,7 @@ function requestHandler(argv: string[], response: (response: string) => void) {
 }
 
 app.start({
-    css: `${dataDir}/style.css`,
+    css: PATHS.data.css,
     requestHandler: requestHandler,
     main: main,
 })

@@ -14,20 +14,20 @@ window {
   button {
     color: $on_primary_container;
     background: $primary_container;
-    border-radius: 6px;
-    padding: 8px;
-    transition: all 200ms ease;
-    box-shadow: 0 2px 4px $shadow_medium;
+    border-radius: $radius-md;
+    padding: $space-lg;
+    transition: all $duration-normal ease;
+    box-shadow: $elevation-1 $shadow_medium;
 
     &:hover {
       color: $on_primary;
       background: $primary_fixed_dim;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px $shadow_strong;
+      transform: $transform-hover;
+      box-shadow: $elevation-2 $shadow_strong;
     }
 
     &:active {
-      transform: translateY(0);
+      transform: $transform-active;
     }
 
     label {
@@ -43,13 +43,13 @@ window {
     color: $on_surface;
     background: $surface_container_high;
     border: 1px solid $outline_variant;
-    border-radius: 6px;
-    padding: 8px;
+    border-radius: $radius-md;
+    padding: $space-lg;
     caret-color: $primary;
 
     &:focus {
       border-color: $primary;
-      box-shadow: 0 0 8px $primary_glow_30;
+      box-shadow: 0 0 $space-lg $primary_glow_30;
     }
   }
 
@@ -59,16 +59,16 @@ window {
 
   /* Monitor Settings specific */
   .monitor-box {
-    padding: 8px;
+    padding: $space-lg;
     background: transparentize($secondary_container, 0.5);
-    border: 2px solid $outline_variant;
-    border-radius: 8px;
-    transition: all 200ms ease;
+    border: $space-xs solid $outline_variant;
+    border-radius: $radius-lg;
+    transition: all $duration-normal ease;
 
     &.focused {
       background: transparentize($primary_container, 0.3);
       border-color: $primary;
-      box-shadow: 0 0 12px transparentize($primary, 0.6);
+      box-shadow: 0 0 $glow-sm transparentize($primary, 0.6);
     }
 
     label {

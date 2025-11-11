@@ -1,0 +1,44 @@
+// Spacing scale (Material Design 4dp base unit)
+$space-xs: 2px;
+$space-sm: 4px;
+$space-md: 6px;
+$space-lg: 8px;
+$space-xl: 12px;
+$space-2xl: 16px;
+$space-3xl: 18px;
+$space-4xl: 24px;
+
+// Border radius scale
+$radius-none: 0;
+$radius-sm: 4px;
+$radius-md: 6px;
+$radius-lg: 8px;
+$radius-xl: 12px;
+$radius-2xl: 16px;
+$radius-full: 9999px;
+
+// Transition durations
+$duration-fast: 100ms;
+$duration-normal: 200ms;
+$duration-slow: 300ms;
+
+// Z-index layers
+$z-base: 0;
+$z-overlay: 10;
+$z-modal: 20;
+$z-notification: 30;
+
+// Shadow elevations (aligned with Material Design)
+$elevation-1: 0 2px 4px;
+$elevation-2: 0 4px 8px;
+$elevation-3: 0 6px 16px;
+
+// Transform values
+$transform-hover: translateY(-2px);
+$transform-active: translateY(0);
+$transform-focus: translateY(-1px);
+
+// Glow radius
+$glow-sm: 12px;
+$glow-md: 16px;
+$glow-lg: 20px;

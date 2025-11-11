@@ -1,43 +1,139 @@
 #!/usr/bin/env bash
+set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
 pics=()
 monitors=()
 
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+log_info() { echo -e "${GREEN}[INFO]${NC} $*"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
+
 pics_for_monitors() {
-    mapfile -t monitors < <(hyprctl monitors -j | jq -r '.[].name')
+    # Get monitor list
+    if ! monitors_json=$(hyprctl monitors -j 2>/dev/null); then
+        log_error "Failed to get monitor list from Hyprland"
+        return 1
+    fi
 
-    if ! command -v find-similar-pics &>/dev/null; then
-        mapfile -t pics < <(fd ".png|.jpg|.jpeg" ~/Pictures/wallpapers/ | shuf -n ${#monitors[@]})
-    else
-        rand_pic=$(fd ".png|.jpg|.jpeg" ~/Pictures/wallpapers/ | shuf -n 1)
-        pics[0]=$rand_pic
+    mapfile -t monitors < <(echo "$monitors_json" | jq -r '.[].name')
 
-        if [ ! ${#monitors[@]} -eq 1 ]; then
-            mapfile -t similar_pics < <(find-similar-pics "$rand_pic" ~/Pictures/wallpapers/ -s -n $((${#monitors[@]} - 1)))
+    if [ ${#monitors[@]} -eq 0 ]; then
+        log_error "No monitors found"
+        return 1
+    fi
 
+    log_info "Found ${#monitors[@]} monitor(s)"
+
+    # Find wallpapers
+    wallpaper_dir="$HOME/Pictures/wallpapers"
+    if [ ! -d "$wallpaper_dir" ]; then
+        log_error "Wallpaper directory not found: $wallpaper_dir"
+        return 1
+    fi
+
+    if ! command -v fd &>/dev/null; then
+        log_error "fd command not found. Install fd-find."
+        return 1
+    fi
+
+    # Select wallpapers
+    rand_pic=$(fd -e png -e jpg -e jpeg . "$wallpaper_dir" | shuf -n 1)
+    if [ -z "$rand_pic" ]; then
+        log_error "No wallpapers found in $wallpaper_dir"
+        return 1
+    fi
+
+    pics[0]=$rand_pic
+
+    # Only use similarity matching for multiple monitors
+    if [ ${#monitors[@]} -gt 1 ]; then
+        if command -v find-similar-pics &>/dev/null; then
+            log_info "Using similarity matching for multi-monitor setup"
+            mapfile -t similar_pics < <(
+                find-similar-pics "$rand_pic" "$wallpaper_dir" \
+                    -s -n $((${#monitors[@]} - 1))
+            )
             pics+=("${similar_pics[@]}")
+        else
+            log_info "Selecting random wallpapers (install find-similar-pics for matching)"
+            mapfile -t additional_pics < <(
+                fd -e png -e jpg -e jpeg . "$wallpaper_dir" | shuf -n $((${#monitors[@]} - 1))
+            )
+            pics+=("${additional_pics[@]}")
         fi
     fi
 
-    echo "$pic"
+    log_info "Selected wallpaper: ${pics[0]}"
+}
+
+generate_theme() {
+    local pic=$1
+
+    if ! command -v matugen &>/dev/null; then
+        log_error "matugen not found. Install it first."
+        return 1
+    fi
+
+    log_info "Generating theme from wallpaper..."
+
+    if ! matugen -v image "$pic" 2>&1 | tee /tmp/matugen.log; then
+        log_error "Theme generation failed. See /tmp/matugen.log"
+        return 1
+    fi
+
+    log_info "Theme generated successfully"
 }
 
 change_wallpaper() {
+    if ! command -v swww &>/dev/null; then
+        log_error "swww not found"
+        return 1
+    fi
+
+    log_info "Applying wallpapers to monitors..."
+
     for i in "${!monitors[@]}"; do
         monitor=${monitors[$i]}
-        pic=${pics[$i]}
+        pic=${pics[$i]:-${pics[0]}}  # Fallback to first pic if not enough
+
+        log_info "  $monitor: $(basename "$pic")"
 
         swww img -o "$monitor" "$pic" \
             --transition-step 255 \
             --transition-fps 90 \
             --transition-type=any \
-            --transition-bezier .4,.04,.2,1
+            --transition-bezier .4,.04,.2,1 \
+            2>&1 | grep -v "^$" || true  # Suppress empty lines
     done
+
+    log_info "Wallpapers applied"
 }
 
-pics_for_monitors
+main() {
+    if ! pics_for_monitors; then
+        log_error "Failed to prepare wallpapers"
+        exit 1
+    fi
 
-pic=${pics[0]}
-matugen -v image "$pic"
+    pic=${pics[0]}
 
-change_wallpaper
+    if ! generate_theme "$pic"; then
+        log_error "Theme generation failed"
+        exit 1
+    fi
+
+    if ! change_wallpaper; then
+        log_error "Failed to change wallpaper"
+        exit 1
+    fi
+
+    log_info "Theme change complete!"
+}
+
+main "$@"
