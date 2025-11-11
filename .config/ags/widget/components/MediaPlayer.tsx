@@ -1,9 +1,91 @@
 import AstalMpris from "gi://AstalMpris"
+import AstalCava from "gi://AstalCava"
 import { createBinding, createComputed, For, With } from "gnim"
 import { Gtk } from "ags/gtk4"
 import { onCleanup } from "ags"
 
 const mpris = AstalMpris.get_default()
+
+// Try creating with absolutely no parameters
+let cava: AstalCava.Cava | null = null
+
+try {
+    const instance = new AstalCava.Cava()
+
+    // Set properties after construction
+    instance.bars = 12
+    instance.framerate = 60
+    instance.autosens = true
+
+    cava = instance
+    console.log("Cava initialized successfully")
+} catch (error) {
+    console.error("Failed to initialize cava:", error)
+    cava = null
+}
+
+function CavaVisualization() {
+    if (!cava) {
+        return <box css="min-width: 16px;" />
+    }
+
+    return (
+        <drawingarea
+            $={(self) => {
+                const width = 48
+                const height = 20
+
+                self.set_size_request(width, height)
+
+                self.set_draw_func((_, cr, w, h) => {
+                    const values = cava!.values
+                    if (!values || values.length === 0) return
+
+                    const barWidth = w / values.length
+
+                    // Start path from bottom left
+                    cr.moveTo(0, h)
+
+                    // Draw smooth curve through values
+                    for (let i = 0; i < values.length; i++) {
+                        const x = i * barWidth
+                        const y = h - (values[i] * h)
+                        const nextX = (i + 1) * barWidth
+                        const nextY = i < values.length - 1 ? h - (values[i + 1] * h) : y
+
+                        if (i === 0) {
+                            cr.lineTo(x, y)
+                        }
+
+                        // Draw cubic bezier curve to next point
+                        const cp1x = x + barWidth / 2
+                        const cp1y = y
+                        const cp2x = nextX - barWidth / 2
+                        const cp2y = nextY
+
+                        cr.curveTo(cp1x, cp1y, cp2x, cp2y, nextX, nextY)
+                    }
+
+                    // Close path to bottom right and fill
+                    cr.lineTo(w, h)
+                    cr.closePath()
+
+                    // Get theme foreground color
+                    const styleContext = self.get_style_context()
+                    const color = styleContext.get_color()
+                    cr.setSourceRGBA(color.red, color.green, color.blue, color.alpha * 0.8)
+                    cr.fill()
+                })
+
+                // Subscribe to cava values changes
+                cava!.connect("notify::values", () => {
+                    self.queue_draw()
+                })
+            }}
+            css="min-width: 48px; min-height: 20px;"
+        />
+    )
+}
 
 function formatTime(seconds: number): string {
     if (seconds < 0 || isNaN(seconds)) return "0:00"
@@ -277,27 +359,15 @@ export default function MediaPlayer(): Gtk.Widget {
 
                     const title = createBinding(player, "title")
                     const artist = createBinding(player, "artist")
-                    const status = createBinding(player, "playbackStatus")
 
                     const displayText = createComputed([title, artist], (t, a) => {
                         const info = `${t || "Unknown"} - ${a || "Unknown"}`
                         return info.length > 40 ? info.substring(0, 37) + "..." : info
                     })
 
-                    const icon = status.as(s => {
-                        switch (s) {
-                            case AstalMpris.PlaybackStatus.PLAYING:
-                                return "media-playback-start-symbolic"
-                            case AstalMpris.PlaybackStatus.PAUSED:
-                                return "media-playback-pause-symbolic"
-                            default:
-                                return "music-note-symbolic"
-                        }
-                    })
-
                     return (
                         <box spacing={8}>
-                            <image iconName={icon} />
+                            <CavaVisualization />
                             <label label={displayText} />
                         </box>
                     )
