@@ -27,7 +27,7 @@ export default function Tray() {
     const items = createBinding(tray, "items")
 
     return (
-        <box>
+        <box spacing={8}>
             <For each={items}>
                 {item => Item(item)}
             </For>
