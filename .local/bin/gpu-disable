@@ -1,0 +1,109 @@
+#!/bin/bash
+# Disable NVIDIA GPU with fzf selection using nvidia-smi drain
+
+# Create log file early to catch any errors
+LOG_FILE="/tmp/gpu-disable.log"
+
+set -e
+
+# Initialize log file with proper permissions
+sudo touch "$LOG_FILE"
+sudo chmod 666 "$LOG_FILE"
+echo "=== GPU Disable Script Started at $(date) ===" > "$LOG_FILE"
+
+# Get list of active NVIDIA GPUs using nvidia-smi (won't show drained GPUs)
+# Keep the full PCI ID format that nvidia-smi expects (with leading zeros)
+GPU_LIST=$(nvidia-smi --query-gpu=pci.bus_id,name --format=csv,noheader 2>/dev/null | \
+    sed 's/, */ /')
+
+if [ -z "$GPU_LIST" ]; then
+    echo "Error: No active NVIDIA GPUs found"
+    echo "Either no GPUs are present, or all are already disabled/drained"
+    exit 1
+fi
+
+# Let user select GPU with fzf
+SELECTED=$(echo "$GPU_LIST" | fzf --prompt="Select GPU to disable: " --height=10)
+
+if [ -z "$SELECTED" ]; then
+    echo "No GPU selected. Aborted."
+    exit 1
+fi
+
+# Extract PCI address (first field before the space)
+GPU_PCI=$(echo "$SELECTED" | awk '{print $1}')
+GPU_NAME=$(echo "$SELECTED" | sed 's/^[^ ]* //')
+
+echo "Selected: $GPU_NAME"
+echo "PCI Address: $GPU_PCI"
+
+# Ask about restarting Hyprland
+echo ""
+echo "Disabling the GPU will require restarting your window manager."
+while true; do
+    read -p "Restart Hyprland and disable this GPU? (yes/NO): " -r
+    case "${REPLY,,}" in
+    yes | y)
+        break
+        ;;
+    no | n | "")
+        echo "Aborted."
+        exit 1
+        ;;
+    *)
+        echo "Please enter 'yes' or 'no' (or press Enter for no)"
+        ;;
+    esac
+done
+
+# Prompt for sudo password and schedule the disable operation
+echo "Authenticating for GPU disable operation..."
+# Authenticate first and cache credentials
+sudo -v
+
+echo "Scheduling GPU disable and restarting Hyprland..."
+
+# Use nohup and setsid to ensure the process survives session termination
+nohup sudo -n setsid bash -c "
+    LOG_FILE='/tmp/gpu-disable.log'
+    echo 'Waiting for Hyprland to exit...' >> \"\$LOG_FILE\" 2>&1
+    sleep 5
+    echo 'Putting GPU $GPU_PCI into drain mode...' >> \"\$LOG_FILE\" 2>&1
+
+    # Step 1: Disable persistence mode for the target GPU
+    if nvidia-smi --id '$GPU_PCI' --persistence-mode=0 >> \"\$LOG_FILE\" 2>&1; then
+        echo 'Persistence mode disabled for $GPU_PCI' >> \"\$LOG_FILE\" 2>&1
+    else
+        echo 'ERROR: Failed to disable persistence mode for $GPU_PCI' >> \"\$LOG_FILE\" 2>&1
+        exit 1
+    fi
+
+    # Step 2: Enable drain mode for the target GPU
+    # Convert 8-digit domain to 4-digit format (00000000:08:00.0 -> 0000:08:00.0)
+    GPU_PCI_DRAIN=\$(echo '$GPU_PCI' | sed 's/^00000000:/0000:/')
+    echo \"Using PCI ID format: \${GPU_PCI_DRAIN} for drain command\" >> \"\$LOG_FILE\" 2>&1
+    if nvidia-smi drain --pciid \${GPU_PCI_DRAIN} --modify 1 >> \"\$LOG_FILE\" 2>&1; then
+        echo 'Drain mode enabled for $GPU_PCI' >> \"\$LOG_FILE\" 2>&1
+    else
+        echo \"ERROR: Failed to enable drain mode for $GPU_PCI (tried with \${GPU_PCI_DRAIN})\" >> \"\$LOG_FILE\" 2>&1
+        exit 1
+    fi
+
+    # Step 3: Enable persistence mode for all other GPUs
+    if nvidia-smi --persistence-mode=1 >> \"\$LOG_FILE\" 2>&1; then
+        echo 'Persistence mode enabled for remaining GPUs' >> \"\$LOG_FILE\" 2>&1
+    else
+        echo 'WARNING: Failed to enable persistence mode for remaining GPUs' >> \"\$LOG_FILE\" 2>&1
+    fi
+
+    echo 'GPU $GPU_PCI disabled successfully at \$(date)' >> \"\$LOG_FILE\" 2>&1
+    echo 'Restarting SDDM to reinitialize display on remaining GPU...' >> \"\$LOG_FILE\" 2>&1
+    systemctl restart sddm >> \"\$LOG_FILE\" 2>&1
+    echo 'SDDM restarted successfully' >> \"\$LOG_FILE\" 2>&1
+" >> "$LOG_FILE" 2>&1 &
+
+echo "Background process started. Exiting Hyprland..."
+sleep 1
+
+# Now exit Hyprland (nohup process will continue running)
+hyprctl dispatch exit
