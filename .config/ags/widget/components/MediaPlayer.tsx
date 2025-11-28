@@ -1,6 +1,6 @@
 import AstalMpris from "gi://AstalMpris"
 import AstalCava from "gi://AstalCava"
-import { createBinding, createComputed, For, With } from "gnim"
+import { createBinding, createComputed, createState, For, With } from "gnim"
 import { Gtk } from "ags/gtk4"
 import { onCleanup } from "ags"
 
@@ -336,15 +336,90 @@ export default function MediaPlayer(): Gtk.Widget {
         })
     })
 
-    const activePlayer = filteredPlayers.as(p => p?.[0])
+    const [activePlayer, setActivePlayer] = createState<AstalMpris.Player | null>(null)
+
+    // Create a computed binding from the state for use with With component
+    const activePlayerBinding = createComputed([activePlayer], (player) => player)
 
     return (
         <menubutton
             $={(self) => {
                 popoverRef = self.get_popover()
+
+                let isInitialized = false
+                const playerConnections = new Map<AstalMpris.Player, number>()
+
+                const selectActivePlayer = () => {
+                    const allPlayers = mpris.get_players().filter(player => {
+                        const identity = player.identity?.toLowerCase() || ""
+                        const busName = player.busName?.toLowerCase() || ""
+                        return !identity.includes("playerctl") && !busName.includes("playerctl")
+                    })
+
+                    if (allPlayers.length === 0) {
+                        setActivePlayer(null)
+                        return
+                    }
+
+                    // Find first playing player
+                    const playingPlayer = allPlayers.find(player => {
+                        return player.playbackStatus === AstalMpris.PlaybackStatus.PLAYING
+                    })
+
+                    const selected = playingPlayer || allPlayers[0]
+                    setActivePlayer(selected)
+                }
+
+                const updatePlayerConnections = () => {
+                    const newPlayers = mpris.get_players().filter(player => {
+                        const identity = player.identity?.toLowerCase() || ""
+                        const busName = player.busName?.toLowerCase() || ""
+                        return !identity.includes("playerctl") && !busName.includes("playerctl")
+                    })
+
+                    // Clean up old connections
+                    playerConnections.forEach((connectionId, player) => {
+                        if (!newPlayers.includes(player)) {
+                            player.disconnect(connectionId)
+                            playerConnections.delete(player)
+                        }
+                    })
+
+                    // Set up connections for new players
+                    newPlayers.forEach((player) => {
+                        if (!playerConnections.has(player)) {
+                            const id = player.connect("notify::playback-status", () => {
+                                selectActivePlayer()
+                            })
+                            playerConnections.set(player, id)
+                        }
+                    })
+
+                    selectActivePlayer()
+                }
+
+                // Guard against multiple initializations
+                if (!isInitialized) {
+                    isInitialized = true
+
+                    // Initial setup
+                    updatePlayerConnections()
+
+                    // Listen for player changes on mpris
+                    const mprisId = mpris.connect("notify::players", updatePlayerConnections)
+
+                    onCleanup(() => {
+                        playerConnections.forEach((connectionId, player) => {
+                            player.disconnect(connectionId)
+                        })
+                        playerConnections.clear()
+                        mpris.disconnect(mprisId)
+                        isInitialized = false
+                    })
+                }
             }}
         >
-            <With value={activePlayer}>
+            <With value={activePlayerBinding}>
                 {(player) => {
                     if (!player) {
                         return (
