@@ -56,7 +56,7 @@ abbr mirror 'sudo reflector --country AT --latest 50 --sort rate --save /etc/pac
 abbr ls 'eza --icons --all --group-directories-first --color always --sort oldest'
 abbr ll 'eza --icons --all --group-directories-first --color always --long --sort oldest'
 abbr llh 'eza --icons --all --group-directories-first --color always --long --sort newest | head -10'
-abbr tree 'eza --icons --all --group-directories-first --color always --tree --ignore-glob ".git*"'
+abbr tree 'eza --icons --all --group-directories-first --color always --tree --ignore-glob ".git*" --git-ignore'
 abbr ps procs
 abbr grep rg
 abbr fzf 'fzf -d "|" --cycle -i --reverse'
@@ -68,17 +68,15 @@ abbr cat 'bat -p --color always'
 abbr yeet 'yay -Rns'
 abbr reload 'source ~/.config/fish/config.fish'
 abbr lg lazygit
-abbr sc systemctl
 abbr chx 'chmod +x'
-abbr clear-nvim 'rm -rf ~/.cache/nvim ~/.local/share/nvim ~/.local/state/nvim'
 abbr .. 'cd ..'
 abbr ... 'cd ../..'
 abbr .... 'cd ../../..'
 abbr skf 'ssh-key-fzf'
-abbr ncm 'ncmpcpp'
 abbr kit 'kitty --detach'
 abbr ccat 'cat'
 abbr cld 'rm -rf ./*'
+abbr rmdirs 'fd -t d -0 | sort -z -r | xargs -0 rmdir --ignore-fail-on-non-empty'
 
 # functions
 function nvim -d "Open nvim and handle arg path"
