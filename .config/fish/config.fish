@@ -79,6 +79,13 @@ abbr cld 'rm -rf ./*'
 abbr rmdirs 'fd -t d -0 | sort -z -r | xargs -0 rmdir --ignore-fail-on-non-empty'
 
 # functions
+function latest -d "Open latest modified file in nvim"
+    set -l latest_file (eza --only-files --sort newest | head -1 | tr -d "'")
+    if test -n "$latest_file"
+        nvim "$latest_file"
+    end
+end
+
 function nvim -d "Open nvim and handle arg path"
     set -l dir (pwd)
     if count $argv >/dev/null
