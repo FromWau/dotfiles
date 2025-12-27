@@ -6,8 +6,10 @@ import "./../../utils/time.ts"
 const GPU_POLL_INTERVAL = (2).seconds  // Increased from 1s to reduce CPU usage
 
 interface GpuStats {
-    gpuUtil: string
-    memUtil: string
+    gpuUtil: string | null
+    memUtil: string | null
+    gpuClock: string | null
+    deviceName: string
 }
 
 async function getGpuUsage(): Promise<GpuStats | undefined> {
@@ -15,7 +17,7 @@ async function getGpuUsage(): Promise<GpuStats | undefined> {
         const result = await execAsync([
             "bash",
             "-c",
-            `nvtop -s 2>/dev/null | jq -r '.[0] | if . == null then "null" else "\\(.gpu_util),\\(.mem_util)" end' 2>/dev/null || echo "null"`
+            `nvtop -s 2>/dev/null | jq -r '.[0] | if . == null then "null" else "\\(.gpu_util // "null"),\\(.mem_util // "null"),\\(.gpu_clock // "null"),\\(.device_name)" end' 2>/dev/null || echo "null"`
         ])
 
         if (!result || result.trim() === "null" || result.trim() === "") {
@@ -23,12 +25,17 @@ async function getGpuUsage(): Promise<GpuStats | undefined> {
         }
 
         const parts = result.trim().split(',')
-        if (parts.length !== 2) {
+        if (parts.length !== 4) {
             return undefined
         }
 
-        const [gpuUtil, memUtil] = parts
-        return { gpuUtil, memUtil }
+        const [gpuUtil, memUtil, gpuClock, deviceName] = parts
+        return {
+            gpuUtil: gpuUtil === "null" ? null : gpuUtil,
+            memUtil: memUtil === "null" ? null : memUtil,
+            gpuClock: gpuClock === "null" ? null : gpuClock,
+            deviceName: deviceName || "GPU"
+        }
     } catch (e) {
         // Silently handle errors - GPU monitoring is not critical
         return undefined
@@ -43,8 +50,9 @@ export default function Gpu() {
             {
                 (gpu) => gpu !== undefined && (
                     <box spacing={8}>
-                        <label label={`GPU: ${gpu.gpuUtil}`} />
-                        <label label={`VRAM: ${gpu.memUtil}`} />
+                        {gpu.gpuUtil !== null && <label label={`GPU: ${gpu.gpuUtil}`} />}
+                        {gpu.memUtil !== null && <label label={`VRAM: ${gpu.memUtil}`} />}
+                        {gpu.gpuUtil === null && gpu.gpuClock !== null && <label label={`GPU: ${gpu.gpuClock}`} />}
                     </box>
                 )
             }
