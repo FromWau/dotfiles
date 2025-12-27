@@ -12,7 +12,7 @@ export default function Battery() {
     return (
         <With value={hasBattery}>
             {(hasBattery) => hasBattery && (
-                <box spacing={8}>
+                <box spacing={8} class="battery-widget">
                     <image iconName={batIcon} />
                     <label label={batPercentage} />
                 </box>

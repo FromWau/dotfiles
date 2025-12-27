@@ -45,7 +45,7 @@ async function getGpuUsage(): Promise<GpuStats | undefined> {
 export default function Gpu() {
     const gpu = createPoll(undefined, GPU_POLL_INTERVAL, () => getGpuUsage())
 
-    return <box>
+    return <box class="gpu-widget">
         <With value={gpu}>
             {
                 (gpu) => gpu !== undefined && (
