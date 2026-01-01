@@ -26,3 +26,6 @@
 .config/dunst/dunstrc
 .config/walker/themes/matugen/colors.css
 .config/ags/config.json
+
+.config/hypr/monitors.conf
+.config/hypr/workspaces.conf
