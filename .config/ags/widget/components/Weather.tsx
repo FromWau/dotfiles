@@ -214,6 +214,7 @@ export default function Weather() {
 
     return (
         <menubutton
+            class="weather-widget"
             tooltipText="Weather"
             $={(self) => {
                 popoverRef = self.get_popover()

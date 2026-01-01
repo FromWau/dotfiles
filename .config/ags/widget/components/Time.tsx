@@ -22,7 +22,7 @@ const time = createPoll("", (1).seconds, () => getFormattedTime())
 
 export default function Time() {
     return (
-        <menubutton>
+        <menubutton class="time-widget">
             <label label={time} />
             <popover>
                 <Gtk.Calendar />

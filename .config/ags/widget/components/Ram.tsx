@@ -17,7 +17,7 @@ async function getRamUsage() {
 export default function Ram() {
     const ram: Accessor<string> = createPoll("", RAM_POLL_INTERVAL, () => getRamUsage())
 
-    return <box>
+    return <box class="ram-widget">
         <label label={ram((it) => `Ram: ${it}`)} />
     </box>
 }

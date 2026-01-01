@@ -15,7 +15,7 @@ async function getCpuUsage() {
 export default function Cpu() {
     const cpu = createPoll("", CPU_POLL_INTERVAL, () => getCpuUsage())
 
-    return <box>
+    return <box class="cpu-widget">
         <label label={cpu((it) => `Cpu: ${it}`)} />
     </box>
 }
