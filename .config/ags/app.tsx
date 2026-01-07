@@ -4,7 +4,8 @@ import Settings from "./widget/Settings"
 import { For, This, createBinding } from "ags"
 import GLib from "gi://GLib"
 import { execAsync } from "ags/process"
-import { setMouseMode, toggleMouseMode, syncMouseMode, mouseModeEnabled, applyMouseMode } from "./utils/mouseMode"
+import { setDisplayMode, cycleDisplayMode, syncDisplayMode, currentDisplayMode, applyDisplayMode } from "./utils/displayMode"
+import type { DisplayMode } from "./utils/displayMode"
 import { PATHS, validatePaths } from "./utils/paths"
 import { readConfig } from "./utils/config"
 
@@ -51,17 +52,16 @@ function main() {
 
     buildTheme()
 
-    // Initialize mouseMode from config
+    // Initialize displayMode from config
     // This runs after Hyprland has started, reads config.json, and applies settings if needed
     const config = readConfig()
-    const mouseModeConfig = config.mouseMode?.enabled ?? false
-    if (mouseModeConfig) {
-        console.log("[App] MouseMode enabled in config, applying settings to Hyprland...")
-        applyMouseMode(true).catch((err) => {
-            console.error("[App] Failed to apply mouseMode on startup:", err)
+    const displayMode = config.displayMode ?? "normal"
+    console.log("[App] Display mode from config:", displayMode)
+    if (displayMode !== "normal") {
+        console.log("[App] Applying display mode to Hyprland...")
+        applyDisplayMode(displayMode).catch((err) => {
+            console.error("[App] Failed to apply displayMode on startup:", err)
         })
-    } else {
-        console.log("[App] MouseMode disabled in config")
     }
 
     const monitors = createBinding(app, "monitors")
@@ -96,46 +96,46 @@ function requestHandler(argv: string[], response: (response: string) => void) {
             }
             break
 
-        case "mousemode":
+        case "display":
             if (args.length === 0) {
-                // Return current state from config
+                // Return current display mode from config
                 const config = readConfig()
-                const enabled = config.mouseMode?.enabled ?? false
-                response(enabled ? "true" : "false")
-            } else if (args[0] === "toggle") {
-                // Toggle mouse mode
-                toggleMouseMode()
-                    .then((newState) => {
-                        response(`Mouse mode ${newState ? "enabled" : "disabled"}`)
+                const mode = config.displayMode ?? "normal"
+                response(mode)
+            } else if (args[0] === "cycle") {
+                // Cycle through modes
+                cycleDisplayMode()
+                    .then((newMode) => {
+                        response(`Display mode: ${newMode}`)
                     })
                     .catch((err) => {
-                        console.error("[App] Failed to toggle mouse mode:", err)
+                        console.error("[App] Failed to cycle display mode:", err)
                         response(`Error: ${err}`)
                     })
             } else if (args[0] === "sync") {
-                // Sync/reapply current state from config
-                syncMouseMode()
+                // Sync/reapply current mode from config
+                syncDisplayMode()
                     .then(() => {
-                        const currentState = mouseModeEnabled()
-                        response(`Mouse mode synced (${currentState ? "enabled" : "disabled"})`)
+                        const mode = currentDisplayMode()
+                        response(`Display mode synced (${mode})`)
                     })
                     .catch((err) => {
-                        console.error("[App] Failed to sync mouse mode:", err)
+                        console.error("[App] Failed to sync display mode:", err)
                         response(`Error: ${err}`)
                     })
-            } else if (args[0] === "true" || args[0] === "false") {
-                // Set state explicitly
-                const enabled = args[0] === "true"
-                setMouseMode(enabled)
+            } else if (args[0] === "normal" || args[0] === "game" || args[0] === "mouse") {
+                // Set specific mode
+                const mode = args[0] as DisplayMode
+                setDisplayMode(mode)
                     .then(() => {
-                        response(`Mouse mode ${enabled ? "enabled" : "disabled"}`)
+                        response(`Display mode: ${mode}`)
                     })
                     .catch((err) => {
-                        console.error("[App] Failed to set mouse mode:", err)
+                        console.error("[App] Failed to set display mode:", err)
                         response(`Error: ${err}`)
                     })
             } else {
-                response("unknown mousemode arg (use: toggle, sync, true, false, or no arg to get state)")
+                response("unknown display arg (use: normal, game, mouse, cycle, sync, or no arg to get current mode)")
             }
             break
 

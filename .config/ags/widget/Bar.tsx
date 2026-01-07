@@ -15,7 +15,7 @@ import Bluetooth from "./components/Bluetooth"
 import AppLauncher from "./components/AppLauncher"
 import MouseModeIndicator from "./components/MouseModeIndicator"
 import MediaPlayer from "./components/MediaPlayer"
-import { mouseModeEnabled } from "../utils/mouseMode"
+import { currentDisplayMode } from "../utils/displayMode"
 
 export default function Bar(gdkmonitor: Gdk.Monitor) {
     return (
@@ -46,7 +46,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
                     <Tray />
                     <MediaPlayer />
                     <Weather />
-                    <box visible={mouseModeEnabled.as((enabled) => !enabled)} spacing={8}>
+                    <box visible={currentDisplayMode.as((mode) => mode === "normal")} spacing={8}>
                         <Cpu />
                         <Ram />
                         <Gpu />

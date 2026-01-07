@@ -1,6 +1,6 @@
 import { Gtk } from "ags/gtk4"
 import { execAsync } from "ags/process"
-import { mouseModeEnabled } from "../../utils/mouseMode"
+import { currentDisplayMode } from "../../utils/displayMode"
 
 interface App {
     name: string
@@ -39,7 +39,7 @@ export default function AppLauncher() {
 
     return (
         <menubutton
-            visible={mouseModeEnabled.as((enabled) => enabled)}
+            visible={currentDisplayMode.as((mode) => mode === "mouse")}
             tooltipText="Apps"
             $={(self) => {
                 popoverRef = self.get_popover()

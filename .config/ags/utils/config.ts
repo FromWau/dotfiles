@@ -1,6 +1,8 @@
 import { readFile, writeFile } from "ags/file"
 import GLib from "gi://GLib"
 
+export type DisplayMode = "normal" | "game" | "mouse"
+
 export interface Config {
     weather?: {
         city: string
@@ -12,22 +14,56 @@ export interface Config {
         currentWallpaper: string
         cursorTheme: string
     }
-    mouseMode?: {
-        enabled: boolean
-    }
+    displayMode?: DisplayMode
 }
 
 const CONFIG_PATH = `${GLib.getenv("HOME")}/.config/ags/config.json`
 
 let cachedConfig: Config | null = null
 
+/**
+ * Migrate legacy mouseMode/gameMode to displayMode
+ */
+function migrateConfig(config: any): Config {
+    // Check if we have legacy fields
+    const hasLegacyFields = config.mouseMode !== undefined || config.gameMode !== undefined
+
+    if (hasLegacyFields) {
+        // Migrate from legacy fields if no displayMode set
+        let displayMode: DisplayMode = config.displayMode ?? "normal"
+
+        if (!config.displayMode) {
+            if (config.mouseMode?.enabled) {
+                displayMode = "mouse"
+            } else if (config.gameMode?.enabled) {
+                displayMode = "game"
+            }
+        }
+
+        console.log("[Config] Migrating legacy config to displayMode:", displayMode)
+        const migratedConfig: Config = {
+            weather: config.weather,
+            theme: config.theme,
+            displayMode,
+        }
+
+        // Save migrated config
+        writeConfig(migratedConfig)
+        return migratedConfig
+    }
+
+    return config
+}
+
 export function readConfig(): Config {
     // Always read from disk to avoid stale cache
     try {
         const content = readFile(CONFIG_PATH)
-        const config = JSON.parse(content)
+        let config = JSON.parse(content)
+        // Migrate legacy config if needed
+        config = migrateConfig(config || {})
         cachedConfig = config
-        return config || {}
+        return config
     } catch (err) {
         console.error("[Config] Failed to read config:", err)
         return cachedConfig || {}
@@ -62,10 +98,12 @@ export function updateConfig(updates: Partial<Config>): boolean {
 
         // Deep merge to preserve nested properties
         const newConfig: Config = {
+            ...currentConfig,
+            ...updates,
             weather: { ...(currentConfig.weather || {}), ...(updates.weather || {}) },
             theme: { ...(currentConfig.theme || {}), ...(updates.theme || {}) },
-            mouseMode: { ...(currentConfig.mouseMode || {}), ...(updates.mouseMode || {}) },
         }
+
         console.log("[Config] New config:", JSON.stringify(newConfig))
 
         const result = writeConfig(newConfig)
