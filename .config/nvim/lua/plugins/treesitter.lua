@@ -3,7 +3,18 @@ return {
     build = ":TSUpdate",
     dependencies = "nvim-treesitter/nvim-treesitter-textobjects",
     opts = {
-        ensure_installed = { "lua", "vim", "vimdoc", "query", "markdown", "markdown_inline", "hyprlang" },
+        ensure_installed = {
+            "lua",
+            "vim",
+            "vimdoc",
+            "query",
+            "markdown",
+            "markdown_inline",
+            "hyprlang",
+            "gdscript",
+            "godot_resource",
+            "gdshader",
+        },
         sync_install = false,
         auto_install = true,
         highlight = {
