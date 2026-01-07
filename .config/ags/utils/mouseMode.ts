@@ -36,16 +36,9 @@ export async function applyMouseMode(enabled: boolean) {
         const name = monitor.name
         console.log("[MouseMode] Step 4: Processing monitor", name)
 
-        const hyprDir = GLib.getenv("XDG_RUNTIME_DIR") + "/hypr/" + GLib.getenv("HYPRLAND_INSTANCE_SIGNATURE")
-        const stateDir = `${hyprDir}/temp/monitors/${name}`
-
-        // Create state directory
-        console.log("[MouseMode] Step 5: Creating state directory")
-        await execAsync(`mkdir -p "${stateDir}"`)
-
         // Get default scale from monitors.conf
         let defaultScale = "1.0"
-        console.log("[MouseMode] Step 6: Reading monitors.conf")
+        console.log("[MouseMode] Step 5: Reading monitors.conf")
         try {
             const monitorsConfPath = `${GLib.getenv("HOME")}/.config/hypr/monitors.conf`
             const monitorsConf = readFile(monitorsConfPath)
@@ -65,37 +58,33 @@ export async function applyMouseMode(enabled: boolean) {
         const resolution = `${monitor.width}x${monitor.height}@${monitor.refreshRate}`
         const position = `${monitor.x}x${monitor.y}`
 
-        // Write state file for toggle-scale.sh compatibility
-        console.log("[MouseMode] Step 7: Writing state file")
-        await execAsync(`echo "${enabled ? "true" : "false"}" > "${stateDir}/is_scaled"`)
-
         // Apply to Hyprland
         const monitorConfig = `${name},${resolution},${position},${scale}`
-        console.log("[MouseMode] Step 8: Applying monitor config:", monitorConfig)
+        console.log("[MouseMode] Step 6: Applying monitor config:", monitorConfig)
         await execAsync(`hyprctl keyword monitor "${monitorConfig}"`)
-        console.log("[MouseMode] Step 9: Monitor config applied successfully")
+        console.log("[MouseMode] Step 7: Monitor config applied successfully")
     }
 
     // Set cursor size
-    console.log("[MouseMode] Step 10: Setting cursor size")
+    console.log("[MouseMode] Step 8: Setting cursor size")
     const cursorSize = enabled ? CURSOR_SIZE_LARGE : CURSOR_SIZE_NORMAL
     try {
         await execAsync(`hyprctl setcursor Bibata-Modern-Ice ${cursorSize}`)
-        console.log("[MouseMode] Step 11: Cursor size set successfully")
+        console.log("[MouseMode] Step 9: Cursor size set successfully")
     } catch (err) {
         console.error("[MouseMode] Failed to set cursor size:", err)
     }
 
     // Restore wallpaper after scaling
-    console.log("[MouseMode] Step 12: Restoring wallpaper")
+    console.log("[MouseMode] Step 10: Restoring wallpaper")
     try {
         await execAsync("swww restore")
-        console.log("[MouseMode] Step 13: Wallpaper restored successfully")
+        console.log("[MouseMode] Step 11: Wallpaper restored successfully")
     } catch (err) {
         console.warn("[MouseMode] Failed to restore wallpaper:", err)
     }
 
-    console.log("[MouseMode] Step 14: applyMouseMode completed")
+    console.log("[MouseMode] Step 12: applyMouseMode completed")
 }
 
 /**
