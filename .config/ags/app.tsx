@@ -1,7 +1,6 @@
 import app from "ags/gtk4/app"
 import Bar from "./widget/Bar"
 import Settings from "./widget/Settings"
-import MonitorSettings from "./widget/MonitorSettings"
 import { For, This, createBinding } from "ags"
 import GLib from "gi://GLib"
 import { execAsync } from "ags/process"
@@ -69,7 +68,6 @@ function main() {
 
     // Create Settings window
     Settings()
-    MonitorSettings()
 
     return (
         <For each={monitors}>
