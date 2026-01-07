@@ -1,199 +1,167 @@
-import { readFile, writeFile } from "ags/file"
 import GLib from "gi://GLib"
 import { execAsync } from "ags/process"
 import { createState } from "gnim"
-import "./../utils/time"
+import { readConfig, updateConfig } from "./config"
+import { readFile } from "ags/file"
+import "./time"
 
-const statePath = GLib.get_user_data_dir() + "/ags/mouse-mode.json"
 const CURSOR_SIZE_NORMAL = 24
 const CURSOR_SIZE_LARGE = 48
-const TARGET_HEIGHT = 1080 // Target resolution height for mouse mode
 
-interface MouseModeState {
-    enabled: boolean
-}
+// Create reactive state
+const [mouseModeEnabled, setMouseModeEnabled] = createState(false)
 
-interface MonitorInfo {
-    name: string
-    width: number
-    height: number
-    refreshRate: number
-    x: number
-    y: number
-}
+// Read initial state from config.json (persistent across reboots)
+const config = readConfig()
+const initialState = config.mouseMode?.enabled ?? false
+console.log("[MouseMode] Initial state from config.json:", initialState)
+setMouseModeEnabled(initialState)
 
-function loadState(): boolean {
-    try {
-        const data = readFile(statePath)
-        const state: MouseModeState = JSON.parse(data)
-        return state.enabled ?? false
-    } catch {
-        return false
-    }
-}
+export { mouseModeEnabled }
 
-function saveState(enabled: boolean) {
-    try {
-        const state: MouseModeState = { enabled }
-        writeFile(statePath, JSON.stringify(state))
-    } catch (err) {
-        console.error("Failed to save mouse mode state:", err)
-    }
-}
+/**
+ * Apply mouseMode settings to Hyprland
+ * This is called on startup if mouseMode is enabled in config
+ */
+export async function applyMouseMode(enabled: boolean) {
+    console.log("[MouseMode] Step 1: Starting applyMouseMode, enabled=", enabled)
 
-function roundToQuarter(num: number): number {
-    // Round to nearest 0.25 (Hyprland requirement)
-    return Math.round(num * 4) / 4
-}
-
-async function getMonitors(): Promise<MonitorInfo[]> {
-    try {
-        const output = await execAsync("hyprctl monitors -j")
-        const monitors = JSON.parse(output)
-        return monitors.map((m: any) => ({
-            name: m.name,
-            width: m.width,
-            height: m.height,
-            refreshRate: m.refreshRate,
-            x: m.x,
-            y: m.y,
-        }))
-    } catch (err) {
-        console.error("Failed to get monitors:", err)
-        return []
-    }
-}
-
-function getDefaultScale(monitorName: string): number {
-    try {
-        const configPath = `${GLib.getenv("HOME")}/.config/hypr/conf/io/monitor.conf`
-        const content = readFile(configPath)
-        const lines = content.split("\n")
-
-        for (const line of lines) {
-            if (line.includes(`monitor=${monitorName}`)) {
-                const parts = line.split(",")
-                if (parts.length >= 4) {
-                    const scale = parseFloat(parts[3].trim())
-                    return isNaN(scale) ? 1 : scale
-                }
-            }
-        }
-    } catch (err) {
-        console.error("Failed to read default scale:", err)
-    }
-    return 1
-}
-
-function getExtraMonitorSettings(monitorName: string): string {
-    try {
-        const configPath = `${GLib.getenv("HOME")}/.config/hypr/conf/io/monitor.conf`
-        const content = readFile(configPath)
-        const lines = content.split("\n")
-
-        for (const line of lines) {
-            if (line.includes(`monitor=${monitorName}`)) {
-                const parts = line.split(",")
-                if (parts.length >= 5) {
-                    return parts.slice(4).join(",").trim()
-                }
-            }
-        }
-    } catch (err) {
-        console.error("Failed to read extra settings:", err)
-    }
-    return ""
-}
-
-async function applyMouseMode(enabled: boolean) {
-    const monitors = await getMonitors()
-    if (monitors.length === 0) {
-        console.error("No monitors found")
-        return
-    }
-
-    const lines = ["# Auto generated - Mouse Mode"]
+    // Get monitor info from Hyprland
+    console.log("[MouseMode] Step 2: Getting monitor info from hyprctl")
+    const monitorsJson = await execAsync("hyprctl monitors -j")
+    const monitors = JSON.parse(monitorsJson)
+    console.log("[MouseMode] Step 3: Found", monitors.length, "monitors")
 
     for (const monitor of monitors) {
-        const defaultScale = getDefaultScale(monitor.name)
-        let scale: number
+        const name = monitor.name
+        console.log("[MouseMode] Step 4: Processing monitor", name)
 
-        if (enabled) {
-            // Calculate scale to get to target height (1080p)
-            const calculatedScale = monitor.height / TARGET_HEIGHT
-            scale = roundToQuarter(calculatedScale)
-            console.log(
-                `Mouse mode: scaling ${monitor.name} from ${monitor.height}p to ${TARGET_HEIGHT}p (scale: ${scale})`
-            )
-        } else {
-            scale = defaultScale
+        const hyprDir = GLib.getenv("XDG_RUNTIME_DIR") + "/hypr/" + GLib.getenv("HYPRLAND_INSTANCE_SIGNATURE")
+        const stateDir = `${hyprDir}/temp/monitors/${name}`
+
+        // Create state directory
+        console.log("[MouseMode] Step 5: Creating state directory")
+        await execAsync(`mkdir -p "${stateDir}"`)
+
+        // Get default scale from monitors.conf
+        let defaultScale = "1.0"
+        console.log("[MouseMode] Step 6: Reading monitors.conf")
+        try {
+            const monitorsConfPath = `${GLib.getenv("HOME")}/.config/hypr/monitors.conf`
+            const monitorsConf = readFile(monitorsConfPath)
+            const monitorLine = monitorsConf.split("\n").find((line) => line.includes(`monitor=${name}`))
+            if (monitorLine) {
+                const parts = monitorLine.split(",")
+                if (parts.length >= 4) {
+                    defaultScale = parts[3].trim()
+                }
+            }
+        } catch (err) {
+            console.warn("[MouseMode] Failed to read monitors.conf, using default scale 1.0")
         }
 
+        // Determine scale
+        const scale = enabled ? "2.0" : defaultScale
         const resolution = `${monitor.width}x${monitor.height}@${monitor.refreshRate}`
         const position = `${monitor.x}x${monitor.y}`
-        const extraSettings = getExtraMonitorSettings(monitor.name)
 
-        if (extraSettings) {
-            lines.push(`monitor=${monitor.name}, ${resolution}, ${position}, ${scale}, ${extraSettings}`)
-        } else {
-            lines.push(`monitor=${monitor.name}, ${resolution}, ${position}, ${scale}`)
-        }
+        // Write state file for toggle-scale.sh compatibility
+        console.log("[MouseMode] Step 7: Writing state file")
+        await execAsync(`echo "${enabled ? "true" : "false"}" > "${stateDir}/is_scaled"`)
+
+        // Apply to Hyprland
+        const monitorConfig = `${name},${resolution},${position},${scale}`
+        console.log("[MouseMode] Step 8: Applying monitor config:", monitorConfig)
+        await execAsync(`hyprctl keyword monitor "${monitorConfig}"`)
+        console.log("[MouseMode] Step 9: Monitor config applied successfully")
     }
 
-    // Write monitor config to Hyprland temp file
-    const content = lines.join("\n")
-    const configPath = `${GLib.getenv("HOME")}/.config/hypr/conf/temp/monitor_scale.conf`
-
-    try {
-        // Use the update_file.sh script to write config
-        const scriptPath = `${GLib.getenv("HOME")}/.config/hypr/scripts/utils/update_file.sh`
-        await execAsync(`bash "${scriptPath}" "temp/monitor_scale.conf" "${content.replace(/"/g, '\\"')}"`)
-    } catch (err) {
-        console.error("Failed to write monitor config:", err)
-    }
-
-    // Update cursor size
+    // Set cursor size
+    console.log("[MouseMode] Step 10: Setting cursor size")
     const cursorSize = enabled ? CURSOR_SIZE_LARGE : CURSOR_SIZE_NORMAL
     try {
         await execAsync(`hyprctl setcursor Bibata-Modern-Ice ${cursorSize}`)
+        console.log("[MouseMode] Step 11: Cursor size set successfully")
     } catch (err) {
-        console.error("Failed to set cursor size:", err)
+        console.error("[MouseMode] Failed to set cursor size:", err)
     }
 
-    // Restore wallpaper to fix any rendering issues
-    execAsync("swww restore").catch(() => {
-        // Ignore errors if swww is not running
-    })
+    // Restore wallpaper after scaling
+    console.log("[MouseMode] Step 12: Restoring wallpaper")
+    try {
+        await execAsync("swww restore")
+        console.log("[MouseMode] Step 13: Wallpaper restored successfully")
+    } catch (err) {
+        console.warn("[MouseMode] Failed to restore wallpaper:", err)
+    }
 
-    // Send notification
-    const title = "Mouse Mode"
-    const message = enabled ? "Enabled - Comfortable bed browsing mode" : "Disabled - Normal desktop mode"
-    execAsync(`notify-send "${title}" "${message}" -i input-mouse`).catch(() => {
-        // Ignore notification errors
-    })
+    console.log("[MouseMode] Step 14: applyMouseMode completed")
 }
 
-// Load initial state from disk once on startup
-const initialState = loadState()
-const [mouseModeEnabled, setMouseModeEnabledInternal] = createState(initialState)
-export { mouseModeEnabled }
+/**
+ * Toggle mouseMode and save state to config
+ */
+export async function toggleMouseMode() {
+    try {
+        // Read current state from config (source of truth)
+        const config = readConfig()
+        const currentState = config.mouseMode?.enabled ?? false
+        const newState = !currentState
+        console.log("[MouseMode] Toggling from", currentState ? "enabled" : "disabled", "to", newState ? "enabled" : "disabled")
 
-export function toggleMouseMode() {
-    const newState = !mouseModeEnabled()
-    setMouseModeEnabledInternal(newState)
-    saveState(newState)
-    applyMouseMode(newState)
-    return newState
+        // Apply the settings
+        await applyMouseMode(newState)
+
+        // Save to config.json (persistent across reboots)
+        updateConfig({
+            mouseMode: {
+                enabled: newState,
+            },
+        })
+
+        // Update reactive state
+        setMouseModeEnabled(newState)
+
+        // Send notification
+        const title = "Mouse Mode"
+        const message = newState ? "Enabled - Comfortable bed browsing mode" : "Disabled - Normal desktop mode"
+        execAsync(`notify-send "${title}" "${message}" -i input-mouse`).catch(() => {})
+
+        console.log("[MouseMode] Toggle completed successfully")
+        return newState
+    } catch (err) {
+        console.error("[MouseMode] Error in toggleMouseMode:", err)
+        throw err
+    }
 }
 
-export function setMouseMode(enabled: boolean) {
-    setMouseModeEnabledInternal(enabled)
-    saveState(enabled)
-    applyMouseMode(enabled)
+/**
+ * Set mouseMode to a specific state
+ */
+export async function setMouseMode(enabled: boolean) {
+    // Read current state from config (source of truth)
+    const config = readConfig()
+    const currentState = config.mouseMode?.enabled ?? false
+
+    // Only apply if state is different
+    if (currentState !== enabled) {
+        console.log("[MouseMode] setMouseMode: changing from", currentState ? "enabled" : "disabled", "to", enabled ? "enabled" : "disabled")
+        await toggleMouseMode()
+    } else {
+        console.log("[MouseMode] setMouseMode: already", enabled ? "enabled" : "disabled")
+    }
 }
 
-export function syncMouseMode() {
-    // Reapply current state (useful on AGS/Hyprland startup)
-    const currentState = loadState()
-    applyMouseMode(currentState)
+/**
+ * Re-apply current mouseMode state from config
+ * Useful after external changes to Hyprland config
+ */
+export async function syncMouseMode() {
+    const config = readConfig()
+    const enabled = config.mouseMode?.enabled ?? false
+    console.log("[MouseMode] Syncing from config.json:", enabled ? "enabled" : "disabled")
+
+    await applyMouseMode(enabled)
+    setMouseModeEnabled(enabled)
+    console.log("[MouseMode] Sync completed")
 }

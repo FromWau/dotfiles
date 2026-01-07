@@ -5,8 +5,9 @@ import MonitorSettings from "./widget/MonitorSettings"
 import { For, This, createBinding } from "ags"
 import GLib from "gi://GLib"
 import { execAsync } from "ags/process"
-import { setMouseMode, toggleMouseMode, syncMouseMode, mouseModeEnabled } from "./utils/mouseMode"
+import { setMouseMode, toggleMouseMode, syncMouseMode, mouseModeEnabled, applyMouseMode } from "./utils/mouseMode"
 import { PATHS, validatePaths } from "./utils/paths"
+import { readConfig } from "./utils/config"
 
 async function buildTheme() {
     const scssPath = PATHS.config.scss
@@ -51,6 +52,19 @@ function main() {
 
     buildTheme()
 
+    // Initialize mouseMode from config
+    // This runs after Hyprland has started, reads config.json, and applies settings if needed
+    const config = readConfig()
+    const mouseModeConfig = config.mouseMode?.enabled ?? false
+    if (mouseModeConfig) {
+        console.log("[App] MouseMode enabled in config, applying settings to Hyprland...")
+        applyMouseMode(true).catch((err) => {
+            console.error("[App] Failed to apply mouseMode on startup:", err)
+        })
+    } else {
+        console.log("[App] MouseMode disabled in config")
+    }
+
     const monitors = createBinding(app, "monitors")
 
     // Create Settings window
@@ -86,22 +100,42 @@ function requestHandler(argv: string[], response: (response: string) => void) {
 
         case "mousemode":
             if (args.length === 0) {
-                // Return current state
-                response(mouseModeEnabled() ? "true" : "false")
+                // Return current state from config
+                const config = readConfig()
+                const enabled = config.mouseMode?.enabled ?? false
+                response(enabled ? "true" : "false")
             } else if (args[0] === "toggle") {
                 // Toggle mouse mode
-                const newState = toggleMouseMode()
-                response(`Mouse mode ${newState ? "enabled" : "disabled"}`)
+                toggleMouseMode()
+                    .then((newState) => {
+                        response(`Mouse mode ${newState ? "enabled" : "disabled"}`)
+                    })
+                    .catch((err) => {
+                        console.error("[App] Failed to toggle mouse mode:", err)
+                        response(`Error: ${err}`)
+                    })
             } else if (args[0] === "sync") {
-                // Sync/reapply current state
+                // Sync/reapply current state from config
                 syncMouseMode()
-                const currentState = mouseModeEnabled()
-                response(`Mouse mode synced (${currentState ? "enabled" : "disabled"})`)
+                    .then(() => {
+                        const currentState = mouseModeEnabled()
+                        response(`Mouse mode synced (${currentState ? "enabled" : "disabled"})`)
+                    })
+                    .catch((err) => {
+                        console.error("[App] Failed to sync mouse mode:", err)
+                        response(`Error: ${err}`)
+                    })
             } else if (args[0] === "true" || args[0] === "false") {
                 // Set state explicitly
                 const enabled = args[0] === "true"
                 setMouseMode(enabled)
-                response(`Mouse mode ${enabled ? "enabled" : "disabled"}`)
+                    .then(() => {
+                        response(`Mouse mode ${enabled ? "enabled" : "disabled"}`)
+                    })
+                    .catch((err) => {
+                        console.error("[App] Failed to set mouse mode:", err)
+                        response(`Error: ${err}`)
+                    })
             } else {
                 response("unknown mousemode arg (use: toggle, sync, true, false, or no arg to get state)")
             }
