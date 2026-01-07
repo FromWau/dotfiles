@@ -177,6 +177,14 @@ export default function Session() {
                             }}
                         />
                         <ActionButton
+                            icon="video-display-symbolic"
+                            label="GPU Settings"
+                            onClick={() => {
+                                (globalThis as any).showSettings?.(2)
+                                closePopover()
+                            }}
+                        />
+                        <ActionButton
                             icon="applications-graphics-symbolic"
                             label="Generate Theme"
                             onClick={() => {

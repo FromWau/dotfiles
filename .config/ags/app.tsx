@@ -129,6 +129,10 @@ function requestHandler(argv: string[], response: (response: string) => void) {
                 setDisplayMode(mode)
                     .then(() => {
                         response(`Display mode: ${mode}`)
+                        // Auto-open GPU settings when switching to game mode
+                        if (mode === "game") {
+                            (globalThis as any).showSettings?.(2)
+                        }
                     })
                     .catch((err) => {
                         console.error("[App] Failed to set display mode:", err)

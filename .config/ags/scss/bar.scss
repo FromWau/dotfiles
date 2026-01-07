@@ -169,3 +169,30 @@
 .Bar .weather-widget label {
   min-width: 50px;
 }
+
+/* GPU Settings */
+.gpu-item {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gpu-name {
+    font-weight: bold;
+}
+
+.gpu-active {
+    color: $primary;
+}
+
+.gpu-disabled {
+    opacity: 0.5;
+}
+
+.gpu-pci {
+    font-size: 10px;
+    opacity: 0.6;
+}
+
+.enable-all-box {
+    padding: 8px;
+}
