@@ -1,5 +1,6 @@
 import { Gtk } from "ags/gtk4";
 import { execAsync } from "ags/process";
+import { currentDisplayMode } from "../../utils/displayMode";
 
 function SectionHeader({ label }: { label: string }) {
     return (
@@ -17,6 +18,28 @@ function ActionButton({ icon, label, onClick }: { icon: string; label: string; o
             <box spacing={8}>
                 <image iconName={icon} />
                 <label label={label} halign={Gtk.Align.START} hexpand />
+            </box>
+        </button>
+    )
+}
+
+function DisplayModeButton({ icon, label, mode, onClick }: { icon: string; label: string; mode: string; onClick: () => void }) {
+    return (
+        <button
+            onClicked={onClick}
+            css={currentDisplayMode.as((currentMode) =>
+                currentMode === mode
+                    ? "padding: 8px; background-color: alpha(@theme_selected_bg_color, 0.3); border-left: 2px solid @theme_selected_bg_color;"
+                    : "padding: 8px;"
+            )}
+        >
+            <box spacing={8}>
+                <image iconName={icon} />
+                <label label={label} halign={Gtk.Align.START} hexpand />
+                <label
+                    label={currentDisplayMode.as((currentMode) => currentMode === mode ? "●" : "")}
+                    css="color: @theme_selected_bg_color;"
+                />
             </box>
         </button>
     )
@@ -110,6 +133,38 @@ export default function Session() {
                         />
                     </box>
 
+                    {/* Display Modes */}
+                    <SectionHeader label="Display Mode" />
+                    <box orientation={Gtk.Orientation.VERTICAL} spacing={2}>
+                        <DisplayModeButton
+                            icon="video-display-symbolic"
+                            label="Normal (4K)"
+                            mode="normal"
+                            onClick={() => {
+                                execAsync("ags request display normal")
+                                closePopover()
+                            }}
+                        />
+                        <DisplayModeButton
+                            icon="applications-games-symbolic"
+                            label="Game (1440p)"
+                            mode="game"
+                            onClick={() => {
+                                execAsync("ags request display game")
+                                closePopover()
+                            }}
+                        />
+                        <DisplayModeButton
+                            icon="input-mouse-symbolic"
+                            label="Mouse (1080p)"
+                            mode="mouse"
+                            onClick={() => {
+                                execAsync("ags request display mouse")
+                                closePopover()
+                            }}
+                        />
+                    </box>
+
                     {/* System Settings */}
                     <SectionHeader label="System" />
                     <box orientation={Gtk.Orientation.VERTICAL} spacing={2}>
@@ -123,9 +178,9 @@ export default function Session() {
                         />
                         <ActionButton
                             icon="video-display-symbolic"
-                            label="Monitor Settings"
+                            label="GPU Settings"
                             onClick={() => {
-                                (globalThis as any).showMonitorSettings?.()
+                                (globalThis as any).showSettings?.(2)
                                 closePopover()
                             }}
                         />
@@ -134,14 +189,6 @@ export default function Session() {
                             label="Generate Theme"
                             onClick={() => {
                                 execAsync("hypr-wal")
-                                closePopover()
-                            }}
-                        />
-                        <ActionButton
-                            icon="input-mouse-symbolic"
-                            label="Mouse Mode"
-                            onClick={() => {
-                                execAsync("ags request mousemode toggle")
                                 closePopover()
                             }}
                         />

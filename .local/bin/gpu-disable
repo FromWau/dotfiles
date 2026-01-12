@@ -1,10 +1,34 @@
 #!/bin/bash
-# Disable NVIDIA GPU with fzf selection using nvidia-smi drain
+# Disable NVIDIA GPU with optional flags: -g GPU_ID --yes
 
 # Create log file early to catch any errors
 LOG_FILE="/tmp/gpu-disable.log"
 
 set -e
+
+# Parse command line arguments
+GPU_ID=""
+SKIP_CONFIRM=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -g|--gpu)
+            GPU_ID="$2"
+            shift 2
+            ;;
+        --yes|-y)
+            SKIP_CONFIRM=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [-g GPU_ID] [--yes]"
+            echo "  -g GPU_ID: PCI ID of GPU to disable (e.g., 00000000:01:00.0)"
+            echo "  --yes: Skip confirmation prompt"
+            exit 1
+            ;;
+    esac
+done
 
 # Initialize log file with proper permissions
 sudo touch "$LOG_FILE"
@@ -22,12 +46,61 @@ if [ -z "$GPU_LIST" ]; then
     exit 1
 fi
 
-# Let user select GPU with fzf
-SELECTED=$(echo "$GPU_LIST" | fzf --prompt="Select GPU to disable: " --height=10)
-
-if [ -z "$SELECTED" ]; then
-    echo "No GPU selected. Aborted."
+# Safety check: Don't allow disabling the only GPU
+GPU_COUNT=$(echo "$GPU_LIST" | wc -l)
+if [ "$GPU_COUNT" -eq 1 ]; then
+    echo "Error: Cannot disable the only active GPU"
+    echo ""
+    echo "You have only 1 active GPU:"
+    echo "$GPU_LIST"
+    echo ""
+    echo "Disabling it would leave you with no display output."
+    echo "Please enable another GPU first using gpu-enable before disabling this one."
     exit 1
+fi
+
+# If GPU_ID was provided via -g flag, use it
+if [ -n "$GPU_ID" ]; then
+    # Check if GPU_ID is a numeric index (0, 1, 2, etc.)
+    if [[ "$GPU_ID" =~ ^[0-9]+$ ]]; then
+        # Use nvtop to get GPU by index
+        DEVICE_NAME=$(nvtop -s 2>/dev/null | jq -r ".[$GPU_ID].device_name // empty" 2>/dev/null)
+
+        if [ -z "$DEVICE_NAME" ]; then
+            echo "Error: GPU index $GPU_ID not found"
+            echo "Available GPUs:"
+            nvtop -s 2>/dev/null | jq -r 'to_entries[] | "\(.key): \(.value.device_name)"' 2>/dev/null || echo "Failed to query GPUs"
+            exit 1
+        fi
+
+        # Find matching GPU in nvidia-smi list by device name
+        SELECTED=$(echo "$GPU_LIST" | grep -F "$DEVICE_NAME" | head -n1)
+
+        if [ -z "$SELECTED" ]; then
+            echo "Error: GPU '$DEVICE_NAME' (index $GPU_ID) not found in active GPUs"
+            echo "Available GPUs:"
+            echo "$GPU_LIST"
+            exit 1
+        fi
+    else
+        # Treat as PCI ID - exact match required
+        SELECTED=$(echo "$GPU_LIST" | grep -F "$GPU_ID" || true)
+
+        if [ -z "$SELECTED" ]; then
+            echo "Error: GPU with PCI ID '$GPU_ID' not found in active GPUs"
+            echo "Available GPUs:"
+            echo "$GPU_LIST"
+            exit 1
+        fi
+    fi
+else
+    # No -g flag: use fzf for interactive selection
+    SELECTED=$(echo "$GPU_LIST" | fzf --prompt="Select GPU to disable: " --height=10)
+
+    if [ -z "$SELECTED" ]; then
+        echo "No GPU selected. Aborted."
+        exit 1
+    fi
 fi
 
 # Extract PCI address (first field before the space)
@@ -37,24 +110,26 @@ GPU_NAME=$(echo "$SELECTED" | sed 's/^[^ ]* //')
 echo "Selected: $GPU_NAME"
 echo "PCI Address: $GPU_PCI"
 
-# Ask about restarting Hyprland
-echo ""
-echo "Disabling the GPU will require restarting your window manager."
-while true; do
-    read -p "Restart Hyprland and disable this GPU? (yes/NO): " -r
-    case "${REPLY,,}" in
-    yes | y)
-        break
-        ;;
-    no | n | "")
-        echo "Aborted."
-        exit 1
-        ;;
-    *)
-        echo "Please enter 'yes' or 'no' (or press Enter for no)"
-        ;;
-    esac
-done
+# Ask about restarting Hyprland (unless --yes flag is provided)
+if [ "$SKIP_CONFIRM" = false ]; then
+    echo ""
+    echo "Disabling the GPU will require restarting your window manager."
+    while true; do
+        read -p "Restart Hyprland and disable this GPU? (yes/NO): " -r
+        case "${REPLY,,}" in
+        yes | y)
+            break
+            ;;
+        no | n | "")
+            echo "Aborted."
+            exit 1
+            ;;
+        *)
+            echo "Please enter 'yes' or 'no' (or press Enter for no)"
+            ;;
+        esac
+    done
+fi
 
 # Prompt for sudo password and schedule the disable operation
 echo "Authenticating for GPU disable operation..."

@@ -144,3 +144,55 @@
     box-shadow: 0 0 $glow-lg $primary_glow_60;
   }
 }
+
+/* Fixed widths for dynamic widgets to prevent layout shifts */
+.Bar .time-widget label {
+  min-width: 250px;
+}
+
+.Bar .battery-widget label {
+  min-width: 35px;
+}
+
+.Bar .gpu-widget label {
+  min-width: 100px;
+}
+
+.Bar .cpu-widget label {
+  min-width: 80px;
+}
+
+.Bar .ram-widget label {
+  min-width: 260px;
+}
+
+.Bar .weather-widget label {
+  min-width: 50px;
+}
+
+/* GPU Settings */
+.gpu-item {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gpu-name {
+    font-weight: bold;
+}
+
+.gpu-active {
+    color: $primary;
+}
+
+.gpu-disabled {
+    opacity: 0.5;
+}
+
+.gpu-pci {
+    font-size: 10px;
+    opacity: 0.6;
+}
+
+.enable-all-box {
+    padding: 8px;
+}
