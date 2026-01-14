@@ -2,7 +2,9 @@ import GLib from "gi://GLib"
 import { execAsync } from "ags/process"
 import { createState } from "gnim"
 import { readConfig, updateConfig } from "./config"
-import { readFile } from "ags/file"
+import { readFile, writeFile } from "ags/file"
+
+const DISPLAY_MODE_CONF = `${GLib.getenv("HOME")}/.config/hypr/conf/display-mode.conf`
 import "./time"
 
 // Display mode types
@@ -42,6 +44,39 @@ setCurrentDisplayMode(initialMode)
 export { currentDisplayMode }
 
 /**
+ * Parse resolution string like "2560x1440@120" into components
+ */
+function parseResolution(res: string): { width: number; height: number; refresh: number } | null {
+    const match = res.match(/^(\d+)x(\d+)@(\d+(?:\.\d+)?)$/)
+    if (!match) return null
+    return {
+        width: parseInt(match[1]),
+        height: parseInt(match[2]),
+        refresh: Math.round(parseFloat(match[3])),
+    }
+}
+
+/**
+ * Check if monitor already matches target settings
+ */
+function monitorMatchesTarget(
+    monitor: { width: number; height: number; refreshRate: number; scale: number },
+    targetResolution: string,
+    targetScale: string
+): boolean {
+    const target = parseResolution(targetResolution)
+    if (!target) return false
+
+    const scaleMatches = Math.abs(monitor.scale - parseFloat(targetScale)) < 0.01
+    const resMatches =
+        monitor.width === target.width &&
+        monitor.height === target.height &&
+        Math.round(monitor.refreshRate) === target.refresh
+
+    return scaleMatches && resMatches
+}
+
+/**
  * Apply display mode settings to Hyprland
  */
 export async function applyDisplayMode(mode: DisplayMode) {
@@ -54,11 +89,14 @@ export async function applyDisplayMode(mode: DisplayMode) {
     const monitors = JSON.parse(monitorsJson)
     console.log("[DisplayMode] Found", monitors.length, "monitors")
 
+    const monitorConfigs: string[] = []
+    let anyChanged = false
+
     for (const monitor of monitors) {
         const name = monitor.name
 
         // Get default resolution and scale from monitors.conf for "normal" mode
-        let defaultResolution = `${monitor.width}x${monitor.height}@${monitor.refreshRate}`
+        let defaultResolution = `${monitor.width}x${monitor.height}@${Math.round(monitor.refreshRate)}`
         let defaultScale = "1.0"
 
         try {
@@ -82,12 +120,37 @@ export async function applyDisplayMode(mode: DisplayMode) {
         const resolution = modeConfig.resolution ?? defaultResolution
         const scale = modeConfig.scale ?? defaultScale
         const position = `${monitor.x}x${monitor.y}`
+        const monitorValue = `${name},${resolution},${position},${scale}`
 
-        // Apply to Hyprland
-        const monitorConfig = `${name},${resolution},${position},${scale}`
-        console.log("[DisplayMode] Applying monitor config:", monitorConfig)
-        await execAsync(`hyprctl keyword monitor "${monitorConfig}"`)
+        // Always add to config file content (with monitor= prefix for conf file)
+        monitorConfigs.push(`monitor=${monitorValue}`)
+
+        // Check if monitor already matches target (for immediate apply)
+        if (monitorMatchesTarget(monitor, resolution, scale)) {
+            console.log("[DisplayMode]", name, "already matches target, skipping hyprctl")
+            continue
+        }
+
+        anyChanged = true
+
+        // Apply immediately via hyprctl
+        console.log("[DisplayMode] Applying monitor config:", monitorValue)
+        await execAsync(`hyprctl keyword monitor "${monitorValue}"`)
         console.log("[DisplayMode] Monitor config applied successfully")
+    }
+
+    // Write to display-mode.conf for persistence across Hyprland reloads
+    // For "normal" mode, clear the file so monitors.conf takes precedence
+    const confContent =
+        mode === "normal"
+            ? "# Display mode: normal - using monitors.conf defaults\n"
+            : `# Display mode: ${mode} - managed by AGS, do not edit manually\n${monitorConfigs.join("\n")}\n`
+    writeFile(DISPLAY_MODE_CONF, confContent)
+    console.log("[DisplayMode] Written to", DISPLAY_MODE_CONF)
+
+    if (!anyChanged) {
+        console.log("[DisplayMode] All monitors already match, nothing else to do")
+        return
     }
 
     // Set cursor size

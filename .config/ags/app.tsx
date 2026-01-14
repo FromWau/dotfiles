@@ -9,6 +9,19 @@ import type { DisplayMode } from "./utils/displayMode"
 import { PATHS, validatePaths } from "./utils/paths"
 import { readConfig } from "./utils/config"
 
+async function getActiveGpuCount(): Promise<number> {
+    try {
+        const result = await execAsync([
+            "bash",
+            "-c",
+            "nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | wc -l"
+        ])
+        return parseInt(result.trim()) || 0
+    } catch {
+        return 0
+    }
+}
+
 async function buildTheme() {
     const scssPath = PATHS.config.scss
     const cssPath = PATHS.data.css
@@ -127,11 +140,14 @@ function requestHandler(argv: string[], response: (response: string) => void) {
                 // Set specific mode
                 const mode = args[0] as DisplayMode
                 setDisplayMode(mode)
-                    .then(() => {
+                    .then(async () => {
                         response(`Display mode: ${mode}`)
-                        // Auto-open GPU settings when switching to game mode
+                        // Auto-open GPU settings when switching to game mode (only if multiple GPUs active)
                         if (mode === "game") {
-                            (globalThis as any).showSettings?.(2)
+                            const activeGpus = await getActiveGpuCount()
+                            if (activeGpus > 1) {
+                                (globalThis as any).showSettings?.(2)
+                            }
                         }
                     })
                     .catch((err) => {
