@@ -26,7 +26,7 @@ function link_config() {
         ags bat beets btop dunst fastfetch fish git hypr 
         ideavim kitty lazygit matugen mpd mpDris2 mpv 
         ncmpcpp npm nvim pacman systemd wal walker wget 
-        starship.toml tealdeer
+        starship.toml tealdeer xdg-desktop-portal
     )
 
     link_and_backup "$source_dir" "$target_dir" "${items[@]}"
