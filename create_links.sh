@@ -78,7 +78,7 @@ function link_config() {
     source_dir="$SOURCE_HOME/.config/"
     target_dir="$TARGET_HOME/.config/"
     items=(
-        ags bat beets btop dunst fastfetch fish git hypr
+        ags bat beets btop claude dunst fastfetch fish git hypr
         ideavim kitty lazygit matugen mpd mpDris2 mpv
         ncmpcpp npm nvim pacman systemd wal walker wget
         starship.toml tealdeer xdg-desktop-portal
