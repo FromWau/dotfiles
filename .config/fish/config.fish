@@ -11,6 +11,8 @@ set -x PASSWORD_STORE_DIR "$XDG_DATA_HOME"/password-store
 set -x GOPATH "$XDG_DATA_HOME"/go
 set -x GNUPGHOME "$XDG_DATA_HOME"/gnupg
 set -x CARGO_HOME "$XDG_DATA_HOME"/cargo
+set -x RUSTUP_HOME "$XDG_DATA_HOME"/rustup
+set -x SDKMAN_DIR "$XDG_DATA_HOME"/sdkman
 set -x WINEPREFIX "$XDG_DATA_HOME"/wineprefixes/default
 set -x TERMINFO "$XDG_DATA_HOME"/terminfo
 set -x TERMINFO_DIRS "$XDG_DATA_HOME"/terminfo:/usr/share/terminfo
@@ -29,7 +31,12 @@ set -x SSH_AUTH_SOCK "$XDG_RUNTIME_DIR"/ssh-agent.socket
 
 set -x MPD_HOST "$XDG_RUNTIME_DIR"/mpd/socket
 
+set -x ANDROID_USER_HOME "$XDG_DATA_HOME"/android
+set -x ANDROID_HOME "$XDG_DATA_HOME"/android/sdk
+set -x GRADLE_USER_HOME "$XDG_DATA_HOME"/gradle
+
 set -x CUDA_CACHE_PATH "$XDG_CACHE_HOME"/nv
+set -x SQLITE_HISTORY "$XDG_CACHE_HOME"/sqlite_history
 
 set -x MANPAGER "sh -c 'bat -l man -p'"
 set -x LESSHISTFILE -
@@ -39,6 +46,11 @@ set -x DELTA_FEATURES "+side-by-side +dark +syntax-theme base16-256 +true-color 
 set -U fish_greeting
 
 fish_vi_key_bindings insert
+
+function _reload_theme --on-signal USR1
+    source ~/.config/fish/conf.d/fish_frozen_theme.fish
+    commandline -f repaint
+end
 
 # fzf_key_bindings
 
@@ -51,6 +63,9 @@ zoxide init fish | source
 
 
 # abbr
+abbr adb 'HOME="$XDG_DATA_HOME"/android adb'
+abbr wget 'wget --hsts-file="$XDG_DATA_HOME"/wget-hsts'
+abbr nvidia-settings 'nvidia-settings --config="$XDG_CONFIG_HOME"/nvidia/settings'
 abbr icat 'kitty +kitten icat'
 abbr mirror 'sudo reflector --country AT --latest 50 --sort rate --save /etc/pacman.d/mirrorlist'
 abbr ls 'eza --icons --all --group-directories-first --color always --sort oldest'
