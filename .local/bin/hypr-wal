@@ -82,7 +82,8 @@ generate_theme() {
 
     log_info "Generating theme from wallpaper..."
 
-    if ! matugen -v image "$pic" 2>&1 | tee /tmp/matugen.log; then
+    if ! matugen -v image --source-color-index 0 "$pic" > /tmp/matugen.log 2>&1; then
+        cat /tmp/matugen.log
         log_error "Theme generation failed. See /tmp/matugen.log"
         return 1
     fi
