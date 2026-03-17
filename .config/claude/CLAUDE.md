@@ -6,3 +6,4 @@
 @rules/rrplug.md
 @rules/spacetimedb.md
 @rules/rest.md
+@rules/uiux.md
