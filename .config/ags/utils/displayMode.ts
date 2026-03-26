@@ -165,7 +165,7 @@ export async function applyDisplayMode(mode: DisplayMode) {
     // Restore wallpaper after resolution change
     console.log("[DisplayMode] Restoring wallpaper")
     try {
-        await execAsync("swww restore")
+        await execAsync("awww restore")
         console.log("[DisplayMode] Wallpaper restored successfully")
     } catch (err) {
         console.warn("[DisplayMode] Failed to restore wallpaper:", err)

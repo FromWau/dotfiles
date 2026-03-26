@@ -73,6 +73,6 @@ content_str=$(printf "%s\n\n" "${content[@]}")
 ~/.config/hypr/scripts/utils/update_file.sh "temp/monitor_scale.conf" "$content_str" || true
 
 # Restore wallpaper
-swww restore
+awww restore
 
 echo "[toggle-scale] Done"

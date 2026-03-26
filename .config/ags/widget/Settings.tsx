@@ -58,7 +58,7 @@ async function applyTheme(wallpaperPath: string): Promise<boolean> {
         // Update wallpapers on all monitors
         const monitors = JSON.parse(exec('hyprctl monitors -j'))
         for (const monitor of monitors) {
-            await execAsync(`swww img -o "${monitor.name}" "${wallpaperPath}" --transition-step 255 --transition-fps 90 --transition-type=any --transition-bezier .4,.04,.2,1`)
+            await execAsync(`awww img -o "${monitor.name}" "${wallpaperPath}" --transition-step 255 --transition-fps 90 --transition-type=any --transition-bezier .4,.04,.2,1`)
         }
 
         return true

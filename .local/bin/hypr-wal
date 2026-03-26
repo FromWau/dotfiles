@@ -92,8 +92,8 @@ generate_theme() {
 }
 
 change_wallpaper() {
-    if ! command -v swww &>/dev/null; then
-        log_error "swww not found"
+    if ! command -v awww &>/dev/null; then
+        log_error "awww not found"
         return 1
     fi
 
@@ -105,7 +105,7 @@ change_wallpaper() {
 
         log_info "  $monitor: $(basename "$pic")"
 
-        swww img -o "$monitor" "$pic" \
+        awww img -o "$monitor" "$pic" \
             --transition-step 255 \
             --transition-fps 90 \
             --transition-type=any \
