@@ -7,3 +7,10 @@
 @rules/spacetimedb.md
 @rules/rest.md
 @rules/uiux.md
+
+# Default Preferences
+
+## Python Projects
+  - Always use `uv` for Python package management and virtual environments
+  - Use `uv pip install` instead of `pip install`
+  - Create virtual environments with `uv venv`
