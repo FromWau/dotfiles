@@ -76,6 +76,11 @@
 - Range from highly practical (copy confirmation) to playful (celebration animations)
 - Every micro interaction should answer: "Did my action work?"
 
+### Icons & Symbols in UI
+- **Never use unicode characters as icons** — use actual icon components (`Icon()` in Compose, `<svg>` in web)
+- Unicode symbols render inconsistently across platforms and fonts
+- For action hints, use plain text labels or real icon assets
+
 ### Overlays on Images
 - Never place raw text over an image — it ruins both
 - **Full-screen overlay**: works but hides the image

@@ -1,6 +1,13 @@
 ## Android / Kmp Project
 Launch applications: first check for .run/*.xml configs. this get used by android-studio to run the profile.
 
+### Gradle & Toolchain
+
+- Use `./gradlew build` for normal validation — validates all targets and test compilation
+- Use `./gradlew clean build` only after major refactors or big feature changes — not needed for small fixes
+- **JDK toolchain**: Use `jvmToolchain(N)` on the Kotlin extension in root `build.gradle.kts` for compilation. Use `org.gradle.toolchains.foojay-resolver-convention` in `settings.gradle.kts` for auto-provisioning.
+- **Daemon JDK**: `jvmToolchain()` only affects compilation tasks. AGP's `JdkImageTransform` (and other artifact transforms) run inside the Gradle daemon and use the daemon's JDK, not the toolchain. To control the daemon JDK, run `./gradlew updateDaemonJvm --jvm-version=N` — this generates `gradle/gradle-daemon-jvm.properties` with Foojay download URLs for all platforms. Commit this file. Without it, the daemon uses the system JDK, which may be incompatible with AGP.
+
 ### Kotlin / KMP Best Practices
 
 **Architecture:**
@@ -54,6 +61,7 @@ Launch applications: first check for .run/*.xml configs. this get used by androi
 **MVI: State vs Actions vs Events:**
 - **State** (`data class`): persistent values that affect UI appearance (`isLoading`, `todos`). Survives config changes — re-collected after rotation is expected. Bundle all UI-impacting fields in one state class
 - **Actions** (`sealed interface`): user-triggered intents sent **UI → ViewModel** (`ToggleTodo(id)`, `OnSwipeToRefresh`). Pass a single `onAction: (Action) -> Unit` lambda to composables instead of many individual lambdas
+- **Never inject services or repositories into composables** — composables only receive state and an `onAction` lambda. All side effects (navigation, API calls, DB writes, service calls) go through `onAction` → ViewModel. The ViewModel is the only place that holds dependencies and orchestrates work
 - **Events** (`sealed interface`): one-time signals sent **ViewModel → UI** (`ShowSnackbar(message)`, `NavigateToHome`). Use `Channel(UNLIMITED)` + `receiveAsFlow()` — consumed exactly once, not re-fired after config changes
 - **Never put one-time things in State** (snackbar messages, navigation triggers) — they re-fire on every config change because State is re-collected. Use Events instead
 - Collect events via a lifecycle-aware `observeAsEvents` utility function, not `LaunchedEffect` on a state field
