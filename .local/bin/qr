@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
 
-if ! command -v zbarimg &>/dev/null; then
-	notify-send "zbar is not installed"
+if ! command -v ZXingReader &>/dev/null; then
+	notify-send "zxing-cpp is not installed"
 	exit 1
 fi
 
 tmp_file="/tmp/qr.png"
 
 slurp | grim -g - "$tmp_file"
-if [ ! -f "$tmp_file" ]; then
+if [[ ! -f "$tmp_file" ]]; then
 	exit 1
 fi
 
-scanresult=$(zbarimg --quiet --raw "$tmp_file" | tr -d '\n')
+magick "$tmp_file" -trim +repage -bordercolor white -border 30x60 -resize 300% -threshold 40% "$tmp_file"
+scanresult=$(ZXingReader -bytes "$tmp_file" 2>/dev/null | head -1)
 
-if [ -z "$scanresult" ]; then
-	notify-send -t 10000 --app-name "QR-code" "QR-code" "No scan data found"
+if [[ -z "$scanresult" ]]; then
+	notify-send -t 10000 --app-name "Barcode" "Barcode" "No scan data found"
 else
 	wl-copy "$scanresult"
-	convert $tmp_file -resize 75x75 "$tmp_file"
-	notify-send -t 10000 -i "$tmp_file" --app-name "QR-Code" "QR-Code" "$scanresult"
-
+	magick "$tmp_file" -resize 75x75 "$tmp_file"
+	notify-send -t 10000 -i "$tmp_file" --app-name "Barcode" "Barcode" "$scanresult"
 fi
 
-rm "$tmp_file"
+rm -f "$tmp_file"
