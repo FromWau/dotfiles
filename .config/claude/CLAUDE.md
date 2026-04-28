@@ -14,3 +14,5 @@
   - Always use `uv` for Python package management and virtual environments
   - Use `uv pip install` instead of `pip install`
   - Create virtual environments with `uv venv`
+
+Never use thinking dash `--` or other vairants when writing any texts
