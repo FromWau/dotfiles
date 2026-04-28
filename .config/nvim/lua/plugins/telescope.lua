@@ -23,6 +23,10 @@ return {
                         preview_height = 0.6,
                     },
                 },
+                -- Telescope's treesitter previewer still calls the archived
+                -- master API (nvim-treesitter.parsers.ft_to_lang). Fall back to
+                -- vim's regex syntax highlighting until upstream catches up.
+                preview = { treesitter = false },
                 mappings = {
                     i = {
                         ["<ScrollWheelUp>"] = "preview_scrolling_up",

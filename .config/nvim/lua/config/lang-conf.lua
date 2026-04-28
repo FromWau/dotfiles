@@ -74,17 +74,17 @@ local lang_conf = {
         lsps = { kulala_ls = {} }, -- install on system: npm install -g @mistweaverco/kulala-ls
         formatters = { ["kulala-fmt"] = {} },
     },
+    kotlin = {
+        lsps = { kotlin_lsp = {} }, -- JetBrains kotlin-lsp; Mason pkg `kotlin-lsp` bundles its own JRE
+        formatters = { ktfmt = {} },
+    },
 }
 
 local lsps, formatters, formatters_by_ft = {}, {}, {}
 
 for ft, config in pairs(lang_conf) do
     for server, opts in pairs(config.lsps or {}) do
-        if opts.settings then
-            lsps[server] = { settings = opts.settings }
-        else
-            lsps[server] = nil
-        end
+        lsps[server] = opts.settings and { settings = opts.settings } or {}
     end
 
     formatters_by_ft[ft] = {}

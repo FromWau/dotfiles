@@ -20,8 +20,8 @@ local function tmap(keys, func, opts) map("t", keys, func, opts) end
 nmap("<ESC>", "<cmd>nohlsearch<CR>")
 
 -- Diagnostic keymaps
-nmap("dp", vim.diagnostic.goto_prev, { desc = "Go to previous [D]iagnostic message" })
-nmap("dn", vim.diagnostic.goto_next, { desc = "Go to next [D]iagnostic message" })
+nmap("dp", function() vim.diagnostic.jump { count = -1, float = true } end, { desc = "Go to previous [D]iagnostic message" })
+nmap("dn", function() vim.diagnostic.jump { count = 1, float = true } end, { desc = "Go to next [D]iagnostic message" })
 nmap("de", vim.diagnostic.open_float, { desc = "Show diagnostic [E]rror messages" })
 nmap("dq", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
 

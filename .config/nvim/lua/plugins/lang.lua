@@ -1,18 +1,18 @@
 local lang_conf = require "config.lang-conf"
 
 return {
-    -- Lsp
+    -- Lsp: in Neovim 0.11+ configuration uses vim.lsp.config + vim.lsp.enable.
+    -- nvim-lspconfig is kept purely for the default server configs it ships in
+    -- runtime `lsp/<name>.lua` (auto-loaded via runtimepath); we layer our own
+    -- settings on top of those defaults.
     {
         "neovim/nvim-lspconfig",
         dependencies = {
             {
-                -- add nvim lua lib stuff for config
                 "folke/lazydev.nvim",
-                ft = "lua", -- only load on lua files
+                ft = "lua",
                 opts = {
                     library = {
-                        -- See the configuration section for more details
-                        -- Load luvit types when the `vim.uv` word is found
                         { path = "${3rd}/luv/library", words = { "vim%.uv" } },
                         { path = "snacks.nvim", words = { "Snacks" } },
                     },
@@ -29,67 +29,72 @@ return {
             "williamboman/mason-lspconfig.nvim",
         },
         config = function()
-            -- Filter out kulala_ls -> can not installed via mason for now
-            local ensure_installed = vim.tbl_filter(function(server)
-                return server ~= "kulala_ls" -- system-only
-            end, vim.tbl_keys(lang_conf.lsps))
+            local servers = vim.tbl_keys(lang_conf.lsps)
+
+            -- Mason cannot install system-only LSPs (e.g. kulala_ls).
+            local mason_servers = vim.tbl_filter(function(s) return s ~= "kulala_ls" end, servers)
 
             require("mason").setup {}
             require("mason-lspconfig").setup {
-                ensure_installed = ensure_installed,
-                -- ensure_installed = lang_conf.lsps,
+                ensure_installed = mason_servers,
                 automatic_installation = true,
             }
 
-            local capabilities = vim.lsp.protocol.make_client_capabilities()
-            capabilities = vim.tbl_deep_extend("force", capabilities, require("blink.cmp").get_lsp_capabilities())
+            -- Global capabilities for every server: nvim defaults + blink.cmp extras.
+            vim.lsp.config("*", {
+                capabilities = vim.tbl_deep_extend(
+                    "force",
+                    vim.lsp.protocol.make_client_capabilities(),
+                    require("blink.cmp").get_lsp_capabilities()
+                ),
+            })
 
-            -- for server, opts in pairs(lang_conf.lsps) do
-            --     local setup_opts = { capabilities = capabilities }
-            --     if opts and opts.settings then setup_opts.settings = opts.settings end
-            --     require("lspconfig")[server].setup(setup_opts)
-            -- end
+            -- Per-server overrides merged over nvim-lspconfig's defaults.
+            for name, opts in pairs(lang_conf.lsps) do
+                if opts and opts.settings then vim.lsp.config(name, { settings = opts.settings }) end
+            end
+
+            vim.lsp.enable(servers)
 
             vim.api.nvim_create_autocmd("LspAttach", {
                 callback = function(args)
                     local client = vim.lsp.get_client_by_id(args.data.client_id)
-                    if not client then
-                        vim.api.nvim_echo({
-                            { "No lsp client on attach", "ErrorMsg" },
-                        }, true, {})
-                        return
-                    end
+                    if not client then return end
 
-                    if client.supports_method "textDocument/codeAction" then
-                        vim.keymap.set("n", "<leader>ca", function() vim.lsp.buf.code_action() end, { desc = "Code action" })
-                    end
+                    local function buf_map(lhs, rhs, desc) vim.keymap.set("n", lhs, rhs, { buffer = args.buf, desc = desc }) end
 
-                    if client.supports_method "textDocument/rename" then
-                        vim.keymap.set("n", "<leader>cr", function() vim.lsp.buf.rename() end, { desc = "Code rename" })
+                    if client:supports_method "textDocument/codeAction" then
+                        buf_map("<leader>ca", function() vim.lsp.buf.code_action() end, "Code action")
                     end
-
-                    if client.supports_method "textDocument/definition" then
-                        vim.keymap.set("n", "gd", function() vim.lsp.buf.definition() end, { desc = "Goto definition" })
+                    if client:supports_method "textDocument/rename" then
+                        buf_map("<leader>cr", function() vim.lsp.buf.rename() end, "Code rename")
                     end
-
-                    if client.supports_method "textDocument/typeDefinition" then
-                        vim.keymap.set("n", "gD", function() vim.lsp.buf.type_definition() end, { desc = "Goto type definition" })
+                    if client:supports_method "textDocument/definition" then
+                        buf_map("gd", function() vim.lsp.buf.definition() end, "Goto definition")
                     end
-
-                    if client.supports_method "textDocument/references" then
-                        vim.keymap.set("n", "gr", function() vim.lsp.buf.references() end, { desc = "Goto references" })
+                    if client:supports_method "textDocument/typeDefinition" then
+                        buf_map("gD", function() vim.lsp.buf.type_definition() end, "Goto type definition")
                     end
-
-                    if client.supports_method "textDocument/implementation" then
-                        vim.keymap.set("n", "gi", function() vim.lsp.buf.implementation() end, { desc = "Goto implementation" })
+                    if client:supports_method "textDocument/references" then
+                        buf_map("gr", function() vim.lsp.buf.references() end, "Goto references")
                     end
-
-                    if client.supports_method "textDocument/hover" then
-                        vim.keymap.set("n", "K", function() vim.lsp.buf.hover() end, { desc = "Hover" })
+                    if client:supports_method "textDocument/implementation" then
+                        buf_map("gi", function() vim.lsp.buf.implementation() end, "Goto implementation")
                     end
-
-                    if client.supports_method "textDocument/inlayHint" then
-                        vim.keymap.set("n", "<leader>ch", function() vim.lsp.buf.inlay_hints() end, { desc = "Inlay hints" })
+                    if client:supports_method "textDocument/hover" then
+                        buf_map("K", function() vim.lsp.buf.hover() end, "Hover")
+                    end
+                    if client:supports_method "textDocument/inlayHint" then
+                        buf_map(
+                            "<leader>ch",
+                            function()
+                                vim.lsp.inlay_hint.enable(
+                                    not vim.lsp.inlay_hint.is_enabled { bufnr = args.buf },
+                                    { bufnr = args.buf }
+                                )
+                            end,
+                            "Toggle inlay hints"
+                        )
                     end
                 end,
             })

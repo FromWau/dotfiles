@@ -1,7 +1,7 @@
 vim.api.nvim_create_autocmd("TextYankPost", {
     desc = "Highlight when yanking (copying) text",
     group = vim.api.nvim_create_augroup("kickstart-highlight-yank", { clear = true }),
-    callback = function() vim.highlight.on_yank() end,
+    callback = function() vim.hl.on_yank() end,
 })
 
 vim.api.nvim_create_autocmd("FileType", {
@@ -44,16 +44,35 @@ vim.api.nvim_create_autocmd("FileType", {
     end,
 })
 
--- Enable spell checking for markdown and text files
+-- Enable spell checking for markdown and text files.
+-- Built-in `spellfile.vim` downloads missing `.spl` files when interactive,
+-- but skips silently inside autocmds — so we bootstrap non-English dicts
+-- ourselves the first time.
+local function ensure_spellfile(lang)
+    local spell_dir = vim.fn.stdpath "data" .. "/site/spell"
+    vim.fn.mkdir(spell_dir, "p")
+    local target = spell_dir .. "/" .. lang .. ".utf-8.spl"
+    if vim.uv.fs_stat(target) then return end
+
+    local url_base = "https://ftp.nluug.nl/vim/runtime/spell/"
+    for _, suffix in ipairs { ".utf-8.spl", ".utf-8.sug" } do
+        local name = lang .. suffix
+        vim.system({ "curl", "-fsSL", "-o", spell_dir .. "/" .. name, url_base .. name }):wait()
+    end
+end
+
 vim.api.nvim_create_autocmd("FileType", {
     pattern = { "markdown", "text" },
-    command = "setlocal spell"
+    callback = function()
+        for _, lang in ipairs(vim.opt.spelllang:get()) do
+            if lang ~= "en" then ensure_spellfile(lang) end
+        end
+        vim.opt_local.spell = true
+    end,
 })
-
 
 -- Set .http files to use the http filetype
 vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
     pattern = "*.http",
-    command = "setfiletype http"
+    command = "setfiletype http",
 })
-

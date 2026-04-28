@@ -1,22 +1,16 @@
+-- Godot external-editor integration.
+-- godotdev.nvim owns the LSP + DAP wiring for .gd / .gdshader buffers,
+-- so there is nothing to add to lang-conf.lua for this.
+-- Enable the server in Godot: Editor Settings -> Network -> Language Server.
 return {
-    { "habamax/vim-godot" },
-    { "skywind3000/asyncrun.vim" },
-    { "teatek/gdscript-extended-lsp.nvim", opts = { view_type = "floating", picker = "snacks" } },
     {
-        "folke/snacks.nvim",
-        opts = {
-            picker = {
-                sources = {
-                    explorer = {
-                        hidden = true, -- show hidden files
-                        ignored = false, -- don't show gitignored files
-                        exclude = { -- exclude specific patterns
-                            "*.uid", -- glob pattern for files ending with .uid
-                            "server.pipe", -- exact filename match
-                        },
-                    },
-                },
-            },
+        "Mathijs-Bakker/godotdev.nvim",
+        ft = { "gdscript", "gdshader" },
+        dependencies = {
+            "mfussenegger/nvim-dap",
+            "rcarriga/nvim-dap-ui",
+            "nvim-treesitter/nvim-treesitter",
         },
+        opts = {},
     },
 }
