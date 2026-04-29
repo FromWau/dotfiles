@@ -1,0 +1,14 @@
+[Unit]
+Description=AGS desktop shell
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/truncate -s 0 %h/.local/share/ags/ags.log
+ExecStart=/usr/bin/ags run --gtk 4 --log-file %h/.local/share/ags/ags.log
+Restart=on-failure
+RestartSec=1s
+
+[Install]
+WantedBy=graphical-session.target
