@@ -2,6 +2,7 @@
 
 @rules/bash.md
 @rules/android-kmp.md
+@rules/android-cli.md
 @rules/kotlin-formatting.md
 @rules/titanfall.md
 @rules/rrplug.md
