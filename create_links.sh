@@ -78,10 +78,29 @@ function link_config() {
     source_dir="$SOURCE_HOME/.config/"
     target_dir="$TARGET_HOME/.config/"
     items=(
-        ags bat beets btop claude dunst fastfetch fish git hypr
+        ags bat beets btop dunst fastfetch fish git hypr
         ideavim kitty lazygit matugen mpd mpDris2 mpv
         ncmpcpp npm nvim pacman systemd wal walker wget
         starship.toml tealdeer xdg-desktop-portal
+    )
+
+    link_and_backup "$source_dir" "$target_dir" "${items[@]}"
+}
+
+function link_claude() {
+    # Claude Code reads from ~/.claude/, not ~/.config/claude/, so it can't be a
+    # whole-dir symlink — most of ~/.claude/ is runtime state (sessions, history,
+    # credentials) that must stay local. Symlink only the config items.
+    source_dir="$SOURCE_HOME/.config/claude/"
+    target_dir="$TARGET_HOME/.claude/"
+    items=(
+        CLAUDE.md
+        settings.json
+        rules
+        skills
+        agents
+        plugins/installed_plugins.json
+        plugins/known_marketplaces.json
     )
 
     link_and_backup "$source_dir" "$target_dir" "${items[@]}"
@@ -111,8 +130,10 @@ function link_local_share() {
 mkdir -p "$TARGET_HOME/.config"
 mkdir -p "$TARGET_HOME/.local/bin"
 mkdir -p "$TARGET_HOME/.local/share"
+mkdir -p "$TARGET_HOME/.claude/plugins"
 
 link_config
+link_claude
 link_local_bin
 link_local_share
 
