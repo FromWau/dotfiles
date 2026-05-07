@@ -1,17 +1,22 @@
-## REST API Design
+---
+name: rest-api-design
+description: Use when designing, building, or reviewing REST API endpoints — covers URL/resource design (nouns not verbs), versioning, HTTP status codes, naming conventions, pagination, filtering, sorting, error response structure, auth vs authz, and security. Apply whenever the user mentions REST, HTTP endpoints, API design, route handlers, OpenAPI/Swagger, or is creating/modifying server-side routes — even if they don't explicitly say "REST".
+---
 
-### URL Design
+# REST API Design
+
+## URL Design
 - URLs represent **resources (nouns)**, never actions (verbs)
 - HTTP method defines the action: GET = retrieve, POST = create, PUT/PATCH = update, DELETE = remove
 - **Wrong:** `GET /getUsers`, `POST /createUser`, `DELETE /deleteUser/5`
 - **Right:** `GET /users`, `POST /users`, `DELETE /users/5`
 
-### API Versioning
+## API Versioning
 - Always version APIs: `/api/v1/users`
 - When breaking changes are needed, create `/api/v2/...` — old clients stay on v1
 - Versioning is mandatory for any API used by multiple clients or exposed publicly
 
-### HTTP Status Codes
+## HTTP Status Codes
 Use correct status codes — never return 200 for everything:
 - `200` — Success
 - `201` — Resource created
@@ -21,11 +26,11 @@ Use correct status codes — never return 200 for everything:
 - `422` — Validation error
 - `500` — Internal server error
 
-### Consistent Naming
+## Consistent Naming
 - Pick one convention (snake_case or camelCase) and use it **everywhere**
 - Never mix naming formats across endpoints
 
-### Pagination
+## Pagination
 - Never return unbounded collections — always paginate
 - Use query parameters: `GET /users?page=1&limit=10`
 - Return metadata alongside data:
@@ -36,12 +41,12 @@ Use correct status codes — never return 200 for everything:
   }
   ```
 
-### Filtering & Sorting
+## Filtering & Sorting
 - Use query parameters, not separate endpoints
 - **Wrong:** `GET /getActiveUsersSortedByName`
 - **Right:** `GET /users?status=active&sort=name`
 
-### Error Responses
+## Error Responses
 - Always return structured error objects, never bare strings
 - Include a machine-readable code and a human-readable message:
   ```json
@@ -51,19 +56,19 @@ Use correct status codes — never return 200 for everything:
   ```
 - Error format must be consistent across all endpoints
 
-### Authentication vs Authorization
+## Authentication vs Authorization
 - **Authentication** = who are you (identity verification)
 - **Authorization** = what are you allowed to do (permission checks)
 - Keep these as separate concerns — use token-based auth (JWT, OAuth)
 - Never rely on frontend-only access control; enforce on the server
 
-### Security
+## Security
 - Always use HTTPS
 - Validate all input on every request
 - Implement rate limiting
 - Never expose sensitive fields (passwords, tokens, internal IDs) in responses
 
-### API ≠ Database
+## API ≠ Database
 - Design responses around **client needs**, not database schema
 - Combine, hide, or transform fields as needed
 - The API is a contract — internal schema changes should not break it

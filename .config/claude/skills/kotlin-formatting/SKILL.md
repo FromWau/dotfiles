@@ -1,12 +1,17 @@
-## Kotlin Formatting & Linting
+---
+name: kotlin-formatting
+description: Use when editing, writing, or reviewing Kotlin files (`.kt`, `.kts`) — formatting conventions for parameter lists, Compose composables, lambdas, when-expressions, data classes, enums, chained calls, and the no-unicode-escapes rule for string literals. Apply whenever generating or modifying Kotlin code, even for trivial edits, since these conventions are not enforced by ktlint/detekt defaults.
+---
 
-### General Rules
+# Kotlin Formatting & Linting
+
+## General Rules
 - **Trailing commas** — always add trailing commas on the last parameter, enum entry, and collection element
 - **Line length** — break lines at ~120 characters
 - **Blank lines** — one blank line between functions, between logical sections within a function
 - **Never use semicolons** — never put multiple statements on one line with `;`. Each statement gets its own line
 
-### Function Parameters
+## Function Parameters
 - **1 param** — can stay on one line if short: `fun foo(bar: String): Int`
 - **2+ params** — each on its own line:
 ```kotlin
@@ -17,7 +22,7 @@ fun createEntity(
 ): ArtistEntity
 ```
 
-### Compose Composables
+## Compose Composables
 - **Each parameter on its own line** when there are 2+ params:
 ```kotlin
 Text(
@@ -54,7 +59,7 @@ Row(
 - **Use `Arrangement.spacedBy()`** instead of manual `Spacer` between sibling elements in Row/Column
 - **Blank lines between logical blocks** inside Column/Row content (e.g., between a title row and a meta row)
 
-### Data Classes & Enums
+## Data Classes & Enums
 ```kotlin
 // Trailing comma on last field
 data class MediaEntity(
@@ -70,7 +75,7 @@ enum class MediaType {
 }
 ```
 
-### When Expressions
+## When Expressions
 - Short branches can stay on one line
 - Long branches get their own block:
 ```kotlin
@@ -81,7 +86,7 @@ val view = when (action) {
 }
 ```
 
-### Lambda Formatting
+## Lambda Formatting
 - **Short lambdas** — one line: `items.map { it.toDomain() }`
 - **Multi-statement lambdas** — braces on their own lines:
 ```kotlin
@@ -94,13 +99,13 @@ _state.update { old ->
 }
 ```
 
-### No Unicode Escapes in Code
-- **Never use unicode escape sequences** (`\u2192`, `\u25B6`, `\u2014`, etc.) in string literals
-- Use plain text for labels: `"Artist"` not `"\u2192 Artist"`
+## No Unicode Escapes in Code
+- **Never use unicode escape sequences** (`→`, `▶`, `—`, etc.) in string literals
+- Use plain text for labels: `"Artist"` not `"→ Artist"`
 - If you need icons/symbols in UI, use actual Compose `Icon()` components, not unicode characters in strings
-- Separators should be plain characters: `" - "` not `"\u2014"`
+- Separators should be plain characters: `" - "` not `"—"`
 
-### Chained Calls
+## Chained Calls
 - Break after each `.` when the chain is long:
 ```kotlin
 triageRepository

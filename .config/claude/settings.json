@@ -1,0 +1,13 @@
+{
+  "enabledPlugins": {
+    "code-review@claude-plugins-official": true,
+    "kotlin-lsp@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
+  },
+  "effortLevel": "xhigh",
+  "editorMode": "vim",
+  "skipAutoPermissionPrompt": true,
+  "agentPushNotifEnabled": true
+}

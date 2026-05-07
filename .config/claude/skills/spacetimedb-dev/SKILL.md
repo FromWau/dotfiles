@@ -1,9 +1,21 @@
-## SpacetimeDB — Build & Codegen
+---
+name: spacetimedb-dev
+description: Use when working on SpacetimeDB — covers building CLI binaries (`spacetimedb-cli`, `spacetimedb-standalone`), creating apps from templates, generating client bindings (Kotlin, C#, TypeScript, Rust, Unreal C++), Kotlin SDK structure (Types.kt / RemoteTables.kt / RemoteReducers.kt / Module.kt), local-project test workflow, and benchmarking (JMH, perf constraint tests, Keynote-2 TPS). Apply whenever the user is working under `~/Projects/SpacetimeDB/` or `~/Projects/SpacetimeDb-Testing/`, mentions SpacetimeDB, codegen for SDKs, the Kotlin/C#/TS/Rust SDKs, smoketests, or `spacetimedb-cli`. Read references for benchmarking (`benchmarking.md`) and Kotlin codegen internals (`kotlin-codegen.md`).
+---
 
-### Project Location
+# SpacetimeDB — Build & Codegen
+
+## Project Location
+
 `~/Projects/SpacetimeDB/`
 
-### Building CLI Binaries
+## When to read references
+
+- **`references/benchmarking.md`** — JMH microbenchmarks, perf constraint tests, Keynote-2 TPS benchmark across Kotlin/Rust/TypeScript SDKs, JFR profiling, known performance characteristics. Read when the user asks about benchmarks or perf regressions.
+- **`references/kotlin-codegen.md`** — Kotlin codegen output structure, codegen source files, and Kotlin SDK testing/regeneration commands. Read when modifying Kotlin codegen or testing SDK generation.
+
+## Building CLI Binaries
+
 ```bash
 cd ~/Projects/SpacetimeDB
 cargo build --release -p spacetimedb-cli -p spacetimedb-standalone
@@ -13,7 +25,8 @@ Binaries output to:
 - `target/release/spacetimedb-cli`
 - `target/release/spacetimedb-standalone`
 
-### Creating a New SpacetimeDB App
+## Creating a New SpacetimeDB App
+
 ```bash
 ~/Projects/SpacetimeDB/target/release/spacetimedb-cli init \
     --template <template-id> \
@@ -24,7 +37,8 @@ Binaries output to:
 - `spacetimedb-cli init` is non-interactive with `--non-interactive`
 - `spacetimedb-cli dev` and `spacetimedb-cli dev generate` require an interactive terminal (cannot run from non-TTY)
 
-### Generating Client Bindings
+## Generating Client Bindings
+
 Requires `--module-path` pointing to the `spacetimedb/` subdirectory inside the app.
 
 ```bash
@@ -54,6 +68,7 @@ Requires `--module-path` pointing to the `spacetimedb/` subdirectory inside the 
 ```
 
 ### Supported `--lang` Values
+
 | Flag | Aliases |
 |------|---------|
 | `csharp` | `c#`, `cs` |
@@ -62,23 +77,7 @@ Requires `--module-path` pointing to the `spacetimedb/` subdirectory inside the 
 | `rust` | `rs`, `RS` |
 | `unrealcpp` | `uecpp`, `ue5cpp`, `unreal` |
 
-### Kotlin Codegen Output
-```
-module_bindings/
-├── Types.kt               ← all user-defined types (data class, sealed interface, enum class)
-├── {TableName}Table.kt    ← table name + field name constants
-├── {Reducer}Reducer.kt    ← reducer args data class + name constant
-├── RemoteTables.kt        ← aggregates all table accessors
-├── RemoteReducers.kt      ← reducer call stubs
-└── Module.kt              ← lists all tables/reducers
-```
-
-### Codegen Source Files
-- `crates/codegen/src/kotlin.rs` — Kotlin `Lang` trait implementation
-- `crates/codegen/src/lib.rs` — imports `pub mod kotlin` + `pub use self::kotlin::Kotlin`
-- `crates/cli/src/subcommands/generate.rs` — `Language::Kotlin` enum variant + match arms
-
-### Testing with a Local Project
+## Testing with a Local Project
 
 **Test repo:** `~/Projects/SpacetimeDb-Testing/basic-kt/`
 
@@ -157,106 +156,3 @@ cd ~/Projects/SpacetimeDb-Testing/<name> && ./gradlew run
 - `spacetimedb-cli dev` requires an interactive terminal (cannot run from non-TTY)
 - Do NOT have a root `Cargo.toml` in `basic-kt/` — it interferes with the module build in `spacetimedb/`
 - Server binds `0.0.0.0:3000` — use `ws://127.0.0.1:3000` if `localhost` resolves to IPv6
-
----
-
-### Kotlin SDK Benchmarking
-
-#### JMH Microbenchmarks (BSATN, TableCache, Index)
-```bash
-cd ~/Projects/SpacetimeDB/sdks/kotlin
-./gradlew :benchmarks:jmh --no-daemon
-```
-Results: `benchmarks/build/reports/jmh/results.json`
-
-#### Performance Constraint Tests (CI regression guards)
-Hardware-independent scaling tests — verify O(1)/O(n)/O(n log n) at 100K vs 800K rows.
-```bash
-./gradlew :spacetimedb-sdk:jvmTest --tests "*.PerformanceConstraintTest" --no-daemon
-```
-Also runs via smoketests: `cargo ci smoketests` (inside `test_kotlin_sdk_unit_tests`).
-
-#### Keynote-2 TPS Benchmark (end-to-end throughput)
-
-**Setup (once):**
-```bash
-# Build + start server
-cargo build --release -p spacetimedb-cli -p spacetimedb-standalone
-target/release/spacetimedb-cli start
-
-# Publish benchmark module + seed
-target/release/spacetimedb-cli publish --server http://localhost:3000 \
-  --module-path templates/keynote-2/rust_module --no-config -y sim
-cd templates/keynote-2/spacetimedb-rust-client
-cargo run --release -- seed -s http://localhost:3000 -m sim
-```
-
-**Kotlin SDK:**
-```bash
-cd templates/keynote-2/spacetimedb-kotlin-client
-./gradlew run --args="bench --server http://localhost:3000 --module sim --duration 10s --connections 10" --no-daemon
-# Engine options: --engine okhttp (default, fastest), --engine cio, --engine java
-```
-
-**Rust raw-WebSocket baseline:**
-```bash
-cd templates/keynote-2/spacetimedb-rust-client
-cargo run --release -- bench -s http://localhost:3000 -m sim -d 10s -c 10
-```
-
-**TypeScript SDK comparison:**
-```bash
-# First time: pnpm install (from repo root) && cd sdks/typescript && pnpm run build
-cd templates/keynote-2
-npx tsx src/cli.ts test-1 --seconds 10 --concurrency 10 --alpha 1.5 \
-  --connectors spacetimedb --bench-pipelined --max-inflight-per-worker 16384
-```
-Note: use `npx tsx` directly — `pnpm run bench --` double-escapes args.
-
-**JFR profiling (benchmark window only):**
-```bash
-cd templates/keynote-2/spacetimedb-kotlin-client
-./gradlew installDist --no-daemon
-JFR_OUTPUT=/tmp/kotlin-bench.jfr \
-  build/install/spacetimedb-kotlin-tps-bench/bin/spacetimedb-kotlin-tps-bench \
-  bench --server http://localhost:3000 --module sim --duration 10s --connections 10
-# Analyze: jfr print --json --events jdk.ExecutionSample /tmp/kotlin-bench.jfr
-```
-
-#### Known Performance Characteristics
-- OkHttp engine is fastest (~60K TPS) — CIO and Java are slower
-- Main CPU bottleneck: `BigInteger` in Identity/ConnectionId decode (80% of CPU samples)
-- Persistent collections (atomic+PersistentHashMap): only ~2% of CPU — not a bottleneck
-- Callback lists use write-rarely/read-often pattern — CAS contention is minimal
-### Running Kotlin SDK Tests
-
-All Kotlin tests live in smoketests. Run everything with:
-```bash
-cargo test -p spacetimedb-smoketests --test integration kotlin
-```
-
-This runs three tests (source: `crates/smoketests/tests/smoketests/kotlin_sdk.rs`):
-- `test_kotlin_sdk_unit_tests` — SDK unit tests via Gradle (BSATN, types, query builder, callbacks)
-- `test_build_kotlin_client` — generates bindings, verifies they compile
-- `test_kotlin_integration` — starts server, publishes module, runs Kotlin client end-to-end
-
-**Template smoketests** (includes basic-kt and compose-kt):
-```bash
-cargo test -p spacetimedb-smoketests --test integration test_all_templates
-```
-
-**Codegen snapshot tests** (separate crate):
-```bash
-cargo test -p spacetimedb-codegen
-# To accept snapshot changes:
-cargo insta test --accept -p spacetimedb-codegen
-```
-
-**Regenerate integration test bindings** (after codegen changes):
-```bash
-cargo build --release -p spacetimedb-cli
-~/Projects/SpacetimeDB/target/release/spacetimedb-cli generate \
-    --lang kotlin \
-    --out-dir sdks/kotlin/integration-tests/src/test/kotlin/module_bindings/ \
-    --module-path sdks/kotlin/integration-tests/spacetimedb
-```

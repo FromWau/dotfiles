@@ -1,17 +1,23 @@
-## Rust Plugins with rrplug (Northstar)
+---
+name: rrplug-northstar
+description: Use when building Rust native plugins for R2Northstar (Titanfall 2) via the rrplug framework — covers Linux→Windows cross-compilation setup (mingw-w64, .cargo/config.toml), Cargo.toml configuration, the basic plugin template (`Plugin` trait, `register_sq_functions`, `entry!` macro), and `cargo build`/install pipeline. Apply when the user mentions rrplug, native Northstar plugins, Cargo.toml depends on `rrplug`, or files match `**/.cargo/config.toml` with a Northstar plugin context. Most Northstar tasks can be done in Squirrel alone — this skill is for protected ConVars, engine-level hooks, performance-critical ops, or low-level memory access.
+---
 
-### Overview
+# Rust Plugins with rrplug (Northstar)
+
+## Overview
+
 [rrplug](https://github.com/R2NorthstarTools/rrplug) is a Rust framework for creating native plugins for R2Northstar (Titanfall 2).
 
 **Official Docs:** https://docs.rs/rrplug/
 
-### When You Actually Need a Plugin
+## When You Actually Need a Plugin
 
-⚠️ **Most tasks can be done in Squirrel alone!** Test with `SetConVarInt()`, `GetConVarInt()`, `SetConVarFloat()`, `GetConVarFloat()` before building a plugin.
+**Most tasks can be done in Squirrel alone!** Test with `SetConVarInt()`, `GetConVarInt()`, `SetConVarFloat()`, `GetConVarFloat()` before building a plugin.
 
 **DO create a plugin for:** protected ConVars, engine-level hooks not in Squirrel, performance-critical ops, low-level memory access.
 
-### Cross-Compilation Setup (Linux → Windows)
+## Cross-Compilation Setup (Linux → Windows)
 
 ```bash
 rustup target add x86_64-pc-windows-gnu
@@ -38,7 +44,7 @@ rrplug = "0.4"
 log = "0.4"
 ```
 
-### Basic Plugin Template
+## Basic Plugin Template
 
 ```rust
 use rrplug::prelude::*;
@@ -68,7 +74,7 @@ fn my_squirrel_function(message: String) -> Result<String, String> {
 entry!(MyPlugin);
 ```
 
-### Building & Installation
+## Building & Installation
 
 ```bash
 cargo build --release
@@ -77,4 +83,3 @@ cargo build --release
 cp target/x86_64-pc-windows-gnu/release/my_northstar_plugin.dll \
    ~/.local/share/Steam/steamapps/common/Titanfall2/R2Titanfall/plugins/
 ```
-

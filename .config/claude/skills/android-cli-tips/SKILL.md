@@ -1,10 +1,15 @@
-## Google `android` CLI Tool
+---
+name: android-cli-tips
+description: Use alongside the auto-generated `android-cli` skill — adds curated guidance on when to reach for the `android` CLI over adb/gradle/WebSearch, including UI inspection via `android layout`, doc lookup via `android docs search`, and known gotchas (e.g. flag mismatches in shipped docs). Apply when working with Android development tools, inspecting a running app's UI, looking up Android API/Jetpack/Compose docs, or whenever the user mentions the `android` CLI, `adb`, or Android SDK/AVD management.
+---
+
+# Google `android` CLI Tool — Curated Tips
 
 A local CLI from Google for Android dev: docs lookup, UI introspection, project scaffolding, SDK/AVD/APK management, and a first-party skill registry. Installed at `/usr/bin/android`. Check version with `android -V`.
 
 Update: `android update`. Reset/refresh skill files: `android init` (writes `~/.claude/skills/android-cli/`, plus Gemini and Copilot equivalents). Cwd resets after `init`, do not chain commands assuming the working directory persists.
 
-### When to reach for `android` over the usual tools
+## When to reach for `android` over the usual tools
 
 - **Android API / Jetpack / Compose / AndroidX questions** → `android docs search "<keywords>"` then `android docs fetch kb://...`. Beats WebSearch: queries Google's curated Knowledge Base (4800+ articles), returns full article text, no rate limits, cached after a one-time download on first call. Use this BEFORE WebSearch for anything Android-specific.
 - **Inspect a running app's UI** → `android layout --pretty` (or `--diff` to keep context small). Returns a flat JSON list with `text`, `resourceId`, `contentDesc`, `bounds`, `center`, `interactions`, `state`, `off-screen`. Faster and cheaper than a screenshot for most UI questions.
@@ -14,12 +19,12 @@ Update: `android update`. Reset/refresh skill files: `android init` (writes `~/.
 - **SDK/AVD management** → `android sdk install platforms/android-34`, `android sdk list --all`, `android emulator create|start|stop|list|remove`. Avoids the legacy `sdkmanager` / `avdmanager` UX.
 - **New project scaffolding** → `android create empty-activity --name="My App" --output=./my-app` (only template available right now is `empty-activity`).
 
-### Stick with the existing tooling for
+## Stick with the existing tooling for
 
 - Build / lint / test of an existing project → `./gradlew` (the `android run` command is APK deploy, not a Gradle replacement).
 - Connected device list, logcat, file push/pull, package install/uninstall → `adb` (no `android` equivalent).
 
-### Gotchas
+## Gotchas
 
 - Shipped `references/interact.md` documents `screen resolve --screen <path>`; the actual flag is `--screenshot <path>`. Use `--screenshot`.
 - First `android docs search` downloads the Knowledge Base zip (a few seconds). Subsequent calls are instant.

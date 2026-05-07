@@ -1,13 +1,20 @@
-## Titanfall2 (TF2) - Northstar Modding
+---
+name: titanfall-northstar
+description: Use when working on Titanfall 2 / Northstar mods — covers `mod.json` structure (CRITICAL Path field rules, RunOn expressions, Before/After callbacks), Squirrel script patterns (vector syntax, struct/function rules, threading with WaitFrame), debugging via Northstar logs, and deployment via symlink. Apply when editing files under `mods/<author>.<modname>/`, working with `.nut` Squirrel scripts, or whenever the user mentions Titanfall, Northstar, TF2 modding, or Squirrel scripts. Author convention is FromWau.
+---
 
-### Official Resources
+# Titanfall2 (TF2) — Northstar Modding
+
+## Official Resources
+
 - **Main Wiki**: https://docs.northstar.tf/Wiki/
 - **Modding Docs**: https://docs.northstar.tf/Modding/guides/gettingstarted/
 - **Squirrel Docs**: https://docs.northstar.tf/Modding/squirrel/
 - **Template**: https://github.com/laundmo/northstar-mod-template
 - **My Mods**: https://github.com/FromWau/CrouchKickFix
 
-### Mod Directory Structure
+## Mod Directory Structure
+
 ```
 mods/
 └── YourName.ModName/
@@ -19,9 +26,10 @@ mods/
     └── (optional: keyvalues/, resource/, etc.)
 ```
 
-### mod.json Structure - CRITICAL RULES
+## mod.json Structure — CRITICAL RULES
 
-#### ⚠️ PATH SPECIFICATION
+### PATH SPECIFICATION
+
 **NEVER include `mod/scripts/vscripts/` prefix in the Path field!**
 
 ```json
@@ -34,42 +42,44 @@ mods/
     "Authors": ["FromWau"],
     "Scripts": [
         {
-            "Path": "your_script.nut",  // ✅ CORRECT - just filename
-            "RunOn": "CLIENT",           // or "SERVER", "UI", etc.
+            "Path": "your_script.nut",
+            "RunOn": "CLIENT",
             "ClientCallback": {
-                "Before": "InitFunctionName"  // or "After"
+                "Before": "InitFunctionName"
             }
         }
     ]
 }
 ```
 
-#### Common Path Mistakes
+### Common Path Mistakes
+
 ```json
-// ❌ WRONG - Will fail to load!
+// WRONG — Will fail to load!
 "Path": "mod/scripts/vscripts/script.nut"
 "Path": "vscripts/script.nut"
 "Path": "mod/script.nut"
 
-// ✅ CORRECT
+// CORRECT
 "Path": "script.nut"
 ```
 
-#### RunOn Expressions
+### RunOn Expressions
+
 Boolean expressions that control when/where scripts compile:
 
-**VM Contexts:**
-- `CLIENT` - Client-side code
-- `SERVER` - Server-side code
-- `UI` - UI/menu code
+VM Contexts:
+- `CLIENT` — Client-side code
+- `SERVER` — Server-side code
+- `UI` — UI/menu code
 
-**Game Modes:**
-- `SP` - Singleplayer
-- `MP` - Multiplayer
-- `LOBBY` - In lobby/menus
-- `DEV` - Dev mode only
+Game Modes:
+- `SP` — Singleplayer
+- `MP` — Multiplayer
+- `LOBBY` — In lobby/menus
+- `DEV` — Dev mode only
 
-**Examples:**
+Examples:
 ```json
 "RunOn": "CLIENT"                    // Client only
 "RunOn": "CLIENT || SERVER"          // Both client and server
@@ -78,7 +88,7 @@ Boolean expressions that control when/where scripts compile:
 "RunOn": "CLIENT && !LOBBY"          // Client not in lobby
 ```
 
-#### Callbacks - Before vs After
+### Callbacks — Before vs After
 
 ```json
 "ClientCallback": {
@@ -87,12 +97,13 @@ Boolean expressions that control when/where scripts compile:
 }
 ```
 
-**Use "Before" when:** registering callbacks/hooks, setting up data structures
-**Use "After" when:** need player entity to exist, spawning threads that track player
+Use "Before" when: registering callbacks/hooks, setting up data structures
+Use "After" when: need player entity to exist, spawning threads that track player
 
-### Squirrel Script Patterns
+## Squirrel Script Patterns
 
-#### Basic Mod Init Pattern
+### Basic Mod Init Pattern
+
 ```squirrel
 global function ModName_Init
 
@@ -112,19 +123,20 @@ void function ModName_OnClientInit( entity player )
 }
 ```
 
-#### ⚠️ CRITICAL: Squirrel Vector Syntax
+### CRITICAL: Squirrel Vector Syntax
+
 **Vectors ALWAYS require 3 components!**
 
 ```squirrel
-// ❌ WRONG
+// WRONG
 RuiSetFloat2( element, "msgPos", <0.7, 0.4> )
 
-// ✅ CORRECT
+// CORRECT
 RuiSetFloat2( element, "msgPos", <0.7, 0.4, 0> )
 RuiSetFloat3( element, "msgColor", <1, 1, 1> )
 ```
 
-#### ⚠️ CRITICAL: Squirrel Struct and Function Patterns
+### CRITICAL: Squirrel Struct and Function Patterns
 
 - Use `global struct` for structs shared across files
 - Declare `global function` at file top for exported functions
@@ -135,9 +147,10 @@ RuiSetFloat3( element, "msgColor", <1, 1, 1> )
 - Multiple try-catch blocks in same function must be wrapped in `{}` scope blocks
 - **ALWAYS add `untyped` as the first line of every .nut file**
 
-#### Threading Pattern
+### Threading Pattern
+
 ```squirrel
-// ✅ CORRECT - Get fresh player each frame, survives map changes
+// CORRECT — Get fresh player each frame, survives map changes
 void function MyThread()
 {
     entity player
@@ -154,12 +167,12 @@ void function MyThread()
         {
             // Process player state...
         }
-        WaitFrame()  // CRITICAL - prevents freeze
+        WaitFrame()  // CRITICAL — prevents freeze
     }
 }
 ```
 
-### Debugging & Testing
+## Debugging & Testing
 
 Logs: `~/.local/share/Steam/steamapps/common/Titanfall2/R2Titanfall/logs/`
 
@@ -171,11 +184,13 @@ jq . mods/FromWau.ModName/mod.json
 grep -i "error\|failed" ~/.local/share/Steam/steamapps/common/Titanfall2/R2Titanfall/logs/nslog*.txt | tail -20
 ```
 
-### Deployment
+## Deployment
+
 ```bash
 # Symlink for development
 ln -s "$(pwd)/mods/FromWau.ModName" ~/.local/share/Steam/steamapps/common/Titanfall2/R2Titanfall/mods/
 ```
 
-### Author Convention
+## Author Convention
+
 Always set author as **FromWau** in mod.json
