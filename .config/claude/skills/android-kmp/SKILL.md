@@ -1,6 +1,6 @@
 ---
 name: android-kmp
-description: Use when working on Android or Kotlin Multiplatform projects — covers MVI architecture, clean-architecture packaging, use cases vs repositories, models/mappers, error handling with typed `Result`, Kotlin-first library choices, dependency injection, and ViewModel lifecycle. Apply whenever editing files in an Android/KMP project (`build.gradle.kts`, `AndroidManifest.xml`, Kotlin code under `androidApp/`, `composeApp/`, `shared/`, `commonMain/`, `androidMain/`, `iosMain/`), even for small fixes. References cover coroutines/flows and Compose deep dives.
+description: Android and Kotlin Multiplatform development — MVI, Compose, coroutines/flows, DI, error handling. Apply for any work touching Kotlin (`.kt`/`.kts`), `build.gradle.kts`, `AndroidManifest.xml`, or directories like `androidApp/`/`composeApp/`/`shared/`/`commonMain/`/`androidMain/`/`iosMain/`.
 ---
 
 # Android / KMP

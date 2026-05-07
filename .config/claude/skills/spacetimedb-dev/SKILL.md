@@ -1,6 +1,6 @@
 ---
 name: spacetimedb-dev
-description: Use when working on SpacetimeDB — covers building CLI binaries (`spacetimedb-cli`, `spacetimedb-standalone`), creating apps from templates, generating client bindings (Kotlin, C#, TypeScript, Rust, Unreal C++), Kotlin SDK structure (Types.kt / RemoteTables.kt / RemoteReducers.kt / Module.kt), local-project test workflow, and benchmarking (JMH, perf constraint tests, Keynote-2 TPS). Apply whenever the user is working under `~/Projects/SpacetimeDB/` or `~/Projects/SpacetimeDb-Testing/`, mentions SpacetimeDB, codegen for SDKs, the Kotlin/C#/TS/Rust SDKs, smoketests, or `spacetimedb-cli`. Read references for benchmarking (`benchmarking.md`) and Kotlin codegen internals (`kotlin-codegen.md`).
+description: SpacetimeDB development — `spacetimedb-cli` builds, SDK codegen (Kotlin/C#/TS/Rust/Unreal), Kotlin SDK structure, JMH benchmarking. Apply when working under `~/Projects/SpacetimeDB/` or `~/Projects/SpacetimeDb-Testing/`, or user mentions SpacetimeDB or its SDKs.
 ---
 
 # SpacetimeDB — Build & Codegen

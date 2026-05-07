@@ -1,6 +1,6 @@
 ---
 name: rest-api-design
-description: Use when designing, building, or reviewing REST API endpoints — covers URL/resource design (nouns not verbs), versioning, HTTP status codes, naming conventions, pagination, filtering, sorting, error response structure, auth vs authz, and security. Apply whenever the user mentions REST, HTTP endpoints, API design, route handlers, OpenAPI/Swagger, or is creating/modifying server-side routes — even if they don't explicitly say "REST".
+description: REST API design principles — URLs, versioning, status codes, pagination, errors, auth, security. Apply when designing, building, or reviewing REST endpoints, route handlers, or OpenAPI/Swagger specs.
 ---
 
 # REST API Design

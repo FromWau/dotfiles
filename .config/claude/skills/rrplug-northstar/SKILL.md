@@ -1,6 +1,6 @@
 ---
 name: rrplug-northstar
-description: Use when building Rust native plugins for R2Northstar (Titanfall 2) via the rrplug framework — covers Linux→Windows cross-compilation setup (mingw-w64, .cargo/config.toml), Cargo.toml configuration, the basic plugin template (`Plugin` trait, `register_sq_functions`, `entry!` macro), and `cargo build`/install pipeline. Apply when the user mentions rrplug, native Northstar plugins, Cargo.toml depends on `rrplug`, or files match `**/.cargo/config.toml` with a Northstar plugin context. Most Northstar tasks can be done in Squirrel alone — this skill is for protected ConVars, engine-level hooks, performance-critical ops, or low-level memory access.
+description: Rust native plugins for R2Northstar (Titanfall 2) via the rrplug framework — Linux→Windows cross-compile, `Cargo.toml` setup, `Plugin` trait template. For protected ConVars, engine hooks, or low-level work; most Northstar tasks work in Squirrel alone.
 ---
 
 # Rust Plugins with rrplug (Northstar)

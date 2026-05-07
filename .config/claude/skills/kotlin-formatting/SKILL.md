@@ -1,6 +1,6 @@
 ---
 name: kotlin-formatting
-description: Use when editing, writing, or reviewing Kotlin files (`.kt`, `.kts`) — formatting conventions for parameter lists, Compose composables, lambdas, when-expressions, data classes, enums, chained calls, and the no-unicode-escapes rule for string literals. Apply whenever generating or modifying Kotlin code, even for trivial edits, since these conventions are not enforced by ktlint/detekt defaults.
+description: Formatting conventions for Kotlin (`.kt`, `.kts`) — applies whenever writing, editing, or reviewing Kotlin, since these aren't enforced by ktlint/detekt defaults.
 ---
 
 # Kotlin Formatting & Linting

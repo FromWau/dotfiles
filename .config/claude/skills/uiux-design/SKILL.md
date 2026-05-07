@@ -1,6 +1,6 @@
 ---
 name: uiux-design
-description: Use when designing, building, or reviewing user interfaces — covers affordances, visual hierarchy, grids/layout/spacing, typography, color, dark mode, shadows, icons & buttons, feedback & states, micro-interactions, and image overlays. Apply for any frontend/UI work (web, mobile, desktop) including Compose UIs, React/HTML, Figma mockups, or CSS — even if the user just says "make this look better" without saying "design".
+description: UI/UX design principles — affordances, hierarchy, layout, typography, color, dark mode, states, micro-interactions. Apply for any frontend work (Compose, React/HTML, Figma, CSS), including casual "make this look better" requests.
 ---
 
 # UI/UX Design Principles

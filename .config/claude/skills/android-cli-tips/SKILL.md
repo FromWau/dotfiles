@@ -1,6 +1,6 @@
 ---
 name: android-cli-tips
-description: Use alongside the auto-generated `android-cli` skill — adds curated guidance on when to reach for the `android` CLI over adb/gradle/WebSearch, including UI inspection via `android layout`, doc lookup via `android docs search`, and known gotchas (e.g. flag mismatches in shipped docs). Apply when working with Android development tools, inspecting a running app's UI, looking up Android API/Jetpack/Compose docs, or whenever the user mentions the `android` CLI, `adb`, or Android SDK/AVD management.
+description: Curated tips for the `android` CLI tool — UI inspection, doc lookup, AVD/SDK management, and when to prefer it over `adb` or `gradle`.
 ---
 
 # Google `android` CLI Tool — Curated Tips

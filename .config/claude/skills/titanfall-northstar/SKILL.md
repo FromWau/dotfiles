@@ -1,6 +1,6 @@
 ---
 name: titanfall-northstar
-description: Use when working on Titanfall 2 / Northstar mods — covers `mod.json` structure (CRITICAL Path field rules, RunOn expressions, Before/After callbacks), Squirrel script patterns (vector syntax, struct/function rules, threading with WaitFrame), debugging via Northstar logs, and deployment via symlink. Apply when editing files under `mods/<author>.<modname>/`, working with `.nut` Squirrel scripts, or whenever the user mentions Titanfall, Northstar, TF2 modding, or Squirrel scripts. Author convention is FromWau.
+description: Titanfall 2 / Northstar mod development — `mod.json` structure, Squirrel patterns (`.nut`), Northstar log debugging, symlink deployment. Apply when editing `mods/<author>.<modname>/` or user mentions Titanfall, Northstar, TF2 modding, or Squirrel. Author: FromWau.
 ---
 
 # Titanfall2 (TF2) — Northstar Modding
