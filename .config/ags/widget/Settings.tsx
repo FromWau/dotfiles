@@ -4,6 +4,7 @@ import { readFile, writeFile } from "ags/file"
 import { fetch } from "ags/fetch"
 import { exec, execAsync } from "ags/process"
 import GLib from "gi://GLib"
+import { readState } from "../utils/state"
 
 const configDir = GLib.get_user_config_dir() + "/ags"
 const configPath = `${configDir}/config.json`
@@ -15,10 +16,6 @@ interface Config {
         longitude?: number
         timezone?: string
         city?: string
-    }
-    theme?: {
-        currentWallpaper?: string
-        cursorTheme?: string
     }
 }
 
@@ -291,14 +288,8 @@ export default function Settings() {
             themeStatusLabel.label = "✅ Theme applied successfully!"
             cursorThemeLabel.label = `Current cursor: ${getCurrentCursorTheme()}`
 
-            const newConfig: Config = {
-                ...config,
-                theme: {
-                    currentWallpaper: wallpaperPath,
-                    cursorTheme: getCurrentCursorTheme(),
-                }
-            }
-            saveConfig(newConfig)
+            // CURSOR_THEME is written by matugen's cursor-theme.sh template.
+            await execAsync(["hyprstate", "set", "WALLPAPER", wallpaperPath])
         } else {
             themeStatusLabel.label = "❌ Failed to apply theme"
         }
@@ -612,7 +603,7 @@ export default function Settings() {
                             <label label="Select Wallpaper:" halign={Gtk.Align.START} />
                             <Gtk.DropDown
                                 model={Gtk.StringList.new(wallpapers.map(p => GLib.path_get_basename(p)))}
-                                selected={wallpapers.findIndex(w => w === config.theme?.currentWallpaper)}
+                                selected={wallpapers.findIndex(w => w === readState().WALLPAPER)}
                                 $={(self) => {
                                     wallpaperDropdown = self
                                 }}
@@ -648,7 +639,7 @@ export default function Settings() {
                             }}
                         />
 
-                        {config.theme?.currentWallpaper && (
+                        {readState().WALLPAPER && (
                             <box orientation={Gtk.Orientation.VERTICAL} spacing={4} css="margin-top: 8px;">
                                 <label
                                     label="Currently applied:"
@@ -656,7 +647,7 @@ export default function Settings() {
                                     css="font-size: 12px; opacity: 0.7;"
                                 />
                                 <label
-                                    label={`Wallpaper: ${GLib.path_get_basename(config.theme.currentWallpaper)}`}
+                                    label={`Wallpaper: ${GLib.path_get_basename(readState().WALLPAPER!)}`}
                                     halign={Gtk.Align.START}
                                     css="font-size: 11px; opacity: 0.6;"
                                 />

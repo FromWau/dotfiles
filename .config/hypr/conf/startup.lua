@@ -12,7 +12,6 @@ hl.on("hyprland.start", function()
 
     -- AGS (systemd-managed for auto-restart after the GTK4 monitor-toggle crash)
     hl.exec_cmd "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE XDG_SESSION_TYPE && systemctl --user start ags.service"
-    hl.exec_cmd "sleep 1 && ags request mousemode false"
 
     -- Polkit
     hl.exec_cmd "systemctl --user start plasma-polkit-agent.service"

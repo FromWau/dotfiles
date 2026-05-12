@@ -177,10 +177,6 @@ function copy-content -d "Send file content to clipboard"
     end
 end
 
-function toggle-scale -d "Toggle the scale of the monitors"
-    bash -c ~/.config/hypr/scripts/toggle-scale.sh
-end
-
 function music-upload -d "Upload music to fromml@frommhund.xyz"
     fd cover ~/Music -x rm &&
     rsync -vauP -e "ssh -p 2222" ~/Music/ fromml@frommhund.xyz:/home/fromml/music/

@@ -49,11 +49,12 @@ done
 
 echo "Selected cursor theme: $selected_theme (primary color: $PRIMARY_COLOR)"
 
-# Update GTK cursor settings
+# Update GTK cursor settings (sink for GTK apps)
 gsettings set org.gnome.desktop.interface cursor-theme "$selected_theme"
 
-# Update Hyprland cursor
-hyprctl setcursor "$selected_theme" 24
+# Update Hyprland state (source of truth) and reload so display_mode.lua
+# applies the cursor at the size of the current DISPLAY_MODE.
+hyprstate set CURSOR_THEME "$selected_theme" --reload
 
 # Update environment for new apps
 export XCURSOR_THEME="$selected_theme"

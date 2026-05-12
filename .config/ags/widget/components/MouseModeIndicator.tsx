@@ -1,20 +1,18 @@
-import { currentDisplayMode } from "../../utils/displayMode"
-import { execAsync } from "ags/process"
+import { currentDisplayMode, cycleDisplayMode, setDisplayMode } from "../../utils/displayMode"
 import Gtk from "gi://Gtk?version=4.0"
 
 export default function MouseModeIndicator() {
     return (
         <button
             visible={currentDisplayMode.as((mode) => mode !== "normal")}
-            onClicked={() => execAsync("ags request display cycle")}
+            onClicked={() => cycleDisplayMode()}
             cssClasses={["display-mode-indicator"]}
             tooltipText={currentDisplayMode.as((mode) => `Display: ${mode} (left-click to cycle, right-click for normal)`)}
             $={(self) => {
-                // Add right-click gesture controller
                 const rightClickGesture = Gtk.GestureClick.new()
-                rightClickGesture.set_button(3) // Button 3 = right mouse button
+                rightClickGesture.set_button(3)
                 rightClickGesture.connect("pressed", () => {
-                    execAsync("ags request display normal")
+                    setDisplayMode("normal")
                 })
                 self.add_controller(rightClickGesture)
             }}

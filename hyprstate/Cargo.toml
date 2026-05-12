@@ -1,0 +1,13 @@
+[package]
+name = "hyprstate"
+version = "0.1.0"
+edition = "2024"
+description = "Get/set Hyprland desktop state under $XDG_STATE_HOME/hypr/state.json"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[profile.release]
+lto = "thin"
+strip = true

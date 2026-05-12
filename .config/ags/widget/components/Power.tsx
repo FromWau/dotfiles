@@ -50,12 +50,6 @@ export default function Power() {
                     }} >
                         Suspend in 30 minutes
                     </button >
-                    <button onClicked={() => {
-                        execAsync("bash -c ~/.config/hypr/scripts/toggle-scale.sh")
-                        popoverRef?.popdown()
-                    }} >
-                        Toggle Scale
-                    </button >
                 </box >
             </box >
         </popover>

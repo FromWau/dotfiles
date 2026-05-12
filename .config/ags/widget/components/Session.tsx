@@ -1,6 +1,6 @@
 import { Gtk } from "ags/gtk4";
 import { execAsync } from "ags/process";
-import { currentDisplayMode } from "../../utils/displayMode";
+import { currentDisplayMode, setDisplayMode } from "../../utils/displayMode";
 
 function SectionHeader({ label }: { label: string }) {
     return (
@@ -141,7 +141,7 @@ export default function Session() {
                             label="Normal (4K)"
                             mode="normal"
                             onClick={() => {
-                                execAsync("ags request display normal")
+                                setDisplayMode("normal")
                                 closePopover()
                             }}
                         />
@@ -150,7 +150,7 @@ export default function Session() {
                             label="Game (1440p)"
                             mode="game"
                             onClick={() => {
-                                execAsync("ags request display game")
+                                setDisplayMode("game")
                                 closePopover()
                             }}
                         />
@@ -159,7 +159,7 @@ export default function Session() {
                             label="Mouse (1080p)"
                             mode="mouse"
                             onClick={() => {
-                                execAsync("ags request display mouse")
+                                setDisplayMode("mouse")
                                 closePopover()
                             }}
                         />

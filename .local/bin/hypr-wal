@@ -114,6 +114,9 @@ change_wallpaper() {
     done
 
     log_info "Wallpapers applied"
+
+    # Persist primary wallpaper to state (single source of truth)
+    hyprstate set WALLPAPER "${pics[0]}"
 }
 
 main() {

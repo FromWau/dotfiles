@@ -4,23 +4,7 @@ import Settings from "./widget/Settings"
 import { For, This, createBinding } from "ags"
 import GLib from "gi://GLib"
 import { execAsync } from "ags/process"
-import { setDisplayMode, cycleDisplayMode, syncDisplayMode, currentDisplayMode, applyDisplayMode } from "./utils/displayMode"
-import type { DisplayMode } from "./utils/displayMode"
 import { PATHS, validatePaths } from "./utils/paths"
-import { readConfig } from "./utils/config"
-
-async function getActiveGpuCount(): Promise<number> {
-    try {
-        const result = await execAsync([
-            "bash",
-            "-c",
-            "nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | wc -l"
-        ])
-        return parseInt(result.trim()) || 0
-    } catch {
-        return 0
-    }
-}
 
 async function buildTheme() {
     const scssPath = PATHS.config.scss
@@ -65,18 +49,6 @@ function main() {
 
     buildTheme()
 
-    // Initialize displayMode from config
-    // This runs after Hyprland has started, reads config.json, and applies settings if needed
-    const config = readConfig()
-    const displayMode = config.displayMode ?? "normal"
-    console.log("[App] Display mode from config:", displayMode)
-    if (displayMode !== "normal") {
-        console.log("[App] Applying display mode to Hyprland...")
-        applyDisplayMode(displayMode).catch((err) => {
-            console.error("[App] Failed to apply displayMode on startup:", err)
-        })
-    }
-
     const monitors = createBinding(app, "monitors")
 
     // Create Settings window
@@ -106,56 +78,6 @@ function requestHandler(argv: string[], response: (response: string) => void) {
                     break
                 default:
                     response("unknown theme arg")
-            }
-            break
-
-        case "display":
-            if (args.length === 0) {
-                // Return current display mode from config
-                const config = readConfig()
-                const mode = config.displayMode ?? "normal"
-                response(mode)
-            } else if (args[0] === "cycle") {
-                // Cycle through modes
-                cycleDisplayMode()
-                    .then((newMode) => {
-                        response(`Display mode: ${newMode}`)
-                    })
-                    .catch((err) => {
-                        console.error("[App] Failed to cycle display mode:", err)
-                        response(`Error: ${err}`)
-                    })
-            } else if (args[0] === "sync") {
-                // Sync/reapply current mode from config
-                syncDisplayMode()
-                    .then(() => {
-                        const mode = currentDisplayMode()
-                        response(`Display mode synced (${mode})`)
-                    })
-                    .catch((err) => {
-                        console.error("[App] Failed to sync display mode:", err)
-                        response(`Error: ${err}`)
-                    })
-            } else if (args[0] === "normal" || args[0] === "game" || args[0] === "mouse") {
-                // Set specific mode
-                const mode = args[0] as DisplayMode
-                setDisplayMode(mode)
-                    .then(async () => {
-                        response(`Display mode: ${mode}`)
-                        // Auto-open GPU settings when switching to game mode (only if multiple GPUs active)
-                        if (mode === "game") {
-                            const activeGpus = await getActiveGpuCount()
-                            if (activeGpus > 1) {
-                                (globalThis as any).showSettings?.(2)
-                            }
-                        }
-                    })
-                    .catch((err) => {
-                        console.error("[App] Failed to set display mode:", err)
-                        response(`Error: ${err}`)
-                    })
-            } else {
-                response("unknown display arg (use: normal, game, mouse, cycle, sync, or no arg to get current mode)")
             }
             break
 
