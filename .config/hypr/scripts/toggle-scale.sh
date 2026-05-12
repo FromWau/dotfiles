@@ -24,10 +24,10 @@ for monitor in "${monitors[@]}"; do
     name=$(echo "$monitor" | cut -d ',' -f1)
     current_scale=$(echo "$monitor" | cut -d ',' -f4)
 
-    # Read default scale from monitors.lua. Matches `hl.monitor { ... name = "X" ... scale = N ... }`
+    # Read default scale from monitors.lua. Matches `hl.monitor { ... output = "X" ... scale = N ... }`
     # across single- or multi-line table forms. Falls back to 1.0 if no entry exists yet
     # (monitors.lua is an empty placeholder until nwg-displays lands lua output support).
-    default_scale=$(rg -UP -o -r '$1' "(?s)hl\.monitor\s*\{[^}]*name\s*=\s*[\"']$name[\"'][^}]*scale\s*=\s*([0-9.]+)" ~/.config/hypr/monitors.lua 2>/dev/null | head -1)
+    default_scale=$(rg -UP -o -r '$1' "(?s)hl\.monitor\s*\{[^}]*output\s*=\s*[\"']$name[\"'][^}]*scale\s*=\s*([0-9.]+)" ~/.config/hypr/monitors.lua 2>/dev/null | head -1)
     [[ -z "$default_scale" ]] && default_scale="1.0"
 
     echo "[toggle-scale] Monitor: $name, Current: $current_scale, Default: $default_scale"
