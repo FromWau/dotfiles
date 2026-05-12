@@ -1,0 +1,16 @@
+
+[Default Applications]
+x-scheme-handler/nxm=com.nexusmods.app.desktop
+application/uproject=com.epicgames.UnrealEngineEditor.desktop
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop
+x-scheme-handler/norisk=noriskclient-launcher-v3-handler.desktop
+text/plain=nvim.desktop
+text/csv=nvim.desktop
+text/markdown=nvim.desktop
+text/x-lua=nvim.desktop
+text/x-script.python=nvim.desktop
+text/x-go=nvim.desktop
+text/x-rust=nvim.desktop
+application/json=nvim.desktop
+application/xml=nvim.desktop
+application/vnd.ms-excel=nvim.desktop
