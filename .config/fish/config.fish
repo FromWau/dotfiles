@@ -177,10 +177,6 @@ function copy-content -d "Send file content to clipboard"
     end
 end
 
-function clear-hypr -d "Clear temp settings in hyprland"
-    bash -c ~/.config/hypr/scripts/clear-temp.sh
-end
-
 function toggle-scale -d "Toggle the scale of the monitors"
     bash -c ~/.config/hypr/scripts/toggle-scale.sh
 end
