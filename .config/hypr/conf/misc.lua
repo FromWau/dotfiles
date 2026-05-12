@@ -1,9 +1,9 @@
--- Misc options. Mirror of conf/misc.conf.
+-- Misc options.
 
-hl.config({
+hl.config {
     misc = {
-        enable_anr_dialog     = false,
-        vrr                   = 3,
+        enable_anr_dialog = false,
+        vrr = 3,
         disable_hyprland_logo = true,
     },
-})
+}

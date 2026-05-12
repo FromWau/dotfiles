@@ -1,4 +1,4 @@
--- NVIDIA-specific env. Mirror of conf/env/env-nvidia.conf.
+-- NVIDIA-specific env.
 -- https://wiki.hypr.land/Nvidia/#environment-variables
 
 hl.env("LIBVA_DRIVER_NAME", "nvidia")
@@ -7,8 +7,8 @@ hl.env("GBM_BACKEND", "nvidia-drm")
 hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 hl.env("NVD_BACKEND", "direct")
 
-hl.config({
+hl.config {
     cursor = {
         no_hardware_cursors = true,
     },
-})
+}

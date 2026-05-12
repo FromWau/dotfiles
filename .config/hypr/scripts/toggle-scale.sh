@@ -2,7 +2,6 @@
 
 scale_factor=2
 hypr_dir="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE"
-info="# Auto generated"
 
 echo "[toggle-scale] Starting toggle-scale script"
 
@@ -20,16 +19,15 @@ add_point_one_if_odd() {
 }
 
 readarray -t monitors < <(hyprctl monitors -j | jq -r '.[] | "\(.name),\(.width)x\(.height)@\(.refreshRate),\(.x)x\(.y),\(.scale)"')
-content=("$info")
 
 for monitor in "${monitors[@]}"; do
     name=$(echo "$monitor" | cut -d ',' -f1)
     current_scale=$(echo "$monitor" | cut -d ',' -f4)
 
-    # Read default scale from nwg-displays config
-    default_scale=$(rg "monitor=$name" ~/.config/hypr/monitors.conf | cut -d',' -f4 | xargs)
-
-    # Fallback to 1.0 if not found
+    # Read default scale from monitors.lua. Matches `hl.monitor { ... name = "X" ... scale = N ... }`
+    # across single- or multi-line table forms. Falls back to 1.0 if no entry exists yet
+    # (monitors.lua is an empty placeholder until nwg-displays lands lua output support).
+    default_scale=$(rg -UP -o -r '$1' "(?s)hl\.monitor\s*\{[^}]*name\s*=\s*[\"']$name[\"'][^}]*scale\s*=\s*([0-9.]+)" ~/.config/hypr/monitors.lua 2>/dev/null | head -1)
     [[ -z "$default_scale" ]] && default_scale="1.0"
 
     echo "[toggle-scale] Monitor: $name, Current: $current_scale, Default: $default_scale"
@@ -60,17 +58,11 @@ for monitor in "${monitors[@]}"; do
     fi
 
     monitor_config=$(echo "$monitor" | cut -d ',' -f-3)
-    content+=("monitor=${monitor_config}, $new_scale")
 
     # Apply directly to Hyprland
     echo "[toggle-scale] Applying: monitor=${monitor_config}, $new_scale"
     hyprctl keyword monitor "${monitor_config}, $new_scale"
 done
-
-content_str=$(printf "%s\n\n" "${content[@]}")
-
-# Update temp config file
-~/.config/hypr/scripts/utils/update_file.sh "temp/monitor_scale.conf" "$content_str" || true
 
 # Restore wallpaper
 awww restore

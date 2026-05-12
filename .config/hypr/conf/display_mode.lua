@@ -1,8 +1,1 @@
--- Per-device display mode override, managed by AGS at runtime.
--- Committed as an empty placeholder and gitignored for local edits.
--- To enable local edits without git seeing them:
---   git update-index --skip-worktree .config/hypr/conf/display_mode.lua
---
--- AGS rewrites this file with hl.monitor() override calls when the user
--- toggles display modes (normal / game / mouse). For "normal" mode the file
--- is empty and monitors.lua wins.
+-- Managed by AGS at runtime. Current mode: normal. No overrides; monitors.lua wins.
