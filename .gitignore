@@ -7,6 +7,7 @@
 
 # Colors
 .config/bat/themes
+.config/fish/conf.d/fish_frozen_theme.fish
 .config/ghostty/themes
 .config/hypr/conf/colors.lua
 .config/kitty/colors.conf
