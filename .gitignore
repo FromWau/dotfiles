@@ -8,7 +8,7 @@
 # Colors
 .config/bat/themes
 .config/ghostty/themes
-.config/hypr/conf/colors.conf
+.config/hypr/conf/colors.lua
 .config/kitty/colors.conf
 .config/matugen/current-colors.css
 
@@ -27,5 +27,6 @@
 .config/walker/themes/matugen/colors.css
 .config/ags/config.json
 
-.config/hypr/monitors.conf
-.config/hypr/workspaces.conf
+.config/hypr/monitors.lua
+.config/hypr/workspaces.lua
+.config/hypr/conf/display_mode.lua

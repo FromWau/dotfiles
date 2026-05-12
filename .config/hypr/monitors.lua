@@ -1,0 +1,5 @@
+-- Per-device monitor configuration. Committed as an empty placeholder and
+-- gitignored for local edits. To enable local edits without git seeing them:
+--   git update-index --skip-worktree .config/hypr/monitors.lua
+-- nwg-displays will overwrite this file once
+-- https://github.com/nwg-piotr/nwg-displays/pull/132 lands.

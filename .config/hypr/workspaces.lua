@@ -1,0 +1,4 @@
+-- Per-device workspace rules from nwg-displays. Committed as an empty
+-- placeholder and gitignored for local edits. To enable local edits without
+-- git seeing them:
+--   git update-index --skip-worktree .config/hypr/workspaces.lua
