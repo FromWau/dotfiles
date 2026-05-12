@@ -22,8 +22,8 @@ hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 hl.env("ADW_DISABLE_PORTAL", "1")
 
--- Miscellaneous
-hl.env("WLR_NO_HARDWARE_CURSORS", "1")
+-- Electron/CEF: prefer native Wayland to avoid XWayland flicker.
+hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 
 hl.on("hyprland.start", function() hl.exec_cmd "gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'" end)
 
