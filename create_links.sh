@@ -99,6 +99,7 @@ function link_claude() {
         rules
         skills
         agents
+        commands
         plugins/installed_plugins.json
         plugins/known_marketplaces.json
     )
@@ -126,6 +127,34 @@ function link_local_share() {
     link_and_backup "$source_dir" "$target_dir" "${items[@]}"
 }
 
+# Files that are tracked in git but also listed in .gitignore (matugen/AGS
+# outputs, per-device placeholders) need --skip-worktree so local regen
+# doesn't pollute git status. List is derived dynamically from .gitignore.
+function skip_worktree_for_ignored() {
+    if ! git -C "$SOURCE_HOME" rev-parse --git-dir &>/dev/null; then
+        echo "Skip: $SOURCE_HOME is not a git repo, skip-worktree pass skipped"
+        return
+    fi
+
+    local files=()
+    while IFS= read -r f; do
+        [ -n "$f" ] && files+=("$f")
+    done < <(cd "$SOURCE_HOME" && git ls-files | git check-ignore --stdin --no-index 2>/dev/null)
+
+    for f in "${files[@]}"; do
+        local state
+        state=$(git -C "$SOURCE_HOME" ls-files -v -- "$f" | cut -c1)
+        if [ "$state" = "S" ]; then
+            echo "OK (skip-worktree): $f"
+            ((OK++))
+        else
+            git -C "$SOURCE_HOME" update-index --skip-worktree -- "$f"
+            echo "SKIP-WORKTREE: $f"
+            ((CHANGED++))
+        fi
+    done
+}
+
 # Ensure target directories exist
 mkdir -p "$TARGET_HOME/.config"
 mkdir -p "$TARGET_HOME/.local/bin"
@@ -136,6 +165,7 @@ link_config
 link_claude
 link_local_bin
 link_local_share
+skip_worktree_for_ignored
 
 echo ""
 echo "=== Summary ==="
