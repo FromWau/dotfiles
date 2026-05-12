@@ -112,8 +112,8 @@ function link_local_bin() {
     target_dir="$TARGET_HOME/.local/bin/"
     items=(
         battery-notify download-spot find-similar-pics fix-bitwarden
-        fzf-previewer git-reset-to-parent hypr-wal qr reddit-images
-        ssh-key-fzf gpu-enable gpu-disable
+        fzf-previewer git-reset-to-parent hypr-wal hyprstate qr
+        reddit-images ssh-key-fzf gpu-enable gpu-disable
     )
 
     link_and_backup "$source_dir" "$target_dir" "${items[@]}"
