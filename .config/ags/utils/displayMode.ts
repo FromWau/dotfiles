@@ -2,9 +2,9 @@ import GLib from "gi://GLib"
 import { execAsync } from "ags/process"
 import { createState } from "gnim"
 import { readConfig, updateConfig } from "./config"
-import { readFile, writeFile } from "ags/file"
+import { writeFile } from "ags/file"
 
-const DISPLAY_MODE_CONF = `${GLib.getenv("HOME")}/.config/hypr/conf/display-mode.conf`
+const DISPLAY_MODE_LUA = `${GLib.getenv("HOME")}/.config/hypr/conf/display_mode.lua`
 import "./time"
 
 // Display mode types
@@ -13,8 +13,8 @@ export type DisplayMode = "normal" | "game" | "mouse"
 // Display mode configurations
 const DISPLAY_CONFIGS = {
     normal: {
-        resolution: null, // Will be read from monitors.conf
-        scale: null, // Will be read from monitors.conf
+        resolution: null, // monitors.lua wins
+        scale: null,
         cursorSize: 24,
         description: "Normal - Max resolution",
     },
@@ -62,7 +62,7 @@ function parseResolution(res: string): { width: number; height: number; refresh:
 function monitorMatchesTarget(
     monitor: { width: number; height: number; refreshRate: number; scale: number },
     targetResolution: string,
-    targetScale: string
+    targetScale: string,
 ): boolean {
     const target = parseResolution(targetResolution)
     if (!target) return false
@@ -77,80 +77,53 @@ function monitorMatchesTarget(
 }
 
 /**
- * Apply display mode settings to Hyprland
+ * Apply display mode settings to Hyprland by rewriting display_mode.lua
+ * and reloading. For "normal" the file becomes a no-op placeholder and
+ * monitors.lua wins. For other modes the file holds hl.monitor() overrides.
  */
 export async function applyDisplayMode(mode: DisplayMode) {
     console.log("[DisplayMode] Applying mode:", mode)
 
     const modeConfig = DISPLAY_CONFIGS[mode]
+    let luaContent: string
+    let needsReload = false
 
-    // Get monitor info from Hyprland
-    const monitorsJson = await execAsync("hyprctl monitors -j")
-    const monitors = JSON.parse(monitorsJson)
-    console.log("[DisplayMode] Found", monitors.length, "monitors")
+    if (mode === "normal") {
+        luaContent =
+            "-- Managed by AGS at runtime. Current mode: normal. No overrides; monitors.lua wins.\n"
+        // We don't know whether prior overrides exist without re-reading the
+        // file. Always reload on entering normal mode to revert cleanly.
+        needsReload = true
+    } else {
+        const monitorsJson = await execAsync("hyprctl monitors -j")
+        const monitors = JSON.parse(monitorsJson)
+        console.log("[DisplayMode] Found", monitors.length, "monitors")
 
-    const monitorConfigs: string[] = []
-    let anyChanged = false
+        const lines: string[] = []
+        const resolution = modeConfig.resolution!
+        const scale = modeConfig.scale!
 
-    for (const monitor of monitors) {
-        const name = monitor.name
-
-        // Get default resolution and scale from monitors.conf for "normal" mode
-        let defaultResolution = `${monitor.width}x${monitor.height}@${Math.round(monitor.refreshRate)}`
-        let defaultScale = "1.0"
-
-        try {
-            const monitorsConfPath = `${GLib.getenv("HOME")}/.config/hypr/monitors.conf`
-            const monitorsConf = readFile(monitorsConfPath)
-            const monitorLine = monitorsConf.split("\n").find((line) => line.includes(`monitor=${name}`))
-            if (monitorLine) {
-                const parts = monitorLine.split(",")
-                if (parts.length >= 2) {
-                    defaultResolution = parts[1].trim()
-                }
-                if (parts.length >= 4) {
-                    defaultScale = parts[3].trim()
-                }
+        for (const monitor of monitors) {
+            const name = monitor.name
+            const position = `${monitor.x}x${monitor.y}`
+            lines.push(
+                `hl.monitor({ output = "${name}", mode = "${resolution}", position = "${position}", scale = "${scale}" })`,
+            )
+            if (!monitorMatchesTarget(monitor, resolution, scale)) {
+                needsReload = true
             }
-        } catch (err) {
-            console.warn("[DisplayMode] Failed to read monitors.conf, using current resolution")
         }
-
-        // Determine resolution and scale based on mode
-        const resolution = modeConfig.resolution ?? defaultResolution
-        const scale = modeConfig.scale ?? defaultScale
-        const position = `${monitor.x}x${monitor.y}`
-        const monitorValue = `${name},${resolution},${position},${scale}`
-
-        // Always add to config file content (with monitor= prefix for conf file)
-        monitorConfigs.push(`monitor=${monitorValue}`)
-
-        // Check if monitor already matches target (for immediate apply)
-        if (monitorMatchesTarget(monitor, resolution, scale)) {
-            console.log("[DisplayMode]", name, "already matches target, skipping hyprctl")
-            continue
-        }
-
-        anyChanged = true
-
-        // Apply immediately via hyprctl
-        console.log("[DisplayMode] Applying monitor config:", monitorValue)
-        await execAsync(`hyprctl keyword monitor "${monitorValue}"`)
-        console.log("[DisplayMode] Monitor config applied successfully")
+        luaContent = `-- Managed by AGS at runtime. Current mode: ${mode}.\n${lines.join("\n")}\n`
     }
 
-    // Write to display-mode.conf for persistence across Hyprland reloads
-    // For "normal" mode, clear the file so monitors.conf takes precedence
-    const confContent =
-        mode === "normal"
-            ? "# Display mode: normal - using monitors.conf defaults\n"
-            : `# Display mode: ${mode} - managed by AGS, do not edit manually\n${monitorConfigs.join("\n")}\n`
-    writeFile(DISPLAY_MODE_CONF, confContent)
-    console.log("[DisplayMode] Written to", DISPLAY_MODE_CONF)
+    writeFile(DISPLAY_MODE_LUA, luaContent)
+    console.log("[DisplayMode] Written to", DISPLAY_MODE_LUA)
 
-    if (!anyChanged) {
-        console.log("[DisplayMode] All monitors already match, nothing else to do")
-        return
+    if (needsReload) {
+        console.log("[DisplayMode] Reloading Hyprland config")
+        await execAsync("hyprctl reload")
+    } else {
+        console.log("[DisplayMode] All monitors already match, skipping reload")
     }
 
     // Set cursor size
