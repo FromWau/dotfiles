@@ -11,6 +11,20 @@ description: Formatting conventions for Kotlin (`.kt`, `.kts`) — applies whene
 - **Blank lines** — one blank line between functions, between logical sections within a function
 - **Never use semicolons** — never put multiple statements on one line with `;`. Each statement gets its own line
 
+## String Formatting
+- **Always prefer string templates** (`$x`, `${expr}`) over `%s`/`%d` format placeholders, in *every* context — including `Timber`, `String.format`, exception messages, etc.
+- Applies to single- and multi-line strings:
+```kotlin
+// WRONG
+Timber.d("onCreate: taskId=%d, savedInstance=%s", taskId, savedInstanceState != null)
+Timber.w(e, "failed to clear session/KV after %s", reason)
+
+// RIGHT
+Timber.d("onCreate: taskId=$taskId, savedInstance=${savedInstanceState != null}")
+Timber.w(e, "failed to clear session/KV after $reason")
+```
+- Tradeoff acknowledged: Timber's varargs form defers formatting until the log is actually written; string templates evaluate eagerly. The codebase prefers readability and templates anyway — do not "optimize" by switching back to `%s`/`%d`.
+
 ## Function Parameters
 - **1 param** — can stay on one line if short: `fun foo(bar: String): Int`
 - **2+ params** — each on its own line:
