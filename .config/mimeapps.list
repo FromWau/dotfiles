@@ -1,9 +1,10 @@
 
 [Default Applications]
-x-scheme-handler/nxm=com.nexusmods.app.desktop
-application/uproject=com.epicgames.UnrealEngineEditor.desktop
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 x-scheme-handler/norisk=noriskclient-launcher-v3-handler.desktop
+x-scheme-handler/mailto=userapp-Thunderbird-2C1151.desktop
+message/rfc822=userapp-Thunderbird-2C1151.desktop
+x-scheme-handler/mid=userapp-Thunderbird-2C1151.desktop
 text/plain=nvim.desktop
 text/csv=nvim.desktop
 text/markdown=nvim.desktop
@@ -14,3 +15,7 @@ text/x-rust=nvim.desktop
 application/json=nvim.desktop
 application/xml=nvim.desktop
 application/vnd.ms-excel=nvim.desktop
+
+[Added Associations]
+x-scheme-handler/mailto=userapp-Thunderbird-2C1151.desktop;
+x-scheme-handler/mid=userapp-Thunderbird-2C1151.desktop;
