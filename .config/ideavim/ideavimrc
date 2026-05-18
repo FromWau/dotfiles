@@ -9,10 +9,6 @@ set ignorecase
 set smartcase
 set incsearch
 set notimeout
-set smartindent
-set autoindent
-set tabstop=4
-set shiftwidth=4
 set cursorline
 
 " set history=1000
@@ -26,8 +22,8 @@ set ideavimsupport+=singleline
 
 """ Mapping
 " nice to have
-nmap <C-a> ggVG
-nmap <Esc> <Esc>:nohls<CR><Esc>
+nnoremap <C-a> ggVG
+nnoremap <Esc> :nohlsearch<CR>
 
 " android
 nmap <leader>ag <Action>(Android.SyncProject)
@@ -42,7 +38,7 @@ nmap <leader>co <Action>(OptimizeImports)
 nmap <leader>cg <Action>(Generate)
 nmap <leader>ca <Action>(ShowIntentionActions)
 nmap <leader>ce <Action>(ShowErrorDescription)
-nmap <leader>cd <Action>(QuickJavaDoc)
+nmap <leader>cd <Action>(SafeDelete)
 
 " find related
 nmap <leader>fe <Action>(SearchEverywhere)
@@ -63,20 +59,6 @@ nmap gs <Action>(GotoSuperMethod)
 nmap gd <Action>(GotoDeclaration)
 nmap gj <Action>(GotoNextError)
 nmap gk <Action>(GotoPreviousError)
-
-" harpoon (dont forget to install the plugin from the marketplace)
-nmap <leader>hh :action ShowHarpoon<CR>
-nmap <leader>ha :action SetHarpoon1<CR>
-nmap <leader>hs :action SetHarpoon2<CR>
-nmap <leader>hd :action SetHarpoon3<CR>
-nmap <leader>hf :action SetHarpoon4<CR>
-nmap <leader>hg :action SetHarpoon5<CR>
-
-nmap <leader>hA :action GoToHarpoon1<CR>
-nmap <leader>hS :action GoToHarpoon2<CR>
-nmap <leader>hD :action GoToHarpoon3<CR>
-nmap <leader>hF :action GoToHarpoon4<CR>
-nmap <leader>hG :action GoToHarpoon5<CR>
 
 " ui
 nmap <leader>uV <Action>(VimFindActionIdAction)
@@ -118,7 +100,7 @@ let g:WhichKeyDesc_OptimizeImports = "<Space>co OptimizeImports"
 let g:WhichKeyDesc_Generate = "<Space>cg Generate"
 let g:WhichKeyDesc_ShowIntentionActions = "<Space>ca ShowIntentionActions"
 let g:WhichKeyDesc_ShowErrorDescription = "<Space>ce ShowErrorDescription"
-let g:WhichKeyDesc_QuickJavaDoc = "<Space>cd QuickJavaDoc"
+let g:WhichKeyDesc_SafeDelete = "<Space>cd SafeDelete"
 
 let g:WhichKeyDesc_find = "<Space>f +[F]ind"
 let g:WhichKeyDesc_SearchEverywhere = "<Space>fe SearchEverywhere"
@@ -144,21 +126,7 @@ let g:WhichKeyDesc_ui = "<Space>u +[U]i"
 let g:WhichKeyDesc_VimFindActionIdAction = "<Space>uV VimFindActionIdAction"
 let g:WhichKeyDesc_NERDTreeToggle = "<Space>ue toggle file tree"
 
-let g:WhichKeyDesc_harpoon = "<Space>h +[H]arpoon"
-let g:WhichKeyDesc_ShowHarpoon = "<Space>hh show harpoon"
-let g:WhichKeyDesc_SetHarpoon1 = "<Space>ha set harpoon 1"
-let g:WhichKeyDesc_SetHarpoon2 = "<Space>hs set harpoon 2"
-let g:WhichKeyDesc_SetHarpoon3 = "<Space>hd set harpoon 3"
-let g:WhichKeyDesc_SetHarpoon4 = "<Space>hf set harpoon 4"
-let g:WhichKeyDesc_SetHarpoon5 = "<Space>hg set harpoon 5"
-
-let g:WhichKeyDesc_GoToHarpoon1 = "<Space>hA go to harpoon 1"
-let g:WhichKeyDesc_GoToHarpoon2 = "<Space>hS go to harpoon 2"
-let g:WhichKeyDesc_GoToHarpoon3 = "<Space>hD go to harpoon 3"
-let g:WhichKeyDesc_GoToHarpoon4 = "<Space>hF go to harpoon 4"
-let g:WhichKeyDesc_GoToHarpoon5 = "<Space>hG go to harpoon 5"
-
-let g:WhicjKeyDesc_refreshrc = "<Space>rr +[R]efresh Vim[R]c"
+let g:WhichKeyDesc_refreshrc = "<Space>rr +[R]efresh Vim[R]c"
 
 " Other Plugins
 Plug 'dbakker/vim-paragraph-motion' " Fix { } motions on paragraphs with only ' '
