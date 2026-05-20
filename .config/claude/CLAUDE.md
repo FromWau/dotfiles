@@ -31,4 +31,47 @@ training-data recall.
   - Use `uv pip install` instead of `pip install`
   - Create virtual environments with `uv venv`
 
+## Gradle (XDG layout)
+  - My Gradle home follows XDG Base Directory and lives at
+    `$XDG_DATA_HOME/gradle` (typically `~/.local/share/gradle`), not the
+    default `~/.gradle`.
+  - Look there for caches, wrapper dists, init scripts, daemon logs, etc.
+  - `gradle.properties` / `init.d/` are under `$XDG_DATA_HOME/gradle/`.
+  - Don't suggest `~/.gradle/...` paths without checking `$GRADLE_USER_HOME`
+    or `$XDG_DATA_HOME` first.
+
 Never use thinking dash `--` or other variants when writing any texts
+
+# Fact-checking — two-step
+
+Plan freely on assumptions (fast-path). Verify before the user sees them.
+
+**Step 1 — internal planning / reasoning:** assumptions, recall, and
+inferences are fine. Don't slow down thinking to look up every fact.
+
+**Step 2 — before responding or applying a change:** scan the planned
+output for verifiable claims and check them. Treat as claims anything a
+reader could act on or quote back: tracker IDs, URLs, version numbers,
+API signatures, CLI flags, library defaults, file paths, line numbers,
+symbol names, OS behavior, "known bug" statements.
+
+- Android / SDK / `adb` / Gradle / AndroidX / framework: `android docs
+  <topic>` (see `android-cli-tips` skill).
+- Code-resolvable (does this symbol exist? what does it do?): `grep` /
+  LSP / read the file.
+- Everything else: short `WebSearch` (1–2 queries).
+
+If a check confirms the assumption, ship it. If it contradicts or returns
+nothing, rewrite the claim with explicit grounding ("the stack trace
+shows…", "I could not verify…", "likely, but unconfirmed"). Never invent
+tracker IDs, URLs, or version numbers to lend false authority.
+
+# When stuck, don't assume — ask
+
+If you are stuck or uncertain about an implementation path, do not pick
+one and proceed. Saying "I don't know" or "I need more info on X" is the
+correct answer. Get clarification before implementing something the user
+may not want. Wasted implementation work is worse than one clarifying
+question. This applies to: ambiguous requirements, multiple viable design
+choices, missing context about why a change is being made, and any case
+where "I'll just guess and go" feels tempting.
