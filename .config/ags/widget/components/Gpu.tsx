@@ -12,12 +12,16 @@ interface GpuStats {
     deviceName: string
 }
 
+let inFlight = false
+
 async function getGpuUsage(): Promise<GpuStats | undefined> {
+    if (inFlight) return undefined
+    inFlight = true
     try {
         const result = await execAsync([
             "bash",
             "-c",
-            `nvtop -s 2>/dev/null | jq -r '.[0] | if . == null then "null" else "\\(.gpu_util // "null"),\\(.mem_util // "null"),\\(.gpu_clock // "null"),\\(.device_name)" end' 2>/dev/null || echo "null"`
+            `timeout 2 nvtop -s 2>/dev/null | jq -r '.[0] | if . == null then "null" else "\\(.gpu_util // "null"),\\(.mem_util // "null"),\\(.gpu_clock // "null"),\\(.device_name)" end' 2>/dev/null || echo "null"`
         ])
 
         if (!result || result.trim() === "null" || result.trim() === "") {
@@ -37,8 +41,9 @@ async function getGpuUsage(): Promise<GpuStats | undefined> {
             deviceName: deviceName || "GPU"
         }
     } catch (e) {
-        // Silently handle errors - GPU monitoring is not critical
         return undefined
+    } finally {
+        inFlight = false
     }
 }
 

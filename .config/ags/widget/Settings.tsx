@@ -149,7 +149,7 @@ async function getGpuStatus(): Promise<GpuInfo[]> {
         const activeGpusRaw = await execAsync([
             "bash",
             "-c",
-            "nvidia-smi --query-gpu=pci.bus_id,name --format=csv,noheader 2>/dev/null || echo ''"
+            "timeout 2 nvidia-smi --query-gpu=pci.bus_id,name --format=csv,noheader 2>/dev/null || echo ''"
         ])
 
         const activePciIds = new Set<string>()

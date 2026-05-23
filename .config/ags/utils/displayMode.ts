@@ -12,6 +12,18 @@ const MODE_META: Record<DisplayMode, { description: string; icon: string }> = {
 
 export const currentDisplayMode = currentState.as((s) => (s.DISPLAY_MODE as DisplayMode) ?? "normal")
 
+async function getActiveGpuCount(): Promise<number> {
+    try {
+        const result = await execAsync([
+            "bash", "-c",
+            "timeout 2 nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | wc -l",
+        ])
+        return parseInt(result.trim()) || 0
+    } catch {
+        return 0
+    }
+}
+
 export async function setDisplayMode(mode: DisplayMode) {
     const { description, icon } = MODE_META[mode]
     await execAsync([
@@ -21,6 +33,9 @@ export async function setDisplayMode(mode: DisplayMode) {
         "--notify-title", "Display Mode",
         "--notify-icon", icon,
     ])
+    if (mode === "game" && (await getActiveGpuCount()) > 1) {
+        (globalThis as any).showSettings?.(2)
+    }
     return mode
 }
 
