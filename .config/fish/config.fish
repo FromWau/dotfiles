@@ -12,7 +12,6 @@ set -x GOPATH "$XDG_DATA_HOME"/go
 set -x GNUPGHOME "$XDG_DATA_HOME"/gnupg
 set -x CARGO_HOME "$XDG_DATA_HOME"/cargo
 set -x RUSTUP_HOME "$XDG_DATA_HOME"/rustup
-set -x SDKMAN_DIR "$XDG_DATA_HOME"/sdkman
 set -x WINEPREFIX "$XDG_DATA_HOME"/wineprefixes/default
 set -x TERMINFO "$XDG_DATA_HOME"/terminfo
 set -x TERMINFO_DIRS "$XDG_DATA_HOME"/terminfo:/usr/share/terminfo
@@ -60,6 +59,8 @@ fish_add_path ~/.local/share/npm/bin
 starship init fish | source
 
 zoxide init fish | source
+
+mise activate fish | source
 
 
 # abbr
