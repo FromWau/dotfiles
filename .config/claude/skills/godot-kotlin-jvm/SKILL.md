@@ -379,6 +379,18 @@ Drop the high `jvmToolchain` value and use `17`.
   (Player + Health + Movement + Animation), `NodeScope` helper, signal
   wrapping via `callbackFlow`, MVI direct-methods vs sealed-actions
   threshold.
+- `references/settings-menu.md` — AAA-style settings menu design:
+  sealed `Settings` hierarchy, `SettingsService` with `update<T>` typed
+  dispatch, live-apply + 2s debounced JSON persistence, per-tab engine
+  applier, keybind rebind capture, cross-platform UX. Read when
+  starting a settings system or reviewing one.
+- `references/steam-publishing.md` — Steam distribution and Steamworks
+  API integration. Why GodotSteam is incompatible (custom fork
+  collision), why steamworks4j (JNI) is the realistic path, autoload +
+  `runCallbacks` lifecycle, per-target Export Preset packaging, dev
+  account flow (Steam Direct $100, App ID, Spacewar 480, branches),
+  Steam Deck Verified considerations. Read when planning Steam
+  integration.
 - Upstream docs (often missing per-version details, link with caution):
   <https://godot-kotl.in/en/stable/>
 - Project template (current plugin version only):
