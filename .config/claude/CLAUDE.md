@@ -75,3 +75,57 @@ may not want. Wasted implementation work is worse than one clarifying
 question. This applies to: ambiguous requirements, multiple viable design
 choices, missing context about why a change is being made, and any case
 where "I'll just guess and go" feels tempting.
+
+# Capturing skills and feedback from session work
+
+When a session has produced something reusable, offer to capture it.
+Two complementary forms with different shapes:
+
+- **Skill** (procedural, "how to do X"): a multi-step workflow, recipe,
+  or domain knowledge with concrete steps. Lives as `SKILL.md` under
+  `~/.claude/skills/` and loads when the topic is in scope. Route
+  through the `skill-creator` skill for creation or major edits; patch
+  the file directly for small fixes.
+- **Feedback memory** (declarative, "when doing X, prefer/avoid Y"): a
+  rule, preference, or constraint. Always loaded via `MEMORY.md`. Use
+  the existing auto-memory flow (the `feedback` type rules in the
+  system prompt).
+
+The two coexist. A session where the user corrects your testing
+approach can produce both a feedback memory ("don't mock the database
+here — last quarter's incident") *and* a skill ("integration-tests"
+capturing the workflow). Pick whichever form fits; nothing forces a
+choice between them.
+
+**Offer to create a new skill when** a task took 5+ tool calls and
+succeeded after wrong turns, a non-obvious error was overcome, the
+user corrected your approach in a generalizable way, a non-trivial
+multi-step workflow was discovered, or the user asks to remember a
+procedure.
+
+**Offer to patch an existing skill when** you followed a skill and hit
+something it didn't warn about: stale instructions, OS-specific
+gotchas, missing steps, a pitfall discovered during use. Patch on the
+spot — that's how skills self-improve.
+
+**Skip simple one-offs.** A single-tool answer, a quick fix, a
+one-liner — neither a skill nor a feedback memory earns its place by
+capturing every interaction. Capture earns its place by saving real
+work next time.
+
+**Prefer extending an existing umbrella over creating a sibling.** A
+library of hundreds of one-session-one-skill micro-entries is a
+failure of the library, not a feature. If the right home for new
+content is a subsection in an existing skill or a
+`references/<topic>.md` underneath it, patch the umbrella instead of
+creating a sibling. Same logic applies to feedback memories: update
+the existing one before writing a near-duplicate.
+
+**Confirm before creating or archiving** a skill or memory file.
+Routine patches and small additions don't need a prompt; structural
+creation, renaming, or deletion does.
+
+**Good SKILL.md ingredients:** a `description:` line with concrete
+trigger phrases (file types, error strings, dependencies, casual user
+phrasings), numbered steps with exact commands, a pitfalls section,
+and verification steps.
