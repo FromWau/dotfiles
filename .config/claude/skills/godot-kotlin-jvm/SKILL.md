@@ -1,6 +1,6 @@
 ---
 name: godot-kotlin-jvm
-description: Godot Kotlin/JVM — @RegisterClass scripts, plugin/version mismatches, embedded JRE. Use for projects with com.utopia-rise.godot-kotlin-jvm plugin, .gdj files, or .kt next to project.godot.
+description: Godot Kotlin/JVM — @RegisterClass, version mismatches, embedded JRE, signal-to-Flow, component composition. Use for com.utopia-rise.godot-kotlin-jvm projects, .gdj files, or .kt next to project.godot.
 ---
 
 # Godot Kotlin/JVM
@@ -174,6 +174,96 @@ Plain helper classes (data classes, etc.) used only from inside other Kotlin
 code do **not** need `@RegisterClass`. Registration is only for classes
 attached to nodes or referenced from GDScript.
 
+## Signals: connecting from Kotlin
+
+Built-in Godot signals on nodes (`bodyEntered` on `Area2D`, `pressed` on
+`Button`, etc.) are connectable directly from Kotlin via the generated
+signal properties on the binding. No GDScript shim required.
+
+**Prefer code-wiring in `_ready()` over the editor's Connect dialog.**
+Connections wired in the editor are serialized into the `.tscn` file, which
+means renaming a method silently breaks the connection until you reopen the
+scene, you can't grep for the wiring, and `.tscn` diffs are noisy in code
+review. Code wiring is refactor-safe and lives next to the logic it relates
+to. Editor wiring still earns its place for connections that are genuinely
+scene content (a level designer hooking a trigger zone to a door); for
+anything internal to a system, wire in code.
+
+To turn a signal into a Kotlin `Flow`, wrap it with `callbackFlow` — the
+symmetric "connect on collection, disconnect on cancellation" guarantee
+prevents double subscriptions and leaks:
+
+```kotlin
+val playerEntered: Flow<Node2D> = callbackFlow {
+    val callable = Callable { body: Node2D -> trySend(body) }
+    bodyEntered.connect(callable)
+    awaitClose { bodyEntered.disconnect(callable) }
+}
+```
+
+The exact `Callable` construction and connect/disconnect surface vary
+between binding versions. See `references/architecture.md` for current
+patterns and a full worked example.
+
+## Architecture: composition + components
+
+Godot already pushes you toward composition via the node tree. Mirror that
+in Kotlin: each entity Node owns small plain Kotlin classes
+(`HealthComponent`, `MovementComponent`, `AnimationComponent`), components
+are unaware of each other and communicate via Flows. The Node is glue plus
+the one thing that genuinely belongs to it (reading input, gating physics
+on aliveness).
+
+**Pure components have zero `godot.*` imports.** Health, damage
+calculation, inventory — pure Kotlin makes them JVM-testable without a
+running engine. Components that need scene-tree access (animation,
+hitboxes) take a node reference via constructor instead of inheriting from
+one.
+
+**One `StateFlow<ComponentState>` out, direct methods in.** Bundling state
+into a single `data class` keeps fields atomically consistent (current and
+max can never disagree, derived flags like `isDead` are always in sync) and
+gives consumers a single subscription point. `MutableStateFlow.update { }`
+is synchronous and atomic — don't wrap it in `scope.launch` unless
+something genuinely suspends, otherwise two updates in the same frame can
+resolve out of order and a caller reading `state.value` right after the
+mutator will see the old value.
+
+**Hybrid MVI: methods or sealed actions, by complexity.** For a component
+with one or two mutators, direct methods (`damage(amount)`, `heal(amount)`)
+say the same thing as `onAction(HealthAction.Damage(amount))` with less
+ceremony. A sealed `Action` type starts earning its keep around three or
+four actions, or as soon as more than one subsystem (UI + AI + network)
+dispatches into the same component. You can migrate from methods to
+actions later without changing consumers, because the state Flow doesn't
+change.
+
+**State vs events.** Use the state Flow for things derivable by observation
+(current HP, is dead, fraction). Use a `SharedFlow` for transient events
+that need to fire even when the value repeats (damage popups, hit flashes)
+— state diffing would miss a second hit for the same damage value.
+
+**Lifecycle.** Nodes don't ship a `CoroutineScope`. Create one tied to the
+node's lifetime and cancel it in `_exitTree`, otherwise collectors leak
+when the node is freed:
+
+```kotlin
+class NodeScope : CoroutineScope {
+    override val coroutineContext = SupervisorJob() + Dispatchers.Main
+    fun cancel() { coroutineContext.cancel() }
+}
+```
+
+**MVI for game-wide state, not gameplay.** MVI maps cleanly to UI and
+"logical state of the game" (inventory, pause menu, run state, save). It
+maps poorly to physics, per-frame transforms, and animations — things
+driven by `_process` / `_physicsProcess`. Don't force every `Area2D` into a
+state machine; reserve MVI for systems that look like screens or like
+persistent world state, and let gameplay nodes stay nodes.
+
+See `references/architecture.md` for the full worked example (Player +
+Health + Movement + Animation components, with the signal-to-Flow wiring).
+
 ## Editor workflow
 
 The editor's "Attach Script" dialog (the one with `Language: Kotlin`,
@@ -285,6 +375,10 @@ Drop the high `jvmToolchain` value and use `17`.
 - `references/dsl-by-version.md` — full `build.gradle.kts` templates per
   plugin version, including the DSL renames between 0.14.x and 0.16.x.
 - `references/errors.md` — extended error catalog with root causes.
+- `references/architecture.md` — composition + components worked example
+  (Player + Health + Movement + Animation), `NodeScope` helper, signal
+  wrapping via `callbackFlow`, MVI direct-methods vs sealed-actions
+  threshold.
 - Upstream docs (often missing per-version details, link with caution):
   <https://godot-kotl.in/en/stable/>
 - Project template (current plugin version only):
