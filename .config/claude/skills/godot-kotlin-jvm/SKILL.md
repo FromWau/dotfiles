@@ -12,6 +12,15 @@ NOT work for `.gdj` files, and several errors look engine-related but are
 actually Gradle/Kotlin-side issues. The aim of this skill is to short-circuit
 all of that.
 
+**Companion skill — load `godot` alongside this one.** It covers
+engine-general knowledge that applies regardless of scripting language:
+scene-tree composition, signal-wiring conventions, common pitfalls
+(negative-scale physics trap, preload memory chains, Sprite2D offset vs
+position), VisibleOnScreen culling, pixel-art resolution setup, editor
+tips. This skill stays focused on the Kotlin/JVM layer on top — the
+plugin, the registration model, Flow wrappers around signals, and the
+Kotlin-side architecture patterns.
+
 ## Mental model
 
 - The Godot **editor** is a *custom fork* of Godot built with JVM support
@@ -180,14 +189,9 @@ Built-in Godot signals on nodes (`bodyEntered` on `Area2D`, `pressed` on
 `Button`, etc.) are connectable directly from Kotlin via the generated
 signal properties on the binding. No GDScript shim required.
 
-**Prefer code-wiring in `_ready()` over the editor's Connect dialog.**
-Connections wired in the editor are serialized into the `.tscn` file, which
-means renaming a method silently breaks the connection until you reopen the
-scene, you can't grep for the wiring, and `.tscn` diffs are noisy in code
-review. Code wiring is refactor-safe and lives next to the logic it relates
-to. Editor wiring still earns its place for connections that are genuinely
-scene content (a level designer hooking a trigger zone to a door); for
-anything internal to a system, wire in code.
+The general advice — *wire signals in code in `_ready()`, not in the
+editor's Connect dialog* — lives in the `godot` skill (refactor-safety,
+greppability, scene-diff hygiene). It applies identically to Kotlin.
 
 To turn a signal into a Kotlin `Flow`, wrap it with `callbackFlow` — the
 symmetric "connect on collection, disconnect on cancellation" guarantee
@@ -205,20 +209,69 @@ The exact `Callable` construction and connect/disconnect surface vary
 between binding versions. See `references/architecture.md` for current
 patterns and a full worked example.
 
-## Architecture: composition + components
+## Architecture: Kotlin-side patterns
 
-Godot already pushes you toward composition via the node tree. Mirror that
-in Kotlin: each entity Node owns small plain Kotlin classes
-(`HealthComponent`, `MovementComponent`, `AnimationComponent`), components
-are unaware of each other and communicate via Flows. The Node is glue plus
-the one thing that genuinely belongs to it (reading input, gating physics
-on aliveness).
+The general composition story — *each component is its own scene with its
+own script, dropped as a child Node into every entity that needs it* —
+lives in the `godot` skill. This section covers the Kotlin-specific
+shapes that story takes.
 
-**Pure components have zero `godot.*` imports.** Health, damage
-calculation, inventory — pure Kotlin makes them JVM-testable without a
-running engine. Components that need scene-tree access (animation,
-hitboxes) take a node reference via constructor instead of inheriting from
-one.
+**Every component is a registered Node subclass.** That means each
+component class extends a `godot.api.*` type (usually `Node`, `Node2D`,
+or `Area2D`), gets `@RegisterClass`, gets its own `.gdj` from the
+plugin, and can be attached to a saved component scene
+(`health_component.tscn`) which is then instanced into `Player.tscn`,
+`Enemy.tscn`, `NPC.tscn`. The script is identical across entities;
+configuration differs via `@RegisterProperty @Export` fields.
+
+```kotlin
+import godot.annotation.RegisterClass
+import godot.annotation.RegisterFunction
+import godot.annotation.RegisterProperty
+import godot.annotation.Export
+import godot.api.Node
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+
+@RegisterClass
+class HealthComponent : Node() {
+
+    @RegisterProperty @Export
+    var maxHp: Int = 100  // shown in the inspector — override per entity
+
+    private val _state = MutableStateFlow(HealthState(hp = maxHp, maxHp = maxHp))
+    val state = _state  // expose StateFlow<HealthState>
+
+    private val _damaged = MutableSharedFlow<Int>(extraBufferCapacity = 16)
+    val damaged = _damaged  // SharedFlow<Int> — one event per hit, no diffing
+
+    @RegisterFunction
+    override fun _ready() {
+        _state.value = HealthState(hp = maxHp, maxHp = maxHp)
+    }
+
+    fun damage(amount: Int) {
+        if (amount <= 0) return
+        _state.update { it.copy(hp = (it.hp - amount).coerceAtLeast(0)) }
+        _damaged.tryEmit(amount)
+    }
+}
+
+data class HealthState(val hp: Int, val maxHp: Int) {
+    val isDead: Boolean get() = hp == 0
+}
+```
+
+The plugin auto-converts camelCase Kotlin property names to snake_case in
+the inspector, so `maxHp` shows up as `max_hp` and matches GDScript
+convention.
+
+**Pure Kotlin helpers are still fine — for non-component logic.** Damage
+formulas, item stat tables, save serialisation, anything that's pure
+computation with no engine lifecycle: keep these as plain Kotlin classes
+(no `@RegisterClass`, no `godot.*` imports), JVM-testable, called from
+inside components. The line is "does this need to be in the scene tree?"
+— yes → registered Node; no → plain class.
 
 **One `StateFlow<ComponentState>` out, direct methods in.** Bundling state
 into a single `data class` keeps fields atomically consistent (current and
@@ -228,6 +281,36 @@ is synchronous and atomic — don't wrap it in `scope.launch` unless
 something genuinely suspends, otherwise two updates in the same frame can
 resolve out of order and a caller reading `state.value` right after the
 mutator will see the old value.
+
+**Wiring sibling components in the parent.** The parent (`Player`) wires
+its children together in `_ready` — typed via `@RegisterProperty @Export`
+references dragged in the inspector, not via stringly-typed `getNode`
+paths:
+
+```kotlin
+@RegisterClass
+class Player : CharacterBody2D() {
+
+    @RegisterProperty @Export lateinit var health: HealthComponent
+    @RegisterProperty @Export lateinit var movement: MovementComponent
+    @RegisterProperty @Export lateinit var animation: AnimationComponent
+
+    private val scope = NodeScope()
+
+    @RegisterFunction
+    override fun _ready() {
+        scope.launch {
+            health.state.collect { s -> if (s.isDead) onDeath() }
+        }
+        scope.launch {
+            health.damaged.collect { animation.playHurt() }
+        }
+    }
+
+    @RegisterFunction
+    override fun _exitTree() { scope.cancel() }
+}
+```
 
 **Hybrid MVI: methods or sealed actions, by complexity.** For a component
 with one or two mutators, direct methods (`damage(amount)`, `heal(amount)`)
@@ -286,9 +369,10 @@ Alternative: drag the `.gdj` from the FileSystem panel onto the node.
 
 ## Output and logging
 
-Use `godot.global.GD.print(...)`, **not** `println(...)`. Plain Kotlin
-`println` writes to JVM stdout (the terminal that launched Godot), not the
-editor's Output panel. `GD.print` routes through Godot's logging system.
+Use `godot.global.GD.print(...)` (and `GD.printErr`, `GD.pushWarning`,
+`GD.pushError`), **not** `println(...)`. Plain Kotlin `println` writes to
+JVM stdout — visible only in the terminal that launched the editor, not
+in the Output panel. `GD.print` routes through Godot's logging system.
 
 ## Embedded JRE
 

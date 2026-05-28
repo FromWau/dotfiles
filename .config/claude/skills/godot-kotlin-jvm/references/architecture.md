@@ -1,71 +1,99 @@
 # Architecture: composition + components
 
 Full worked example of the architectural patterns described in `SKILL.md`'s
-"Architecture: composition + components" and "Signals: connecting from
-Kotlin" sections. This is reference material — read it when you're laying
-out a new gameplay system, picking a component shape, or wiring engine
-signals into Kotlin code.
+"Architecture: Kotlin-side patterns" and "Signals: connecting from Kotlin"
+sections. This is reference material — read it when you're laying out a
+new gameplay system, picking a component shape, or wiring engine signals
+into Kotlin code.
 
 ## Project layout
 
-Components that could be reused across multiple kinds of entities (Health,
-Movement, Animation, Damage, Hitbox, ...) live in a shared `components/`
-package. Only logic that's intrinsically tied to one specific entity
-(Player input mapping, a particular enemy's AI brain, an NPC's dialogue
-graph) lives under that entity's package.
+Components that could be reused across multiple kinds of entities
+(Health, Movement, Animation, Hitbox, …) live in a shared `components/`
+package. Each Godot-side component is *two artifacts*:
+
+- a Kotlin class (`HealthComponent.kt`) annotated with `@RegisterClass`,
+  extending a `godot.api.*` type, and
+- a saved scene (`health_component.tscn`) whose root Node has the
+  generated `.gdj` script attached.
+
+The scene is what the editor drags into entity scenes; the script is what
+holds the behaviour. Mob scenes (`player.tscn`, `slime.tscn`,
+`shop_keeper.tscn`) instance the same component scenes as children and
+configure them per-instance via `@Export` properties (max HP, walk speed,
+etc.).
+
+Only logic that's intrinsically tied to one specific entity (Player input
+mapping, a particular enemy's AI brain, an NPC dialogue graph) lives
+under that entity's package. Pure formulas (damage calc, stat tables)
+that aren't Nodes live in `domain/`.
 
 ```
+res://
+  components/                  ← reusable component scenes
+    health_component.tscn
+    movement_component.tscn
+    animation_component.tscn
+    hurtbox.tscn               (Area2D root)
+  entities/
+    player.tscn                (CharacterBody2D + the 4 component scenes)
+    enemies/
+      slime.tscn               (same components, different @Export values)
+    npcs/
+      shop_keeper.tscn
+
 src/main/kotlin/com/yourgame/
   core/
-    coroutines/        scopes (NodeScope helper)
-    signals/           callbackFlow wrappers for common Godot signals
+    coroutines/                NodeScope helper
+    signals/                   callbackFlow wrappers for common signals
   state/
-    GameStore.kt       MVI store for game-wide state (run, save, settings)
+    GameStore.kt               MVI store for game-wide state
     GameState.kt
     GameIntent.kt
   features/
     inventory/
-      InventoryStore.kt    MVI: state + intent + reducer
-      InventoryHud.kt      Control node that renders state and emits intents
+      InventoryStore.kt        MVI: state + intent + reducer
+      InventoryHud.kt          Control node that renders state, emits intents
     pause_menu/
       ...
-  components/          ← reusable across entities
+  components/                  ← @RegisterClass Node subclasses
     HealthComponent.kt
     MovementComponent.kt
     AnimationComponent.kt
-    DamageComponent.kt
-    Hitbox.kt
+    Hurtbox.kt
   entities/
     player/
-      Player.kt            CharacterBody2D, composes shared + bespoke
-      PlayerInput.kt       bespoke: only the Player has this input mapping
+      Player.kt                CharacterBody2D, wires children together
+      PlayerInput.kt           bespoke: only the Player has this input mapping
     enemies/
       Slime.kt
-      SlimeAi.kt           bespoke: Slime-specific brain
+      SlimeAi.kt               bespoke: Slime-specific brain
     npcs/
       ShopKeeper.kt
-      DialogueBrain.kt     bespoke
-  world/
-    levels/                scenes + per-level glue
-    triggers/
-  domain/                  pure logic, no godot.* imports
+      DialogueBrain.kt         bespoke
+  domain/                      pure logic, no godot.* imports
+    DamageCalculator.kt        formula, called from inside CombatComponent
+    LootTable.kt
+    ItemStats.kt
 ```
 
-The rule of thumb: if a second entity might plausibly use this code,
-hoist it into `components/`. If it only makes sense for one entity,
-keep it next to that entity. Hoisting later is cheap (move file, update
-imports); pre-hoisting things that turn out to be Player-specific creates
-abstraction debt.
+**Rule of thumb:** if a second entity might plausibly use this code,
+hoist it into `components/` and give it a scene. If it only makes sense
+for one entity, keep it next to that entity. Hoisting later is cheap (move
+file, create scene, update imports); pre-hoisting things that turn out to
+be Player-specific creates abstraction debt.
 
-Two rules that keep this clean:
+**Two rules that keep this clean:**
 
 1. `domain/` never imports `godot.*`. It's pure Kotlin, so the JVM test
-   suite can run it without a running engine.
-2. Components are constructed by the owning Node, handed whatever they
-   need via constructor (often a `CoroutineScope`, a node reference, and a
-   few Flows), and never reach back up into the scene tree. That keeps
-   `HealthComponent` reusable on player, enemies, breakable crates, and
-   anything else with hit points, without inheritance.
+   suite can run it without a running engine. Damage formulas, item stat
+   tables, save serialisers belong here.
+2. Components in `components/` are Node subclasses. They don't reach up
+   into the scene tree via `getParent()` chains — they receive sibling
+   references via `@RegisterProperty @Export` (dragged in the editor) or
+   via the parent's `_ready` wiring. That keeps `HealthComponent`
+   reusable on player, enemies, breakable crates, and anything else with
+   hit points.
 
 ## NodeScope helper
 
@@ -86,53 +114,72 @@ Godot's main thread. Touching node APIs from a background thread will
 crash the engine, so any `collect` that ends up calling into a Node must
 run on Main.
 
-## HealthComponent (pure, no Godot imports)
+## HealthComponent (Node subclass, saved as a scene)
 
-Lives in `components/`. Bundled state via a single `StateFlow`, direct
-methods for input. No Godot types are touched, so this class can be
-unit-tested on the plain JVM and reused on any entity that has hit points.
+Lives in `components/HealthComponent.kt` with sibling scene
+`health_component.tscn` (root Node, script = generated `.gdj`). Bundled
+state via a single `StateFlow`, transient hit events via a `SharedFlow`,
+inspector-configurable `maxHp`.
 
 ```kotlin
 // components/HealthComponent.kt
-data class HealthState(val current: Int, val max: Int) {
-    val isDead: Boolean get() = current <= 0
-    val fraction: Float get() = current.toFloat() / max
-}
+@RegisterClass
+class HealthComponent : Node() {
 
-class HealthComponent(
-    initial: Int,
-    max: Int = initial,
-) {
-    private val _state = MutableStateFlow(HealthState(current = initial, max = max))
+    @RegisterProperty @Export
+    var maxHp: Int = 100
+
+    private val _state = MutableStateFlow(HealthState(hp = 100, maxHp = 100))
     val state: StateFlow<HealthState> = _state.asStateFlow()
 
-    fun damage(amount: Int) = _state.update {
-        if (it.isDead) it
-        else it.copy(current = (it.current - amount).coerceAtLeast(0))
+    private val _damaged = MutableSharedFlow<Int>(extraBufferCapacity = 16)
+    val damaged: SharedFlow<Int> = _damaged.asSharedFlow()
+
+    @RegisterFunction
+    override fun _ready() {
+        _state.value = HealthState(hp = maxHp, maxHp = maxHp)
     }
 
-    fun heal(amount: Int) = _state.update {
-        if (it.isDead) it
-        else it.copy(current = (it.current + amount).coerceAtMost(it.max))
+    fun damage(amount: Int) {
+        if (amount <= 0 || _state.value.isDead) return
+        _state.update { it.copy(hp = (it.hp - amount).coerceAtLeast(0)) }
+        _damaged.tryEmit(amount)
     }
+
+    fun heal(amount: Int) {
+        if (amount <= 0 || _state.value.isDead) return
+        _state.update { it.copy(hp = (it.hp + amount).coerceAtMost(it.maxHp)) }
+    }
+}
+
+data class HealthState(val hp: Int, val maxHp: Int) {
+    val isDead: Boolean get() = hp == 0
+    val fraction: Float get() = if (maxHp > 0) hp.toFloat() / maxHp else 0f
 }
 ```
 
-Why no `scope.launch` around `_state.update`: nothing inside is suspending,
-and `MutableStateFlow.update { }` is synchronous and atomic. Wrapping in
-`launch` would defer the update to a later tick and make two damage calls
-in the same frame race against each other.
+`HealthState` stays a pure data class — atomic snapshot of all related
+fields. `_state.update { }` is synchronous and atomic; don't wrap in
+`scope.launch` unless something genuinely suspends, otherwise two damage
+calls in the same frame can race and a caller reading `state.value`
+right after `damage(...)` will see the old value.
 
-Consumers derive what they need from the one Flow:
+**State vs events:** the state Flow gives consumers everything derivable
+by observation (current HP, fraction, isDead). The `damaged` SharedFlow
+exists because a transient hit event needs to fire even when the value
+repeats — state diffing on HP would miss a second 10-damage hit landing
+on the same frame as the first. SharedFlow doesn't diff.
+
+Consumers derive what they need from the one state Flow:
 
 ```kotlin
-health.state.map { it.fraction }                               // for the HUD
-health.state.map { it.isDead }.distinctUntilChanged()          // for death
+health.state.map { it.fraction }                           // HUD bar
+health.state.map { it.isDead }.distinctUntilChanged()      // death trigger
 ```
 
 ### When to switch to sealed actions
 
-For a 1-2 mutator component, `health.damage(10)` says the same thing as
+For a 1–2 mutator component, `health.damage(10)` says the same thing as
 `health.onAction(HealthAction.Damage(10))` with less typing and the same
 testability. A sealed action type starts earning its keep around three or
 four actions, or as soon as more than one subsystem (UI + AI + network)
@@ -146,7 +193,8 @@ sealed interface HealthAction {
     data object Revive : HealthAction
 }
 
-class HealthComponent(...) {
+@RegisterClass
+class HealthComponent : Node() {
     val state: StateFlow<HealthState> = ...
 
     fun onAction(action: HealthAction) = when (action) {
@@ -157,69 +205,81 @@ class HealthComponent(...) {
     }
 
     private fun handleDamage(amount: Int) = _state.update {
-        if (it.isDead) it else it.copy(current = (it.current - amount).coerceAtLeast(0))
+        if (it.isDead) it else it.copy(hp = (it.hp - amount).coerceAtLeast(0))
     }
-
-    private fun handleHeal(amount: Int) = _state.update { ... }
-    private fun handleSetMax(max: Int) = _state.update { ... }
-    private fun handleRevive() = _state.update { ... }
+    // ...
 }
 ```
 
 `onAction` is a single `when` that fans out directly into the concrete
-handlers. No extra `reduce` indirection — the `when` *is* the dispatch.
+handlers. The `when` *is* the dispatch — no extra `reduce` indirection.
 Each handler stays small and individually readable, and you can call them
-directly from inside the class (e.g. from a coroutine that already knows
-which action to apply) without having to construct a `HealthAction` just
-to route through `onAction`.
+directly from inside the class without constructing an action just to
+route through `onAction`.
 
 The migration from methods to actions doesn't change the consumer side
 (state Flow stays identical), so it's safe to defer until the component
 actually grows.
 
-## MovementComponent (direction-driven for reusability)
+## MovementComponent (Node, drives its parent CharacterBody2D)
 
-Lives in `components/`. Takes a `Vector2` direction so an AI-controlled
-enemy can reuse the same component by feeding in a computed direction
-instead of player input. The Node owns the input source, the component
-owns the physics push.
+Lives in `components/MovementComponent.kt` with `movement_component.tscn`.
+Takes a `Vector2` direction so an AI-controlled enemy can reuse the same
+component by feeding in a computed direction instead of player input. The
+*parent* CharacterBody2D is fetched via `getParent()` typed cast — this
+component only makes sense as a direct child of one — and `speed` is
+exported per instance.
 
 ```kotlin
 // components/MovementComponent.kt
-class MovementComponent(
-    private val body: CharacterBody2D,
-    private val speed: Float = 220f,
-) {
+@RegisterClass
+class MovementComponent : Node() {
+
+    @RegisterProperty @Export
+    var speed: Float = 220f
+
+    private var body: CharacterBody2D? = null
+
     private val _velocity = MutableStateFlow(Vector2.ZERO)
     val velocity: StateFlow<Vector2> = _velocity.asStateFlow()
 
+    @RegisterFunction
+    override fun _ready() {
+        body = getParent() as? CharacterBody2D
+            ?: error("MovementComponent must be a child of a CharacterBody2D")
+    }
+
     fun move(direction: Vector2) {
-        val v = direction.normalized() * speed.toDouble()
-        body.velocity = v
-        body.moveAndSlide()
-        _velocity.value = body.velocity
+        val b = body ?: return
+        b.velocity = direction.normalized() * speed.toDouble()
+        b.moveAndSlide()
+        _velocity.value = b.velocity
     }
 
     fun stop() {
-        body.velocity = Vector2.ZERO
+        body?.velocity = Vector2.ZERO
         _velocity.value = Vector2.ZERO
     }
 }
 ```
 
-## DamageComponent (transient events, no persistent state)
+`getParent()` is the one place where coupling to "this node has a
+specific parent type" is acceptable — it's the whole point of a movement
+component. For sibling components, prefer `@RegisterProperty @Export`
+references dragged in the inspector (shown below).
 
-Lives in `components/`. A pure calculator that turns "raw incoming damage
-+ context" into "actual damage to apply". No persistent state, so no
-`StateFlow` — and crucially, damage is a transient event: the same value
-landing twice in a row must produce two distinct outcomes, which state
-diffing can't represent.
+## DamageCalculator (pure Kotlin, lives in `domain/`)
+
+Not every "component" needs to be a Node. A pure formula belongs in
+`domain/` — no `@RegisterClass`, no `godot.*` imports, JVM-testable
+without an engine running. The naming reflects what it actually is: a
+calculator, not a scene-attachable behaviour.
 
 ```kotlin
-// components/DamageComponent.kt
+// domain/DamageCalculator.kt
 data class DefenseStats(val armor: Int, val resistance: Float)
 
-class DamageComponent {
+object DamageCalculator {
     fun calc(rawDamage: Int, defense: DefenseStats): Int {
         val afterArmor = (rawDamage - defense.armor).coerceAtLeast(1)
         return (afterArmor * (1f - defense.resistance)).toInt().coerceAtLeast(1)
@@ -227,51 +287,56 @@ class DamageComponent {
 }
 ```
 
-If you later want to broadcast damage events (floating numbers, combat
-log, screen shake), expose them through a `SharedFlow` on whatever
-component owns the entity's combat state:
+A `CombatComponent` (Node) calls this from inside its `applyHit(...)` and
+broadcasts the result through its own `SharedFlow`:
 
 ```kotlin
-data class DamageEvent(val amount: Int)
+// components/CombatComponent.kt
+@RegisterClass
+class CombatComponent : Node() {
 
-class CombatComponent(
-    private val damage: DamageComponent,
-    private val health: HealthComponent,
-) {
+    @RegisterProperty @Export lateinit var health: HealthComponent
+
     private val _events = MutableSharedFlow<DamageEvent>(extraBufferCapacity = 16)
     val events: SharedFlow<DamageEvent> = _events.asSharedFlow()
 
     fun applyHit(rawDamage: Int, defense: DefenseStats) {
-        val actual = damage.calc(rawDamage, defense)
+        val actual = DamageCalculator.calc(rawDamage, defense)
         health.damage(actual)
         _events.tryEmit(DamageEvent(amount = actual))
     }
 }
+
+data class DamageEvent(val amount: Int)
 ```
 
-`SharedFlow` is the right primitive here precisely because two identical
+`SharedFlow` is the right primitive precisely because two identical
 `DamageEvent(amount = 10)` emissions stay distinct. A `StateFlow` would
 collapse them via `distinctUntilChanged` semantics and the second damage
 number would never show up.
 
-## AnimationComponent (reactive, subscribes to other components' Flows)
+## AnimationComponent (Node, subscribes to sibling Flows)
 
-Lives in `components/`. Subscribes once in `init`. Nothing per-frame; the
-animation reacts to state changes published by the other components. A
-private `SharedFlow` is used for transient triggers (hit flash) that need
-to fire even when the same value repeats.
+Lives in `components/AnimationComponent.kt` with `animation_component.tscn`.
+Subscribes once in `_ready`. Nothing per-frame; the animation reacts to
+state changes published by sibling components. Sibling references come
+from the inspector (drag the HealthComponent and MovementComponent child
+nodes onto the `@Export` fields of the AnimationComponent in the entity
+scene).
 
 ```kotlin
 // components/AnimationComponent.kt
-class AnimationComponent(
-    private val sprite: AnimatedSprite2D,
-    scope: CoroutineScope,
-    movement: MovementComponent,
-    health: HealthComponent,
-) {
-    private val _damageOverlay = MutableSharedFlow<Int>(extraBufferCapacity = 8)
+@RegisterClass
+class AnimationComponent : Node() {
 
-    init {
+    @RegisterProperty @Export lateinit var sprite: AnimatedSprite2D
+    @RegisterProperty @Export lateinit var movement: MovementComponent
+    @RegisterProperty @Export lateinit var health: HealthComponent
+
+    private val scope = NodeScope()
+
+    @RegisterFunction
+    override fun _ready() {
         movement.velocity
             .map { if (it == Vector2.ZERO) "idle" else "walk" }
             .distinctUntilChanged()
@@ -285,50 +350,43 @@ class AnimationComponent(
             .onEach { sprite.play("death") }
             .launchIn(scope)
 
-        _damageOverlay
-            .onEach { sprite.play("hurt") /* spawn damage number, etc. */ }
-            .launchIn(scope)
+        scope.launch {
+            health.damaged.collect { sprite.play("hurt") }
+        }
     }
 
-    fun flashDamage(amount: Int) {
-        _damageOverlay.trySend(amount)
-    }
+    @RegisterFunction
+    override fun _exitTree() { scope.cancel() }
 }
 ```
 
-`flashDamage` is a public method, not a public channel. The internal
-`MutableSharedFlow` stays private, same encapsulation principle as
-exposing `state` instead of `_state`. Callers say what they want done, not
-which mechanism delivers it.
+The hit-flash listener uses the `damaged` SharedFlow on HealthComponent,
+not the state Flow — exactly the case where state diffing would miss
+repeated values.
 
-## Player (the Node that wires it together)
+## Player (the parent Node that holds the components)
 
-Lives in `entities/player/`. The Node owns its components (a mix of shared
-and bespoke), reads its one source of input, and gates physics on
-aliveness. Everything else is delegated.
+Lives in `entities/player/Player.kt` with `entities/player.tscn`. The
+Player scene has the four component scenes (HealthComponent,
+MovementComponent, AnimationComponent, CombatComponent) instanced as
+children. The Kotlin class declares `@Export` references; in the editor,
+drag each child Node onto the matching field on the Player node.
 
 ```kotlin
 // entities/player/Player.kt
 @RegisterClass
 class Player : CharacterBody2D() {
 
-    private val nodeScope = NodeScope()
+    @RegisterProperty @Export lateinit var health: HealthComponent
+    @RegisterProperty @Export lateinit var movement: MovementComponent
+    @RegisterProperty @Export lateinit var animation: AnimationComponent
+    @RegisterProperty @Export lateinit var combat: CombatComponent
 
-    private lateinit var health: HealthComponent
-    private lateinit var movement: MovementComponent
-    private lateinit var animation: AnimationComponent
-    private lateinit var damage: DamageComponent
+    private val scope = NodeScope()
 
     @RegisterFunction
     override fun _ready() {
-        val sprite = getNodeAs<AnimatedSprite2D>("AnimatedSprite2D")!!
-
-        health = HealthComponent(initial = 100)
-        movement = MovementComponent(body = this, speed = 220f)
-        animation = AnimationComponent(sprite, nodeScope, movement, health)
-        damage = DamageComponent()
-
-        nodeScope.launch {
+        scope.launch {
             health.state
                 .map { it.isDead }
                 .distinctUntilChanged()
@@ -346,56 +404,45 @@ class Player : CharacterBody2D() {
     }
 
     @RegisterFunction
-    override fun _exitTree() {
-        nodeScope.cancel()
-    }
+    override fun _exitTree() { scope.cancel() }
 
     fun gotHit(rawDamage: Int, attackerDefenseBreak: Int = 0) {
         val defense = DefenseStats(armor = 5 - attackerDefenseBreak, resistance = 0.1f)
-        val actual = damage.calc(rawDamage, defense)
-        health.damage(actual)
-        animation.flashDamage(actual)
+        combat.applyHit(rawDamage, defense)
     }
 }
 ```
 
-Pattern worth naming: in `gotHit`, damage is a transient event. State
-diffing on `health.state` would miss the case where the player gets hit
-for the same amount twice in a row (current goes 100 → 90 → 80, but "a hit
-happened" needs to fire twice). That's why `animation.flashDamage(...)` is
-an explicit call rather than something the animation component derives by
-watching health. When the fan-out from `gotHit` grows to three or four
-calls, consider a `PlayerEvents` `SharedFlow` that interested components
-subscribe to themselves, rather than the Player explicitly notifying each
-one.
+Note what Player *doesn't* do anymore: no `HealthComponent(initial = 100)`
+construction, no `getNodeAs<AnimatedSprite2D>(...)`. Instances and wiring
+live in the scene; the script just declares what it needs and uses what
+the inspector handed it. This is the payoff of the component-as-scene
+pattern — the Kotlin code stops being a DI container.
+
+`gotHit` is now a thin shim that delegates to CombatComponent. The
+animation flash happens automatically because AnimationComponent already
+subscribed to `health.damaged` in its own `_ready`. No manual fan-out
+required.
 
 ## Reusing the same components on an enemy
 
 Because none of `HealthComponent`, `MovementComponent`, `AnimationComponent`,
-or `DamageComponent` know anything about the Player, an enemy node composes
-the exact same set and supplies its own input source (an AI brain instead
-of `Input.getVector`):
+or `CombatComponent` know anything about the Player, an enemy scene
+composes the exact same set of component scenes and tunes them via the
+inspector. Different `max_hp`, different `speed`, different sprite, same
+component scripts.
 
 ```kotlin
 // entities/enemies/Slime.kt
 @RegisterClass
 class Slime : CharacterBody2D() {
 
-    private val nodeScope = NodeScope()
+    @RegisterProperty @Export lateinit var health: HealthComponent
+    @RegisterProperty @Export lateinit var movement: MovementComponent
+    @RegisterProperty @Export lateinit var animation: AnimationComponent
+    @RegisterProperty @Export lateinit var ai: SlimeAi  // bespoke
 
-    private lateinit var health: HealthComponent
-    private lateinit var movement: MovementComponent
-    private lateinit var animation: AnimationComponent
-    private lateinit var ai: SlimeAi               // bespoke, lives in entities/enemies/
-
-    @RegisterFunction
-    override fun _ready() {
-        val sprite = getNodeAs<AnimatedSprite2D>("AnimatedSprite2D")!!
-        health = HealthComponent(initial = 30)
-        movement = MovementComponent(body = this, speed = 60f)
-        animation = AnimationComponent(sprite, nodeScope, movement, health)
-        ai = SlimeAi(scope = nodeScope, perception = /* ... */)
-    }
+    private val scope = NodeScope()
 
     @RegisterFunction
     override fun _physicsProcess(delta: Double) {
@@ -405,15 +452,18 @@ class Slime : CharacterBody2D() {
     }
 
     @RegisterFunction
-    override fun _exitTree() {
-        nodeScope.cancel()
-    }
+    override fun _exitTree() { scope.cancel() }
 }
 ```
 
 `SlimeAi` lives in `entities/enemies/` because it's specific to this
 enemy. If a second enemy ends up wanting the same brain, hoist it into
-`components/` (or a sibling `ai/` package) at that point.
+`components/` and give it a scene at that point.
+
+In the editor: `slime.tscn` instances `health_component.tscn` and sets
+`max_hp = 30`; instances `movement_component.tscn` and sets `speed = 60`;
+adds a `SlimeAi` child. Drag the children onto Slime's `@Export` fields.
+No Kotlin-side changes for new enemy variants.
 
 ## Signals to Flows: full pattern
 
@@ -426,7 +476,7 @@ double-subscribed or leaking after the collector cancels.
 @RegisterClass
 class TriggerZone : Area2D() {
 
-    private val nodeScope = NodeScope()
+    private val scope = NodeScope()
 
     val playerEntered: Flow<Player> = callbackFlow {
         val callable = Callable { body: Node2D -> trySend(body) }
@@ -434,19 +484,17 @@ class TriggerZone : Area2D() {
         awaitClose { bodyEntered.disconnect(callable) }
     }
         .filterIsInstance<Player>()
-        .shareIn(nodeScope, SharingStarted.WhileSubscribed())
+        .shareIn(scope, SharingStarted.WhileSubscribed())
 
     @RegisterFunction
     override fun _ready() {
         playerEntered
             .onEach { onPlayerEnter(it) }
-            .launchIn(nodeScope)
+            .launchIn(scope)
     }
 
     @RegisterFunction
-    override fun _exitTree() {
-        nodeScope.cancel()
-    }
+    override fun _exitTree() { scope.cancel() }
 
     private fun onPlayerEnter(player: Player) {
         // ...
@@ -480,11 +528,16 @@ generated source if something below doesn't compile:
 Wire in code when the connection is part of how your system behaves; wire
 in the editor when the connection is part of how this particular scene is
 arranged. Most gameplay code falls into the first bucket, which is why
-"prefer code wiring in `_ready`" holds up in practice.
+"prefer code wiring in `_ready`" holds up in practice for signals.
 
-Code wiring wins for refactor safety (the IDE follows a rename),
-greppability (the connection is text in a `.kt` file), and clean git diffs
-(`.tscn` connection blocks are noisy and easy to merge wrong). Editor
-wiring wins when a designer needs to rearrange wiring without touching
-code, or when the connection is genuinely scene-local content rather than
-system logic.
+The exception: **structural sibling references** (`@RegisterProperty
+@Export lateinit var health: HealthComponent` on Player). These are
+inspector-wired because they're part of *what this scene is* — the Player
+scene has a HealthComponent child; the script needs to know which one.
+Hardcoding `getNodeAs<HealthComponent>("HealthComponent")` is fragile
+(rename the child node → silent break); inspector references survive
+node renames and surface as red errors in the editor when broken.
+
+Code wiring still wins for signal connections, behaviour subscriptions,
+and anything that's a system-level rule rather than per-scene
+configuration.
