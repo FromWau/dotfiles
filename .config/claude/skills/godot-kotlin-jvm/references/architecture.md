@@ -1,12 +1,40 @@
-# Architecture: composition + components
+# Architecture: composition + components (level 2/3 deep dive)
 
-Full worked example of the architectural patterns described in `SKILL.md`'s
-"Architecture: Kotlin-side patterns" and "Signals: connecting from Kotlin"
-sections. This is reference material — read it when you're laying out a
-new gameplay system, picking a component shape, or wiring engine signals
-into Kotlin code.
+This file is the **escalated** version — the full worked example for
+when you've decided the project needs registered Node components,
+scene-component instances, Inspector-tunable per-entity config, or
+cross-system observation via Coroutines/StateFlow. It is **not the
+default**.
 
-## Project layout
+The default for solo, code-first projects is plain Kotlin classes
+instantiated in the entity's `_ready()` (level 1) — see SKILL.md's
+"Architecture: Kotlin-side patterns" for that shape. The engine-level
+composition spectrum (level 0 monolithic → level 3 scene component)
+lives in the `godot` skill at `references/composition.md`. Load that
+first; this file picks up after the decision to go level 2/3.
+
+The rest of this document describes the level-3 setup (each component
+is its own `.tscn` + `@RegisterClass`), with Coroutines/StateFlow for
+cross-system observation. Most projects don't need all of this. Pick
+the pieces that apply.
+
+## When to actually use this
+
+This shape earns its weight when:
+
+- A **designer (not you)** composes new entity scenes by dragging
+  components onto base templates.
+- Per-entity values (max_hp, speed, damage_multiplier) need
+  Inspector tuning *without* recompiling.
+- Multiple subsystems (UI HUD + analytics + AI) need to observe the
+  same state changes — that's a StateFlow earning its place.
+- The project is large enough that the wiring tax pays itself off.
+
+For a solo dev tutoring through a small Godot/Kotlin project with one
+or two mob types, the level-1 plain-class shape in SKILL.md is the
+better default.
+
+## Project layout (level 3)
 
 Components that could be reused across multiple kinds of entities
 (Health, Movement, Animation, Hitbox, …) live in a shared `components/`
@@ -83,17 +111,23 @@ for one entity, keep it next to that entity. Hoisting later is cheap (move
 file, create scene, update imports); pre-hoisting things that turn out to
 be Player-specific creates abstraction debt.
 
-**Two rules that keep this clean:**
+**Three rules that keep this clean:**
 
 1. `domain/` never imports `godot.*`. It's pure Kotlin, so the JVM test
    suite can run it without a running engine. Damage formulas, item stat
    tables, save serialisers belong here.
 2. Components in `components/` are Node subclasses. They don't reach up
    into the scene tree via `getParent()` chains — they receive sibling
-   references via `@RegisterProperty @Export` (dragged in the editor) or
-   via the parent's `_ready` wiring. That keeps `HealthComponent`
-   reusable on player, enemies, breakable crates, and anything else with
-   hit points.
+   references via the parent's `_ready` wiring (`getNode("HealthComponent")
+   as HealthComponent`) or, when designer-tuneable wiring is the point,
+   via `@RegisterProperty @Export`. `getNode` is the default; `@Export`
+   only when the drag matters. That keeps `HealthComponent` reusable on
+   player, enemies, breakable crates, and anything else with hit points.
+3. **Avoid `@Export` names that shadow `Node` getters** — `tree`, `name`,
+   `position`, `path`, `parent`, `owner`. The Kotlin codegen generates an
+   accessor that shadows the engine one with a different return type;
+   compiles, but creates `node.tree` / `node.getTree()` confusion across
+   plugin versions. Use `animationTree`, `displayName`, `targetPosition`.
 
 ## NodeScope helper
 
@@ -265,8 +299,13 @@ class MovementComponent : Node() {
 
 `getParent()` is the one place where coupling to "this node has a
 specific parent type" is acceptable — it's the whole point of a movement
-component. For sibling components, prefer `@RegisterProperty @Export`
-references dragged in the inspector (shown below).
+component. For sibling components, the default is `getNode("HealthComponent")
+as HealthComponent` in the parent's `_ready` (refactor-tracked by
+IDE/`grep`, breaks loudly on node rename); reach for `@RegisterProperty
+@Export` only when the wire genuinely benefits from being a designer-set
+drag in the Inspector. Examples below show `@Export` because this file
+is the level-3 deep dive — substitute `getNode` for the default code-first
+case.
 
 ## DamageCalculator (pure Kotlin, lives in `domain/`)
 
@@ -523,21 +562,34 @@ generated source if something below doesn't compile:
   (`bodyEntered.connect(callable)`) or a `connect(signalName, callable)`
   method on the Node. The `callbackFlow` pattern doesn't care which.
 
-## Code wiring vs editor wiring: rule of thumb
+## Code wiring vs editor wiring
 
-Wire in code when the connection is part of how your system behaves; wire
-in the editor when the connection is part of how this particular scene is
-arranged. Most gameplay code falls into the first bucket, which is why
-"prefer code wiring in `_ready`" holds up in practice for signals.
+Two refactor failure modes you trade between:
 
-The exception: **structural sibling references** (`@RegisterProperty
-@Export lateinit var health: HealthComponent` on Player). These are
-inspector-wired because they're part of *what this scene is* — the Player
-scene has a HealthComponent child; the script needs to know which one.
-Hardcoding `getNodeAs<HealthComponent>("HealthComponent")` is fragile
-(rename the child node → silent break); inspector references survive
-node renames and surface as red errors in the editor when broken.
+- **Code wiring** (`getNode("HealthComponent") as HealthComponent` in
+  `_ready`). Tracked by IDE / `grep` / *Find Usages* through file
+  renames, class refactors, package moves. Breaks loudly on **node**
+  renames in the editor: runtime cast/NPE pointing at the line.
+- **Editor wiring** (`@RegisterProperty @Export lateinit var health:
+  HealthComponent`, dragged in the Inspector). The `NodePath` blob
+  inside `.tscn` updates automatically when nodes are renamed or moved
+  inside the editor. Breaks silently on file / class refactors — the
+  scene still parses, but the export slot loses its association and the
+  field is null at runtime.
 
-Code wiring still wins for signal connections, behaviour subscriptions,
-and anything that's a system-level rule rather than per-scene
-configuration.
+**For solo, code-first work**, default to code wiring. File/class
+refactors happen more often than node-tree restructuring, and the
+failure mode (loud cast crash on a wrong path) is easier to debug than
+a silent `lateinit` access.
+
+**For team work with a level designer**, editor wiring may win — the
+designer composes the scene by drag-drop and needs the export slot. If
+the same scene is regularly edited by both Kotlin and the editor by
+different people, you genuinely need the editor refs.
+
+For signal connections (`bodyEntered.connect(...)`,
+`died.connect(::onDied)`), code wiring in `_ready` is the universal
+default regardless of the rest. The connection is behaviour, not scene
+arrangement, and the `.tscn`-serialised signal connections from the
+editor's right-click menu are the worst of both worlds (silent on
+method rename, invisible to `grep`).

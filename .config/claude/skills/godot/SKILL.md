@@ -1,19 +1,19 @@
 ---
 name: godot
-description: Godot Engine general knowledge — scene-tree composition, signals, common pitfalls (Sprite2D offset vs position, negative-scale physics trap, preload memory chains), VisibleOnScreen culling, pixel-art resolution setup, editor tips. Apply whenever the user mentions Godot, .tscn/.gd/project.godot files, Godot node types (Sprite2D, Area2D, CharacterBody2D, Node2D, etc.), GDScript, scenes, signals in a game-engine context, or game architecture in Godot. Engine-level — language-agnostic. For Kotlin/JVM scripting specifically, also load `godot-kotlin-jvm`.
+description: Godot Engine general knowledge — scene-tree composition, signals, common pitfalls (Sprite2D offset vs position, negative-scale physics trap, preload memory chains), VisibleOnScreen culling, pixel-art resolution setup, editor tips. Apply whenever the user mentions Godot, .tscn/.gd/project.godot files, Godot node types (Sprite2D, Area2D, CharacterBody2D, Node2D, etc.), GDScript, scenes, signals in a game-engine context, or game architecture in Godot. Engine-level — language-agnostic. For language-binding specifics, also load the relevant binding skill.
 ---
 
 # Godot Engine
 
 This skill captures engine-level Godot knowledge that applies regardless of
-which scripting language (GDScript, C#, Kotlin/JVM, …) is in use. The aim
-is to short-circuit the well-known pitfalls — several of them have killed
-projects late enough that recovery meant a rewrite — and to encode the
-composition patterns the engine quietly pushes you toward.
+which scripting language is in use. The aim is to short-circuit the
+well-known pitfalls — several of them have killed projects late enough
+that recovery meant a rewrite — and to encode the composition patterns
+the engine quietly pushes you toward. Examples use GDScript as the
+engine's native language.
 
-If the user is using Godot Kotlin/JVM (custom fork, `.gdj` files,
-`com.utopia-rise.godot-kotlin-jvm` plugin), also load the
-**godot-kotlin-jvm** skill for the JVM-specific layer.
+For language-binding specifics, load the relevant binding skill alongside
+this one.
 
 ## Mental model
 
@@ -32,130 +32,79 @@ If the user is using Godot Kotlin/JVM (custom fork, `.gdj` files,
   share the same runtime, so a bad `@tool` script *can* take the editor
   down.
 
-## Composition: components are scenes
+## Composition
 
-Godot is already a composition-over-inheritance engine. The temptation —
-especially coming from OO backgrounds — is to build deep class hierarchies
-(`Enemy → FlyingEnemy → HomingFlyingEnemy`). Resist this. **Build each
-behaviour as its own scene-with-script and drop it as a child Node into
-every entity that needs it.**
+Godot is composition-over-inheritance. There's no single "correct" shape
+for a component — pick the extraction level that matches your project:
 
-This is the central pattern. A `HealthComponent` isn't a plain script
-hung off a generic `Node` inside `Player.tscn`. It's:
+- **Plain class / `RefCounted` script** — `class_name` script with
+  no scene presence; instantiated in the entity's `_ready()`. No scene
+  tree presence, no Inspector. Default for code-first solo projects.
+- **Script on child Node** — per-behaviour script (`class_name
+  HealthComponent extends Node`) attached to a child Node within the
+  entity scene. Reuse at the script level.
+- **Component scene** — each behaviour is `health_component.tscn` you
+  instance into multiple entity scenes. Maximum reuse and designer
+  ergonomics, maximum editor ceremony.
 
-1. A Node subclass with its own script (`HealthComponent.gd` /
-   `HealthComponent.gdj` / `HealthComponent.cs`).
-2. Saved as its own scene: `health_component.tscn`.
-3. Instanced as a child of `Player.tscn`, `Enemy.tscn`, `NPC.tscn`, and
-   anything else that needs hit points.
-4. Configured per-instance via `@export` properties (max HP differs
-   between player and goblin; the script is identical).
+The official Godot docs lean conservative (self-contained scenes + DI);
+popular community tutorials use the middle level; full "components as
+scenes" is real but opinionated. There is no universal best practice —
+match the level to the team and the workflow.
 
-```
-res://components/
-├── health_component.tscn      (script: HealthComponent)
-├── movement_component.tscn    (script: MovementComponent)
-├── hurtbox_component.tscn     (script: HurtboxComponent, root: Area2D)
-└── animation_component.tscn   (script: AnimationComponent)
+The rules that apply at every level:
 
-res://entities/
-├── player.tscn      (CharacterBody2D + the four components as children)
-├── enemy_goblin.tscn (CharacterBody2D + the same four components)
-└── npc_villager.tscn (CharacterBody2D + Health + Animation, no Movement)
-```
+- **Components are passive.** No `_process` / `_physicsProcess` on a
+  gameplay component — the controller (Player, GoblinAI) ticks and
+  calls `movement.move(body, dir, speed)`, `health.damage(n)`,
+  `animation.applyPose(...)` synchronously. Components expose methods
+  and state; they don't drive frames. Exception: engine-event
+  components like an `Area2D`-rooted `HurtboxComponent` reacting to
+  `body_entered`.
+- **Components are context-agnostic.** Rock test: if you attached this
+  to a literal rock, would it still function? `move(body, dir, speed)`
+  — yes; `move()` reading a hardcoded player input — no.
+- **Intent passed as method argument, never as a caller-written
+  field.** `movement.move(body, dir, speed)` — not `movement.direction =
+  dir; movement.move()`.
+- **"Call Down, Signal Up."** Controllers call children's methods
+  downward; children emit signals upward. Children don't reach for
+  their parent.
+- **Mechanism vs content.** A reusable component drives a mechanism
+  (the `AnimationTree` API, velocity application). The entity's scene
+  resource carries the content (sprites, animation clips, stat
+  values). Two entities can share `HumanoidToolAnimation` because their
+  AnimationTree resources share the *shape* even with different bound
+  clips.
+- **Rule of three for extraction.** Inline on the first entity. Extract
+  on the second concrete one. Don't extract on speculation; the
+  abstraction shapes around the only existing case and fights the next.
+- **Default to code wiring, not editor wiring.** Reach child nodes via
+  `@onready var x: T = $Child` (or `get_node("Child")` in `_ready()`)
+  rather than `@export` slots dragged in the Inspector. Code refs are
+  tracked by your IDE / `grep` through file renames, class refactors,
+  and *Find Usages*; editor refs are opaque blobs serialised into
+  `.tscn` files that break silently when you move scripts, rename
+  classes, or reorganise the source tree. The trade-off is real: code
+  refs break on **node** renames (loud runtime nil-deref, easy to spot
+  and fix); editor refs break on **file/class** refactors (often
+  silent, harder to find). Pick the failure mode you can debug. For
+  solo, code-first work, code wiring wins.
+- **Don't fear node count** (if you do reach scene-component level).
+  Nodes in Godot 4 are cheap.
 
-The component is reusable not because of clever inheritance but because
-it's a *scene-shaped artifact* the editor can drag into anything. Designers
-can build new enemies without writing code: instance the base scene, drop
-the components they want, tune the `@export` values.
+If you go to scene-component level: **avoid `@export` names that shadow
+`Node` methods** — `tree`, `name`, `position`, `path`, `parent`,
+`owner`. `@export var tree: AnimationTree` clashes with
+`Node.get_tree()`. Use `animation_tree`, `display_name`,
+`target_position`. **Don't double-wire:** if a component is a child at
+a known name, reach it with `@onready var x = $Child` — don't *also*
+`@export` it on the parent.
 
-**Rules that make this work:**
-
-- **Components don't know about each other directly.** They communicate
-  via signals (or your language's reactive primitive — Flows in Kotlin,
-  events in C#). `HealthComponent` emits `died`; `AnimationComponent`
-  listens. Neither holds a reference to the other. This is what lets the
-  same component scene drop into different parents without coupling.
-- **Components are context-agnostic.** The rock test: *if you attached
-  this script to a literal rock, would it still function?* If yes, it's
-  reusable. A `MovementComponent` that hardcodes "the player's input" has
-  failed the test; one that takes a `Vector2` direction has passed.
-  Components own their data; they don't know what's driving them.
-- **The parent Node is the coordinator** when one is needed (e.g. reading
-  input, gating physics on aliveness). Don't make the parent fat — push
-  logic down into the components. The parent's job is to wire signals
-  between siblings and own whatever is genuinely unique to it (input
-  handling for Player, AI ticks for Enemy).
-- **`@export` is your DI container.** Drag references between sibling
-  components in the inspector (`@export var health: HealthComponent`);
-  don't hardcode `get_node("../HealthComponent")`. Exported references
-  refactor cleanly; string paths break silently when nodes move. The
-  typed export also blocks the inspector from accepting the wrong node
-  type, which catches misconfigurations at edit time instead of runtime.
-- **Per-entity overrides via the inspector.** A component scene defines
-  defaults; each entity overrides what it needs (`max_hp = 100` for
-  player, `max_hp = 20` for goblin) without touching the script.
-- **Don't fear node count.** Nodes in Godot 4 are cheap. 100 enemies
-  with 10 components each is 1000 extra nodes — the engine handles this
-  without breaking a sweat. The cost of a fat 5000-line `player.gd` you
-  can't safely refactor dwarfs any per-node overhead. Decompose freely.
-
-### Component scene template
-
-The minimum component scene is *one Node, with a script attached*. The
-root Node type matters — pick what the component genuinely needs:
-
-- Pure logic / state (`HealthComponent`, `StateMachineComponent`) →
-  root `Node`.
-- Physics interaction (`HurtboxComponent`, `HitboxComponent`) → root
-  `Area2D` / `Area3D`.
-- Per-frame work (`MovementComponent` driving physics) → root `Node`
-  (the *parent* `CharacterBody2D` does the actual `move_and_slide`).
-
-Save the scene to `res://components/` so they're easy to find and so the
-editor's "instance child scene" picker surfaces them naturally.
-
-### Reaching components: typed `@export` refs vs unique names
-
-There are two refactor-safe ways for a script to grab a reference to
-another node in the same scene. Pick by where the script lives:
-
-- **Typed `@export` reference** (`@export var health: HealthComponent`)
-  — the default. Best when the consumer is a sibling or parent and you
-  can drag the reference in the inspector. The type acts as a slot:
-  Godot will only let you drop nodes whose script matches the declared
-  type, so misconfiguration shows up at edit time instead of at runtime.
-- **Scene unique name** (`%HealthComponent` / `get_node("%HealthComponent")`)
-  — best when the consumer is far away in the scene tree and dragging
-  isn't practical (a HUD node deep inside `UI/CanvasLayer/...` reaching
-  for a component buried under `Player/Body/Equipment/...`). Right-click
-  the target node in the editor → *Access as Unique Name*. A `%` badge
-  appears, and any script in the same scene can now find it by name,
-  regardless of where either node moves.
-
-Both refactor cleanly: typed exports survive renames and follow the IDE
-through *Find Usages*; unique names survive scene-tree restructuring.
-What you avoid in both cases is brittle relative paths
-(`get_node("../../UI/HealthBar")`) — those break silently the first time
-a node moves.
-
-### When to use a child Node vs a plain script
-
-- **Child Node** — when the thing has lifecycle (needs `_ready`,
-  `_process`, signals, or a `_physics_process` tick) or needs to appear
-  in the scene tree for the editor to wire it up.
-- **Plain class / resource script** — for pure data and pure
-  computation: damage formulas, item definitions, save-state serialisers.
-  These don't need to be Nodes.
-- **`Resource` subclass** — for data that's shared between scenes and you
-  want the editor to edit (item stats, dialogue tables, level configs).
-  Resources are serialisable and the editor knows how to inspect them.
-- **Autoload (singleton)** — for genuinely game-wide state: pause
-  manager, save system, audio mixer, input remapper. Use sparingly;
-  autoloads are global mutable state and they encourage the "everything
-  reaches into everything" anti-pattern. If two scenes need to talk and
-  one isn't a parent of the other, prefer a signal bus autoload over
-  shared mutable state.
+Full details — the four-level spectrum with trade-offs, a worked
+example from a real project, dependency injection styles, when to
+escalate from class to scene-component, mechanism/content example, and
+pitfalls — in `references/composition.md`.
 
 ### Signals: wire in code, not in the editor
 
@@ -300,9 +249,10 @@ discovering real gameplay mechanics. Worth playing with the values.
 
 Use the engine's logging functions (`print`, `printerr`, `push_warning`,
 `push_error`) so output goes through Godot's logging system and shows up
-in the editor's **Output** panel. Language-native print (e.g. Kotlin
-`println`, C# `Console.WriteLine`) writes to JVM/CLR stdout — only
-visible in the terminal that launched the editor, not in the Output panel.
+in the editor's **Output** panel. If you're using a non-GDScript
+binding, prefer the binding's wrapper around the engine functions over
+its host-runtime print — the latter writes to host stdout, only visible
+in the terminal that launched the editor.
 
 ## Quick tips
 
@@ -339,10 +289,19 @@ project (the negative-scale flip above is the canonical example — it's
 material; understand *why* something works before adopting it as a
 pattern.
 
+## References
+
+- `references/composition.md` — full composition pattern: rules,
+  passive components, dependency styles (`@export` vs method arg),
+  three reach mechanisms, composition-by-mixing across entity types,
+  when to extract (rule of three), mechanism vs content, name
+  collisions, pitfalls. Load when actually designing components, not
+  for the one-line "what's a component."
+
 ## What this skill deliberately does not cover
 
-- Language-specific scripting details (GDScript syntax, C# bindings,
-  Kotlin/JVM plugin) — those live in language-specific skills.
+- Language-specific scripting details — those live in language-binding
+  skills.
 - Shader programming, rendering pipeline internals.
 - 3D-specific concerns (this skill leans 2D — the principles transfer
   but the node names differ: `Spatial`/`Node3D`, `Area3D`, etc.).

@@ -211,141 +211,192 @@ patterns and a full worked example.
 
 ## Architecture: Kotlin-side patterns
 
-The general composition story — *each component is its own scene with its
-own script, dropped as a child Node into every entity that needs it* —
-lives in the `godot` skill. This section covers the Kotlin-specific
-shapes that story takes.
+The engine-level composition story (the four-level spectrum, "Call Down
+Signal Up," passive components, mechanism vs content, rule of three)
+lives in the `godot` skill at `references/composition.md`. **Load that
+first.** This section is only the Kotlin-specific application of those
+principles.
 
-**Every component is a registered Node subclass.** That means each
-component class extends a `godot.api.*` type (usually `Node`, `Node2D`,
-or `Area2D`), gets `@RegisterClass`, gets its own `.gdj` from the
-plugin, and can be attached to a saved component scene
-(`health_component.tscn`) which is then instanced into `Player.tscn`,
-`Enemy.tscn`, `NPC.tscn`. The script is identical across entities;
-configuration differs via `@RegisterProperty @Export` fields.
+### Default to plain Kotlin classes (level 1)
+
+For solo, code-first work, the right shape is almost always a plain
+Kotlin class in a `components/` package — no `@RegisterClass`, no
+`godot.api.Node`, no `.gdj`. The entity controller instantiates it in
+`_ready()` and calls methods on it each frame.
 
 ```kotlin
-import godot.annotation.RegisterClass
-import godot.annotation.RegisterFunction
-import godot.annotation.RegisterProperty
-import godot.annotation.Export
-import godot.api.Node
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.MutableSharedFlow
+// components/Movement.kt — plain class, no annotations, no godot inheritance
+package components
 
-@RegisterClass
-class HealthComponent : Node() {
+import godot.api.CharacterBody2D
+import godot.core.Vector2
 
-    @RegisterProperty @Export
-    var maxHp: Int = 100  // shown in the inspector — override per entity
-
-    private val _state = MutableStateFlow(HealthState(hp = maxHp, maxHp = maxHp))
-    val state = _state  // expose StateFlow<HealthState>
-
-    private val _damaged = MutableSharedFlow<Int>(extraBufferCapacity = 16)
-    val damaged = _damaged  // SharedFlow<Int> — one event per hit, no diffing
-
-    @RegisterFunction
-    override fun _ready() {
-        _state.value = HealthState(hp = maxHp, maxHp = maxHp)
+class Movement {
+    fun move(body: CharacterBody2D, direction: Vector2, speed: Int) {
+        body.velocity = direction * speed
+        body.moveAndSlide()
     }
-
-    fun damage(amount: Int) {
-        if (amount <= 0) return
-        _state.update { it.copy(hp = (it.hp - amount).coerceAtLeast(0)) }
-        _damaged.tryEmit(amount)
-    }
-}
-
-data class HealthState(val hp: Int, val maxHp: Int) {
-    val isDead: Boolean get() = hp == 0
 }
 ```
 
-The plugin auto-converts camelCase Kotlin property names to snake_case in
-the inspector, so `maxHp` shows up as `max_hp` and matches GDScript
-convention.
+```kotlin
+// components/HumanoidToolAnimation.kt — plain class, takes its dep at construction
+package components
 
-**Pure Kotlin helpers are still fine — for non-component logic.** Damage
-formulas, item stat tables, save serialisation, anything that's pure
-computation with no engine lifecycle: keep these as plain Kotlin classes
-(no `@RegisterClass`, no `godot.*` imports), JVM-testable, called from
-inside components. The line is "does this need to be in the scene tree?"
-— yes → registered Node; no → plain class.
+import godot.api.AnimationNodeOneShot
+import godot.api.AnimationNodeStateMachinePlayback
+import godot.api.AnimationTree
+import godot.core.Vector2
 
-**One `StateFlow<ComponentState>` out, direct methods in.** Bundling state
-into a single `data class` keeps fields atomically consistent (current and
-max can never disagree, derived flags like `isDead` are always in sync) and
-gives consumers a single subscription point. `MutableStateFlow.update { }`
-is synchronous and atomic — don't wrap it in `scope.launch` unless
-something genuinely suspends, otherwise two updates in the same frame can
-resolve out of order and a caller reading `state.value` right after the
-mutator will see the old value.
+class HumanoidToolAnimation(private val tree: AnimationTree) {
+    private val moveStateMachine: AnimationNodeStateMachinePlayback =
+        tree.get("parameters/MoveStateMachine/playback") as AnimationNodeStateMachinePlayback
+    private val toolStateMachine: AnimationNodeStateMachinePlayback =
+        tree.get("parameters/ToolStateMachine/playback") as AnimationNodeStateMachinePlayback
 
-**Wiring sibling components in the parent.** The parent (`Player`) wires
-its children together in `_ready` — typed via `@RegisterProperty @Export`
-references dragged in the inspector, not via stringly-typed `getNode`
-paths:
+    fun applyPose(tool: Data.Tool, facing: Vector2, isMoving: Boolean) { /* ... */ }
+    fun fireToolOneShot() {
+        tree.set("parameters/ToolOneShot/request", AnimationNodeOneShot.OneShotRequest.FIRE.value)
+    }
+}
+```
 
 ```kotlin
+// Player.kt — the controller. Owns _physicsProcess, instantiates components.
 @RegisterClass
 class Player : CharacterBody2D() {
 
-    @RegisterProperty @Export lateinit var health: HealthComponent
-    @RegisterProperty @Export lateinit var movement: MovementComponent
-    @RegisterProperty @Export lateinit var animation: AnimationComponent
+    private val movement: Movement = Movement()
+    private lateinit var animation: HumanoidToolAnimation
 
-    private val scope = NodeScope()
+    private data class PlayerState(val speed: Int = 150, val facing: Vector2 = Vector2.DOWN, /* ... */)
+    private var state: PlayerState = PlayerState()
 
     @RegisterFunction
     override fun _ready() {
-        scope.launch {
-            health.state.collect { s -> if (s.isDead) onDeath() }
-        }
-        scope.launch {
-            health.damaged.collect { animation.playHurt() }
-        }
+        val tree: AnimationTree = getNode("Animation/AnimationTree") as AnimationTree
+        animation = HumanoidToolAnimation(tree)
     }
 
     @RegisterFunction
-    override fun _exitTree() { scope.cancel() }
+    override fun _physicsProcess(delta: Double) {
+        val dir: Vector2 = Input.getVector("left", "right", "up", "down")
+        movement.move(this, dir, state.speed)
+        animation.applyPose(state.currentTool, state.facing, dir != Vector2.ZERO)
+    }
 }
 ```
 
-**Hybrid MVI: methods or sealed actions, by complexity.** For a component
-with one or two mutators, direct methods (`damage(amount)`, `heal(amount)`)
-say the same thing as `onAction(HealthAction.Damage(amount))` with less
-ceremony. A sealed `Action` type starts earning its keep around three or
-four actions, or as soon as more than one subsystem (UI + AI + network)
-dispatches into the same component. You can migrate from methods to
-actions later without changing consumers, because the state Flow doesn't
-change.
+When Zombie arrives, it reuses the same Kotlin classes — instantiates
+`Movement()` and `HumanoidToolAnimation(getNode(...))` in its own
+`_ready()` with its own `speed`. Reuse at the class level, no scene
+wiring.
 
-**State vs events.** Use the state Flow for things derivable by observation
-(current HP, is dead, fraction). Use a `SharedFlow` for transient events
-that need to fire even when the value repeats (damage popups, hit flashes)
-— state diffing would miss a second hit for the same damage value.
+### Wire by `getNode("X") as T`, not `@Export`
 
-**Lifecycle.** Nodes don't ship a `CoroutineScope`. Create one tied to the
-node's lifetime and cancel it in `_exitTree`, otherwise collectors leak
-when the node is freed:
+Reach child nodes via `getNode("Child") as T` in `_ready()` rather than
+`@RegisterProperty @Export lateinit var child: T`. The `@Export` slot
+requires a drag in the Inspector for every entity scene that uses it,
+and the wiring is opaque (a `NodePath` blob in `.tscn`) — moving or
+renaming a Kotlin script breaks the wiring silently. `getNode` paths
+are IDE-`grep`pable and the failure mode is a loud runtime cast
+exception when the child name is wrong. Pick the failure mode you can
+debug.
 
-```kotlin
-class NodeScope : CoroutineScope {
-    override val coroutineContext = SupervisorJob() + Dispatchers.Main
-    fun cancel() { coroutineContext.cancel() }
-}
-```
+The trade-off the other way is real (code refs break on node renames,
+editor refs survive them) but for solo code-first work, code wiring
+wins. Reserve `@Export` for two cases only:
 
-**MVI for game-wide state, not gameplay.** MVI maps cleanly to UI and
-"logical state of the game" (inventory, pause menu, run state, save). It
-maps poorly to physics, per-frame transforms, and animations — things
-driven by `_process` / `_physicsProcess`. Don't force every `Area2D` into a
-state machine; reserve MVI for systems that look like screens or like
-persistent world state, and let gameplay nodes stay nodes.
+- A designer needs to compose the scene without writing Kotlin.
+- The value is genuinely per-instance Inspector-tunable (a `max_hp` you
+  want to vary per mob in the editor).
 
-See `references/architecture.md` for the full worked example (Player +
-Health + Movement + Animation components, with the signal-to-Flow wiring).
+### When to escalate to a Node-backed component
+
+Promote a plain Kotlin class to a `@RegisterClass` Node subclass only
+when one of these is **concretely** true (not "someday"):
+
+- You want per-entity values like `max_hp` / `speed` /
+  `damage_multiplier` to be tunable in the Inspector without
+  recompiling, via `@RegisterProperty @Export`.
+- You need engine lifecycle the component itself owns — a hurtbox
+  rooted on `Area2D` reacting to its own `bodyEntered` signal, or a
+  state-machine component driving its own `_process`.
+- A designer (not you) composes new entities by dragging components.
+
+The promotion is mechanical: same method signatures, same call shape
+from the controller; just change the class to extend a `godot.api.*`
+type, add `@RegisterClass`, move dep init from constructor to
+`_ready()`, and (if you want Inspector knobs) add `@RegisterProperty
+@Export` on the configurable fields. See `references/architecture.md`
+for the worked level-2/3 example with Coroutines/StateFlow wiring.
+
+If none of those criteria apply, stay at level 1. Most solo / code-first
+projects never need to escalate.
+
+### Constructors, no-arg, and `@Export` field init
+
+A `@RegisterClass` needs a **public no-arg constructor** — the plugin
+instantiates via reflection. Kotlin auto-provides one if all
+constructor parameters have defaults *and* the class has
+`@JvmOverloads` on the constructor; otherwise write a secondary no-arg
+constructor.
+
+`@Export` fields are populated by the engine *after construction, but
+before `_ready`*. So:
+
+- Never read an `@Export` field in a field initializer (`val handle =
+  exportedTree.get(...)` at the class level). The export isn't set yet
+  → NPE. Move the init to `_ready`.
+- Use `lateinit var` (or `var` with a sensible default) for `@Export`
+  Node references.
+
+### Name collisions with `Node` getters
+
+Avoid `@Export` (or any) property name that collides with a `Node`
+getter — `tree`, `name`, `position`, `path`, `parent`, `owner`.
+Declaring `@RegisterProperty @Export lateinit var tree: AnimationTree`
+generates a Kotlin `getTree(): AnimationTree` that shadows
+`Node.getTree(): SceneTree?` — compiles, but creates accessor
+confusion that varies across plugin versions, and `node.tree` reads as
+the SceneTree to a reader. Rename: `animationTree`, `displayName`,
+`targetPosition`.
+
+### Pure Kotlin helpers stay plain
+
+Damage formulas, item stat tables, save serialisation, math utilities
+— anything that's pure computation with no engine lifecycle — keep as
+plain Kotlin classes in `domain/` or similar. No `@RegisterClass`, no
+`godot.*` imports. JVM-testable without launching Godot.
+
+The line is *"does this need to be in the scene tree?"* — yes →
+`@RegisterClass`. No → plain class. The level-1 components above (`Movement`,
+`HumanoidToolAnimation`) are plain classes that happen to *take* Godot
+types as method args — they don't extend any.
+
+### Coroutines / StateFlow — only when it earns its place
+
+Don't reach for `MutableStateFlow`, `MutableSharedFlow`, or `callbackFlow`
+inside per-frame gameplay components. `_physicsProcess` is synchronous;
+introducing a Flow adds latency, frame-order ambiguity, and a
+`CoroutineScope` you have to remember to cancel on `_exitTree`.
+
+Flows earn their place for **cross-system observation** — UI listening
+to a `GameStore`'s `pauseState`, a save system reacting to inventory
+changes, an analytics emitter watching milestones. Anything where
+multiple independent subscribers want a consistent view of a value
+*over time*.
+
+For intra-frame mechanics, plain mutators (`damage(n)`,
+`addToInventory(item)`) and entity-owned `data class` state are the
+right tools. The state Flow is one of many things a component might
+expose; it's not the default.
+
+See `references/architecture.md` for: the full level-3 worked example
+(Player + Health + Movement + Animation as registered Node
+components), `NodeScope` helper for tying coroutines to node lifetime,
+`callbackFlow` wrappers around signals, sealed-action MVI patterns for
+game-wide state, and migration paths between levels.
 
 ## Editor workflow
 
