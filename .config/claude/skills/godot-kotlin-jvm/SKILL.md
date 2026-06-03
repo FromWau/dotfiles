@@ -30,6 +30,14 @@ Kotlin-side architecture patterns.
   Kotlin to a JAR, runs a KSP-style annotation processor, and emits `.gdj`
   registration files. The engine loads the JAR at runtime and uses `.gdj`
   files to expose your classes as Godot script types.
+
+> **⚠️ NEVER hand-create, edit, move, rename, or `rm` a `.gdj` file.** They are
+> build outputs wholly owned by the Gradle plugin — it creates, updates, *and
+> deletes* them in lockstep with your Kotlin sources. Want a `.gdj` gone? Delete
+> or rename the **Kotlin class**, then `./gradlew build` and the plugin removes
+> the stale `.gdj` itself. Manually touching one desyncs the plugin's tracking
+> and can break its Godot-side task or leave the project in limbo. To change a
+> registration, **always edit the `.kt` source and rebuild — never the `.gdj`.**
 - The Gradle project root **is** the Godot project root — the folder
   containing `project.godot`. Don't put them in separate directories
   (unless you set `godotProjectDirectory` explicitly).
@@ -160,9 +168,11 @@ A class that Godot can attach to a node must:
 2. Have `@RegisterClass` on the class.
 3. Have `@RegisterFunction` on each lifecycle method (`_ready`, `_process`, ...).
 4. Have a **public no-arg constructor** — the plugin instantiates via
-   reflection. Kotlin auto-provides one if all constructor parameters have
-   defaults AND the class has `@JvmOverloads` on the constructor; otherwise
-   write a secondary no-arg constructor.
+   reflection. The reliable form is an explicit empty primary constructor (or
+   no params at all) plus a secondary for convenience. **Defaults do not
+   count:** on 0.14.3, both `class X(var n: Int = 0)` and
+   `@JvmOverloads constructor(var n: Int = 0)` FAIL the KSP no-arg check (it
+   reads the Kotlin constructor, not the synthetic JVM overload).
 
 ```kotlin
 import godot.annotation.RegisterClass
@@ -193,21 +203,253 @@ The general advice — *wire signals in code in `_ready()`, not in the
 editor's Connect dialog* — lives in the `godot` skill (refactor-safety,
 greppability, scene-diff hygiene). It applies identically to Kotlin.
 
-To turn a signal into a Kotlin `Flow`, wrap it with `callbackFlow` — the
-symmetric "connect on collection, disconnect on cancellation" guarantee
-prevents double subscriptions and leaks:
+### Declaring your own signal — `@RegisterSignal` is mandatory
+
+A signal you *emit* (Player → Level "tool used", Health → "died") is declared
+as a property with a `signalN<…>()` delegate **and** annotated
+`@RegisterSignal`. The annotation is what makes KSP register the signal with
+the engine. **Without it the property still compiles, but `emit`/`connect`
+silently do nothing** — no exception, no warning.
 
 ```kotlin
-val playerEntered: Flow<Node2D> = callbackFlow {
-    val callable = Callable { body: Node2D -> trySend(body) }
-    bodyEntered.connect(callable)
-    awaitClose { bodyEntered.disconnect(callable) }
+import godot.annotation.RegisterSignal
+import godot.core.signal1
+import godot.core.connect   // for the .connect { } lambda overload
+
+@RegisterClass
+class Player : CharacterBody2D() {
+    @RegisterSignal
+    val toolUse by signal1<String>()        // Godot signal name: tool_use
+
+    private fun onAction() = toolUse.emit("HOE")
 }
 ```
 
-The exact `Callable` construction and connect/disconnect surface vary
-between binding versions. See `references/architecture.md` for current
-patterns and a full worked example.
+- **Arity:** `signal0()` (no args), `signal1<A>()`, `signal2<A, B>()`, … up to
+  `signal16`. Each yields a typed `emit(...)` and a typed `connect { }`.
+- **Naming:** the property name is converted to snake_case for the Godot side
+  (`toolUse` → `tool_use`). The annotation's KDoc mentions a required `signal`
+  prefix, but the **delegate form does not need it** — verified on 0.14.3
+  (`toolUse` registered fine).
+- **Payloads must be Variant types** — a primitive (`Int`, `Float`, `String`,
+  `Bool`, `Vector2`, …) or a **registered Godot `Object`**. A Kotlin `enum` or
+  plain `data class` is neither. An enum is worse than it looks: a
+  `@RegisterSignal signal1<SomeEnum>()` **does not even compile** — the KSP
+  processor emits broken `ENUM<…>` codegen. See "Signal payloads" below for the
+  `sealed class` standard that fixes this.
+
+**Symptom of a forgotten `@RegisterSignal`:** `emit`/`connect` no-op silently,
+and the generated `scripts/<Class>.gdj` shows `signals = [ ]`. The `.gdj` is a
+generated file — never edit *or delete* it (see the ⚠️ rule in Mental model);
+fix the Kotlin source and rebuild.
+
+### Signal payloads: a primitive, or a registered `sealed class`
+
+A signal argument crosses the JVM↔C++ boundary as a **Variant**, so it must be
+a Variant primitive or a Godot `Object` — nothing else. This is the same rule
+GDScript follows: GDScript can `emit(my_class)` only because its classes extend
+`Object`, which *is* a Variant. At bootstrap the binding registers every
+`@RegisterClass` (and every engine type) into its Variant table as `OBJECT`
+(`Bootstrap.kt`: `variantMapper[clazz] = VariantParser.OBJECT`), so a
+**registered** class instance rides a signal *by reference*, with no
+encode/decode. A plain `enum`/`data class` isn't registered, so the runtime
+`ANY` caster fails its `variantMapper[any::class]` lookup.
+
+Two payload shapes, by richness:
+
+1. **Just a number or a label** → emit a **primitive**. `signal1<Int>()`,
+   `signal1<String>()`. If the value is an internal `enum`, send `enum.name` /
+   `enum.ordinal` and map back with `Enum.valueOf(...)` / `Enum.entries[i]`.
+   Cheapest; no per-variant `.gdj`.
+
+2. **A domain type with variants / per-case data** → the **house standard**:
+   a **`sealed class` extending `RefCounted`**, each case a `@RegisterClass`,
+   the signal typed on the sealed parent. The processor generates an `OBJECT`
+   converter and the concrete case rides the signal directly — prefer this over
+   enums-plus-ad-hoc-codecs so every project uses one consistent shape.
+
+   ```kotlin
+   sealed class Tool : RefCounted() {             // sealed CLASS, not interface
+       abstract val stateName: String             // per-TYPE stats → abstract vals,
+       abstract val damage: Int                   // overridden as constants per variant
+   }
+   @RegisterClass class Hoe : Tool() {            // constants only → implicit no-arg ctor
+       override val stateName = "Hoe"
+       override val damage = 0
+   }
+   @RegisterClass class WateringCan() : Tool() {  // per-INSTANCE data → explicit empty
+       override val stateName = "Water"           // primary ctor + a secondary (defaults
+       override val damage = 0                    // do NOT satisfy the KSP no-arg check)
+       var water: Int = 0
+       constructor(water: Int) : this() { this.water = water }
+   }
+
+   @RegisterClass
+   class Player : CharacterBody2D() {
+       @RegisterSignal val toolUsed by signal1<Tool>()
+       private fun onAction() = toolUsed.emit(Hoe())   // arrives as Tool, no decode
+   }
+   ```
+
+   **Per-type stats (damage, stateName) belong as overridden vals**, not
+   constructor params — that keeps the common variant a zero-boilerplate no-arg
+   class; reserve the explicit-ctor + `lateinit` dance for fields that genuinely
+   vary per instance.
+
+   > **⚠️ Connecting to a signal typed on an abstract/sealed parent — DON'T use
+   > the inline `connect { }` lambda.** It compiles to
+   > `variantMapper[DeclaredType]!!`, looking up the signal's *declared* type
+   > (here the abstract `Tool`). That map holds engine types and **registered**
+   > classes — so built-in signals like `bodyEntered.connect { }` (declared type
+   > `Node2D`) are fine, but an abstract sealed *user* parent is neither, and it
+   > **can't be `@RegisterClass`** (no instantiable ctor). So
+   > `toolUsed.connect { … }` throws a
+   > `NullPointerException` **at runtime in Godot** (it compiles fine — gradle is
+   > happy). The trace points at the `connect` call site but, because `connect`
+   > is `inline`, the reported line is the inlined body, not your source line.
+   >
+   > Connect via a `@RegisterFunction` handler + **member reference** instead —
+   > that builds a `Callable(target, "method_name")` (no registry lookup) and
+   > routes the arg through the function's KSP-generated `OBJECT` converter:
+   > ```kotlin
+   > @RegisterFunction fun onToolUsed(tool: Tool) { /* when (tool) { is Hoe -> … } */ }
+   > override fun _ready() { source.toolUsed.connect(this, MyClass::onToolUsed, 0) }
+   > ```
+   > Emit is unaffected — `emit(Hoe())` dispatches on the concrete, registered
+   > `Hoe`. The asymmetry: **emit uses the runtime type (a registered leaf);
+   > lambda-connect uses the declared type (the unregistered parent).** The
+   > alternative, if you want the inline `connect { }` to work, is to type the
+   > signal on a **concrete registered** class (a `@RegisterClass` carrier),
+   > whose type *is* in the registry.
+
+Hard constraints the compiler enforces (each verified on 0.14.3):
+
+- **`sealed class`, never `sealed interface`** — an interface can't extend
+  `RefCounted()` (no superclass constructor call), so
+  `sealed interface X : RefCounted()` won't compile.
+- **The payload class must be top-level, not nested.** `@RegisterClass` on a
+  class nested in another (`class Player { @RegisterClass class ToolUse … }`) is
+  **silently ignored** — no registrar, no `.gdj`, never added to `variantMapper`.
+  It compiles, but `emit` throws `Can't convert type … to Variant` at runtime.
+  Declare payload classes at file top level.
+- **Variants must be `class`, not `object`/`data object`** — `@RegisterClass`
+  needs a public no-arg constructor; the registrar emits `KtConstructor0(::Hoe)`,
+  which a singleton object has no `::Hoe` for (`@RegisterClass object Hoe` →
+  "Unresolved reference 'Hoe'").
+- **A no-arg constructor is mandatory, and defaults do NOT count.** A primary
+  ctor with all-default params (`class WateringCan(var water: Int = 0)`) *and*
+  `@JvmOverloads constructor(var water: Int = 0)` both FAIL the KSP check
+  ("RegisteredClass does not have a public default constructor") on 0.14.3 — KSP
+  doesn't see the synthetic no-arg overload. No-data cases use the implicit ctor
+  (`class Hoe : Tool()`); data cases need an explicit empty primary ctor plus
+  a secondary (as in `WateringCan` above).
+- **The no-arg ctor must be `public` — you can't hide it.** `private`/`internal`
+  both fail the same "public default constructor" check (the engine
+  reflection-instantiates registered classes). To stop the mandatory empty ctor
+  from being *misused* (constructing a payload without its data), make the data
+  fields **`lateinit`** instead of giving them a silent default. The real
+  secondary ctor sets them; an accidental no-arg `WateringCan()` then leaves them
+  unset, so the first read throws a clear `UninitializedPropertyAccessException`
+  rather than handing back a wrong default. It's safe in the signal path because
+  the receiver gets the same instance by reference, never a re-constructed blank
+  one. (`lateinit` needs a non-null reference type — fine for an enum/class
+  field, not for a primitive `Int`; there, keep a nullable or a sentinel.)
+- **No free `.entries`** — a sealed class doesn't enumerate its cases; keep a
+  manual `val all = listOf(Hoe(), …)` if you need iteration.
+
+**Place each stat by how many cases share it** — this is the payoff over an
+enum, where every constant must carry the same fields:
+
+- *Every* case has it (e.g. `stateName`) → `abstract val` on the sealed parent.
+- *Some* cases share it (e.g. `damage` for weapons) → an intermediate
+  `sealed class Weapon : Tool()` holding the `abstract val`; only the concrete
+  leaves are `@RegisterClass` (the intermediate is never emitted, so it stays
+  unregistered). Verified: a two-level `RefCounted` → `Tool` → `Weapon` → `Axe`
+  hierarchy registers fine.
+- *One* case has it (e.g. `depth` on a shovel) → a plain field on that variant
+  only; reach it via a `when (tool) { is Shovel -> tool.depth }` smart-cast.
+
+Don't force a `damage = 0` onto tools that have no damage just to satisfy a
+parent — that's the enum limitation the sealed hierarchy exists to escape.
+
+Cost to weigh against the standard: each case is a `@RegisterClass` (own
+generated `.gdj`, heap-allocated `RefCounted`, allocated per `emit`). For a
+fixed set of interchangeable labels with no per-case data, shape (1) — a
+primitive — is genuinely lighter. The `sealed class` standard earns its keep
+once the cases actually differ.
+
+### Direct one-off connect: typed `Signal1` in plugin 0.16.x
+
+For a single callback (not a Flow), connect in `_ready()`. In **0.16.x** a
+typed signal like `AnimationMixer.animationFinished` is a
+`godot.core.Signal1<StringName>`, whose only typed overload is:
+
+```
+connect(target: T, fn: (T, P0) -> Unit, flags: Int)   // T : godot.api.Object
+```
+
+Use an **unbound member reference** for `fn` and pass `flags` explicitly as
+an `Int`:
+
+```kotlin
+override fun _ready() {
+    val tree = getNode("Animation/AnimationTree") as AnimationTree
+    tree.animationFinished.connect(this, Player::onAnimFinished, 0)
+}
+private fun onAnimFinished(animName: StringName) { /* swingDone = true */ }
+```
+
+Time-wasting pitfalls — each silently resolves to the base
+`Signal.connect(Callable, Int)` overload and then fails to typecheck:
+
+- A **lambda** does not work: untyped → "cannot infer parameter"; an
+  explicit-typed `{ _: T, _: P0 -> ... }` mis-resolves to `Function3`. Use a
+  member reference (`Class::method`), not a lambda.
+- `flags` is **`Int`**, not `Long` — pass `0`, not `0L`.
+- **Omitting `flags`** with a trailing lambda makes Kotlin prefer the
+  exact-arity `connect(Callable, Int)` overload and fail. Pass `0` explicitly.
+
+There is no top-level `callable { }` builder; the lambda→Callable helpers are
+`callableN(...)` / `Function.asCallable(...)` in `godot.core` (see
+`CallablesKt`), but the member-reference form above is simpler for a
+one-off connect.
+
+### Direct one-off connect: typed `Signal1` in plugin 0.14.x (trailing lambda)
+
+The DSL is **different** in 0.14.x — and nicer. The base `godot.core.Signal`
+only exposes `connect(callable: Callable, flags: Int = 0)`, but each typed
+`SignalN` has a **trailing-lambda extension** that builds the `Callable` for
+you. So the clean form for a one-off connect is just:
+
+```kotlin
+import godot.core.connect   // REQUIRED — the lambda overload is an extension fn
+
+override fun _ready() {
+    val tree = getNode("Animation/AnimationTree") as AnimationTree
+    tree.animationStarted.connect { animName -> onAnimStarted(animName) }
+    tree.animationFinished.connect { animName -> onAnimFinished(animName) }
+}
+```
+
+Pitfalls in 0.14.x:
+
+- **Missing `import godot.core.connect`** is the #1 gotcha. Without it, only
+  the base `connect(Callable, Int)` is in scope, so a trailing lambda won't
+  resolve and you get a confusing overload/type error. The IDE often does not
+  auto-suggest it because the base `connect` already resolves the name.
+- Passing a **bare function name** — `connect(onAnimStarted, 0)` — does not
+  compile: a function name is not a value reference (needs `::`), and a
+  `KFunction` is not a `Callable`. Use the trailing lambda instead.
+- The handler is referenced from inside Kotlin, so it does **not** strictly
+  need `@RegisterFunction` for this connect form (the lambda holds the
+  reference directly). Add `@RegisterFunction` only if Godot/GDScript also
+  calls it by name.
+
+Contrast with **0.16.x**, where the typed overload is
+`connect(target, Class::method, flags)` with a member reference and explicit
+`Int` flags (see the section above). When in doubt which DSL you're on, check
+the plugin tag in `gradle/libs.versions.toml`: `0.14.x` → trailing lambda +
+`import godot.core.connect`; `0.16.x` → member reference + `flags`.
 
 ## Architecture: Kotlin-side patterns
 
@@ -329,7 +571,7 @@ from the controller; just change the class to extend a `godot.api.*`
 type, add `@RegisterClass`, move dep init from constructor to
 `_ready()`, and (if you want Inspector knobs) add `@RegisterProperty
 @Export` on the configurable fields. See `references/architecture.md`
-for the worked level-2/3 example with Coroutines/StateFlow wiring.
+for the worked level-2/3 example with signal-based component wiring.
 
 If none of those criteria apply, stay at level 1. Most solo / code-first
 projects never need to escalate.
@@ -337,10 +579,11 @@ projects never need to escalate.
 ### Constructors, no-arg, and `@Export` field init
 
 A `@RegisterClass` needs a **public no-arg constructor** — the plugin
-instantiates via reflection. Kotlin auto-provides one if all
-constructor parameters have defaults *and* the class has
-`@JvmOverloads` on the constructor; otherwise write a secondary no-arg
-constructor.
+instantiates via reflection. Write an explicit empty primary constructor
+(plus a secondary if you want a convenience overload). Parameter **defaults
+do not satisfy the KSP check** on 0.14.3 — neither `class X(var n: Int = 0)`
+nor `@JvmOverloads constructor(var n: Int = 0)` works; KSP inspects the Kotlin
+constructor, which still has a parameter, not the synthetic JVM no-arg overload.
 
 `@Export` fields are populated by the engine *after construction, but
 before `_ready`*. So:
@@ -374,29 +617,43 @@ The line is *"does this need to be in the scene tree?"* — yes →
 `HumanoidToolAnimation`) are plain classes that happen to *take* Godot
 types as method args — they don't extend any.
 
-### Coroutines / StateFlow — only when it earns its place
+### No coroutines or Flows inside nodes
 
-Don't reach for `MutableStateFlow`, `MutableSharedFlow`, or `callbackFlow`
-inside per-frame gameplay components. `_physicsProcess` is synchronous;
-introducing a Flow adds latency, frame-order ambiguity, and a
-`CoroutineScope` you have to remember to cancel on `_exitTree`.
+Don't spawn coroutines (`scope.launch`, `launchIn`) or wrap engine signals in
+`callbackFlow`/`StateFlow`/`SharedFlow` inside a registered Node. In
+godot-kotlin-jvm this is not merely heavyweight — two facts make it actively
+unsafe:
 
-Flows earn their place for **cross-system observation** — UI listening
-to a `GameStore`'s `pauseState`, a save system reacting to inventory
-changes, an analytics emitter watching milestones. Anything where
-multiple independent subscribers want a consistent view of a value
-*over time*.
+- The binding wraps every engine object in a **weak-referenced** wrapper,
+  freed once the native refcount hits 0. A coroutine that outlives its node
+  keeps running and can touch a wrapper whose native object is already gone —
+  a use-after-free crash far from the line that caused it.
+- `shareIn`/`stateIn` (and `callbackFlow` shared through them) **do not hold a
+  strong reference to their sharing coroutine**, so the JVM can
+  garbage-collect it. A Flow-wrapped signal then silently stops firing — no
+  error, no message.
 
-For intra-frame mechanics, plain mutators (`damage(n)`,
-`addToInventory(item)`) and entity-owned `data class` state are the
-right tools. The state Flow is one of many things a component might
-expose; it's not the default.
+Both failure modes are the hard-to-debug kind: a handler that works for a
+while then stops, or a crash unrelated to its trigger. Use the engine's own
+mechanisms instead — synchronous, on the main thread, with lifetimes the
+engine manages:
 
-See `references/architecture.md` for: the full level-3 worked example
-(Player + Health + Movement + Animation as registered Node
-components), `NodeScope` helper for tying coroutines to node lifetime,
-`callbackFlow` wrappers around signals, sealed-action MVI patterns for
-game-wide state, and migration paths between levels.
+- **Discrete events** (died, damaged, tool used, area entered) → a
+  `@RegisterSignal` you `emit`, connected with `.connect { }` in a sibling's
+  `_ready`.
+- **Continuous / derived state** (current HP, velocity, `isMoving`) → a plain
+  property the consumer reads when it needs it (`health.hp`,
+  `movement.isMoving`), polled in `_process` if it drives per-frame visuals.
+- **Intra-frame mechanics** → plain mutators (`damage(n)`,
+  `addToInventory(item)`) and entity-owned `data class` state.
+
+`_physicsProcess` is synchronous; nowhere in per-frame gameplay does a
+coroutine buy you anything a direct call doesn't.
+
+See `references/architecture.md` for the worked component example (Player +
+Health + Movement + Animation) wired entirely with signals and direct calls,
+plus the sealed-action dispatch pattern for components that outgrow a couple
+of mutators.
 
 ## Editor workflow
 
@@ -473,7 +730,7 @@ See `references/errors.md` for the full lookup table. The most common ones:
 |-------|-------|-----|
 | `Version mismatch! C++ module is X / Jar is Y` | Plugin tag's Godot version ≠ editor binary | Change plugin tag in `build.gradle.kts` to match |
 | `Inconsistent JVM-target compatibility detected for tasks 'compileJava' (N) and 'kspKotlin' (M)` | JDK too new for plugin's pinned Kotlin | Add `kotlin { jvmToolchain(17) }` |
-| `RegisteredClass does not have a public default constructor` | Registered class lacks no-arg ctor | Add `@JvmOverloads` (with defaults), or add secondary no-arg ctor, or don't register a plain data class |
+| `RegisteredClass does not have a public default constructor` | Registered class lacks no-arg ctor (defaults/`@JvmOverloads` do NOT count on 0.14.3) | Add an explicit empty primary ctor + secondary, or don't register a plain data class |
 | `Unresolved reference 'Instant'` / `'Clock'` from `kotlin.time.*` | `kotlin.time.Instant` needs Kotlin 2.1+; plugin pins older | Add `org.jetbrains.kotlinx:kotlinx-datetime:0.6.2` and import from `kotlinx.datetime.*` |
 | KSP: `Collection contains no element matching the predicate` | `@RegisterClass` on class that doesn't extend a Godot type | Make the class extend a `godot.api.*` type, or remove `@RegisterClass` |
 | `Unresolved reference 'set'` on `javaHome.set(...)` | `javaHome` on `GenerateEmbeddedJreTask` is `String`, not `Property<T>` | Use `javaHome = "..."` (direct assignment) |
@@ -511,9 +768,9 @@ Drop the high `jvmToolchain` value and use `17`.
   plugin version, including the DSL renames between 0.14.x and 0.16.x.
 - `references/errors.md` — extended error catalog with root causes.
 - `references/architecture.md` — composition + components worked example
-  (Player + Health + Movement + Animation), `NodeScope` helper, signal
-  wrapping via `callbackFlow`, MVI direct-methods vs sealed-actions
-  threshold.
+  (Player + Health + Movement + Animation) wired with `@RegisterSignal`
+  signals and direct property reads (no coroutines/Flows), plus the
+  direct-methods vs sealed-actions threshold.
 - `references/settings-menu.md` — AAA-style settings menu design:
   sealed `Settings` hierarchy, `SettingsService` with `update<T>` typed
   dispatch, live-apply + 2s debounced JSON persistence, per-tab engine

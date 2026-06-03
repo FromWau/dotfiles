@@ -112,20 +112,15 @@ running JDK is newer than the Kotlin compiler version.
 constructor. Godot instantiates registered classes via reflection at
 runtime, so this is required.
 
-**Fix:** Three options:
+**Fix:** Write an explicit empty primary constructor (or no params), plus a
+secondary for convenience.
 
-1. If it's a data class with defaults on every parameter, add `@JvmOverloads`
-   to the constructor:
-   ```kotlin
-   data class Person @JvmOverloads constructor(
-       val name: String = "",
-       val age: Int = 0,
-   )
-   ```
-   But also: data classes don't extend Godot types, so registering them is
-   usually wrong (see next error).
+**Defaults do NOT satisfy the check** (verified on 0.14.3): both
+`class X(var n: Int = 0)` and `@JvmOverloads constructor(var n: Int = 0)` still
+fail — KSP inspects the Kotlin constructor (which has a parameter), not the
+synthetic JVM no-arg overload `@JvmOverloads` emits. So the reliable options are:
 
-2. Write a secondary no-arg constructor:
+1. Write a secondary no-arg constructor:
    ```kotlin
    class MyNode : Node2D() {
        constructor() : super()

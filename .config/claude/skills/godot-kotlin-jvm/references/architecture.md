@@ -2,9 +2,8 @@
 
 This file is the **escalated** version — the full worked example for
 when you've decided the project needs registered Node components,
-scene-component instances, Inspector-tunable per-entity config, or
-cross-system observation via Coroutines/StateFlow. It is **not the
-default**.
+scene-component instances, or Inspector-tunable per-entity config. It is
+**not the default**.
 
 The default for solo, code-first projects is plain Kotlin classes
 instantiated in the entity's `_ready()` (level 1) — see SKILL.md's
@@ -14,9 +13,14 @@ lives in the `godot` skill at `references/composition.md`. Load that
 first; this file picks up after the decision to go level 2/3.
 
 The rest of this document describes the level-3 setup (each component
-is its own `.tscn` + `@RegisterClass`), with Coroutines/StateFlow for
-cross-system observation. Most projects don't need all of this. Pick
-the pieces that apply.
+is its own `.tscn` + `@RegisterClass`). Components communicate **only**
+with engine-native mechanisms: `@RegisterSignal` signals for discrete
+events, plain property reads for state, and direct method calls for
+commands. **No coroutines, no `StateFlow`/`SharedFlow`, no
+`callbackFlow`** — see SKILL.md's "No coroutines or Flows inside nodes"
+for why they're unsafe in godot-kotlin-jvm (weak-referenced object
+wrappers + GC-collectible sharing coroutines). Most projects don't need
+all of this; pick the pieces that apply.
 
 ## When to actually use this
 
@@ -26,8 +30,8 @@ This shape earns its weight when:
   components onto base templates.
 - Per-entity values (max_hp, speed, damage_multiplier) need
   Inspector tuning *without* recompiling.
-- Multiple subsystems (UI HUD + analytics + AI) need to observe the
-  same state changes — that's a StateFlow earning its place.
+- Multiple subsystems (UI HUD + analytics + AI) need to react to the
+  same events — that's a signal with several listeners earning its place.
 - The project is large enough that the wiring tax pays itself off.
 
 For a solo dev tutoring through a small Godot/Kotlin project with one
@@ -71,17 +75,10 @@ res://
       shop_keeper.tscn
 
 src/main/kotlin/com/yourgame/
-  core/
-    coroutines/                NodeScope helper
-    signals/                   callbackFlow wrappers for common signals
-  state/
-    GameStore.kt               MVI store for game-wide state
-    GameState.kt
-    GameIntent.kt
   features/
     inventory/
-      InventoryStore.kt        MVI: state + intent + reducer
-      InventoryHud.kt          Control node that renders state, emits intents
+      InventoryComponent.kt    state + mutators + signals
+      InventoryHud.kt          Control node that reads state, reacts to signals
     pause_menu/
       ...
   components/                  ← @RegisterClass Node subclasses
@@ -129,95 +126,116 @@ be Player-specific creates abstraction debt.
    compiles, but creates `node.tree` / `node.getTree()` confusion across
    plugin versions. Use `animationTree`, `displayName`, `targetPosition`.
 
-## NodeScope helper
+## How components talk: signals, reads, calls
 
-Nodes don't ship a `CoroutineScope`. Create one tied to the node's
-lifetime and cancel it in `_exitTree`, otherwise collectors leak when the
-node is freed.
+Three communication channels, each matched to a kind of information.
+None of them involve a coroutine.
 
-```kotlin
-// core/coroutines/NodeScope.kt
-class NodeScope : CoroutineScope {
-    override val coroutineContext = SupervisorJob() + Dispatchers.Main
-    fun cancel() { coroutineContext.cancel() }
-}
-```
+- **Discrete event** — "something happened at this instant" (died,
+  damaged, tool used, item picked up). → a `@RegisterSignal` the
+  component `emit`s; siblings/parents `connect { }` in their `_ready`.
+  Fires on every `emit`, so two identical events both notify. Payload must
+  be a Variant — a primitive, or a registered `sealed class : RefCounted`
+  for a domain type (the examples below use primitives like `Int`; see
+  SKILL.md's "Signal payloads" for the `sealed class` standard and why a
+  plain `enum` won't even compile as a signal arg).
+- **State / derived value** — "what is true right now" (current HP, HP
+  fraction, velocity, `isMoving`). → a plain property the consumer reads
+  when it needs it. If it drives per-frame visuals, the consumer polls it
+  in its own `_process`.
+- **Command** — "do this" (damage, heal, move, stop). → a plain method
+  call on the component.
 
-`Dispatchers.Main` here means the dispatcher that posts work back to
-Godot's main thread. Touching node APIs from a background thread will
-crash the engine, so any `collect` that ends up calling into a Node must
-run on Main.
+A signal connection between two nodes is **automatically disconnected by
+the engine when either node is freed** — so unlike a coroutine scope,
+there is nothing to clean up in `_exitTree`. That's a direct benefit of
+staying on engine-native mechanisms.
 
 ## HealthComponent (Node subclass, saved as a scene)
 
 Lives in `components/HealthComponent.kt` with sibling scene
-`health_component.tscn` (root Node, script = generated `.gdj`). Bundled
-state via a single `StateFlow`, transient hit events via a `SharedFlow`,
-inspector-configurable `maxHp`.
+`health_component.tscn` (root Node, script = generated `.gdj`). State is
+plain properties; transient events are `@RegisterSignal` signals;
+`maxHp` is inspector-configurable.
 
 ```kotlin
 // components/HealthComponent.kt
+import godot.annotation.RegisterClass
+import godot.annotation.RegisterFunction
+import godot.annotation.RegisterProperty
+import godot.annotation.RegisterSignal
+import godot.annotation.Export
+import godot.api.Node
+import godot.core.signal0
+import godot.core.signal1
+import godot.core.signal2
+
 @RegisterClass
 class HealthComponent : Node() {
 
     @RegisterProperty @Export
     var maxHp: Int = 100
 
-    private val _state = MutableStateFlow(HealthState(hp = 100, maxHp = 100))
-    val state: StateFlow<HealthState> = _state.asStateFlow()
+    @RegisterSignal val healthChanged by signal2<Int, Int>()  // hp, maxHp
+    @RegisterSignal val damaged by signal1<Int>()             // amount
+    @RegisterSignal val died by signal0()
 
-    private val _damaged = MutableSharedFlow<Int>(extraBufferCapacity = 16)
-    val damaged: SharedFlow<Int> = _damaged.asSharedFlow()
+    var hp: Int = 100
+        private set
+
+    val isDead: Boolean get() = hp == 0
+    val fraction: Float get() = if (maxHp > 0) hp.toFloat() / maxHp else 0f
 
     @RegisterFunction
     override fun _ready() {
-        _state.value = HealthState(hp = maxHp, maxHp = maxHp)
+        hp = maxHp
+        healthChanged.emit(hp, maxHp)
     }
 
     fun damage(amount: Int) {
-        if (amount <= 0 || _state.value.isDead) return
-        _state.update { it.copy(hp = (it.hp - amount).coerceAtLeast(0)) }
-        _damaged.tryEmit(amount)
+        if (amount <= 0 || isDead) return
+        hp = (hp - amount).coerceAtLeast(0)
+        healthChanged.emit(hp, maxHp)
+        damaged.emit(amount)
+        if (isDead) died.emit()
     }
 
     fun heal(amount: Int) {
-        if (amount <= 0 || _state.value.isDead) return
-        _state.update { it.copy(hp = (it.hp + amount).coerceAtMost(it.maxHp)) }
+        if (amount <= 0 || isDead) return
+        hp = (hp + amount).coerceAtMost(maxHp)
+        healthChanged.emit(hp, maxHp)
     }
-}
-
-data class HealthState(val hp: Int, val maxHp: Int) {
-    val isDead: Boolean get() = hp == 0
-    val fraction: Float get() = if (maxHp > 0) hp.toFloat() / maxHp else 0f
 }
 ```
 
-`HealthState` stays a pure data class — atomic snapshot of all related
-fields. `_state.update { }` is synchronous and atomic; don't wrap in
-`scope.launch` unless something genuinely suspends, otherwise two damage
-calls in the same frame can race and a caller reading `state.value`
-right after `damage(...)` will see the old value.
+`hp` is a plain `var` with a private setter — synchronous, no async path,
+so two `damage` calls in the same frame can't interleave, and a caller
+reading `health.hp` right after `damage(...)` sees the new value
+immediately.
 
-**State vs events:** the state Flow gives consumers everything derivable
-by observation (current HP, fraction, isDead). The `damaged` SharedFlow
-exists because a transient hit event needs to fire even when the value
-repeats — state diffing on HP would miss a second 10-damage hit landing
-on the same frame as the first. SharedFlow doesn't diff.
+**State vs events:** the readable properties (`hp`, `isDead`, `fraction`)
+give consumers everything derivable by observation. The signals exist for
+the *moments* — `damaged` must fire even when the same amount lands twice
+in a frame. A consumer that polled a `var lastDamage` would miss the
+second identical hit, because equal values are indistinguishable; a signal
+emits each time regardless. That's the whole reason `damaged` is a signal
+and not a property.
 
-Consumers derive what they need from the one state Flow:
+Consumers pick the channel that fits:
 
 ```kotlin
-health.state.map { it.fraction }                           // HUD bar
-health.state.map { it.isDead }.distinctUntilChanged()      // death trigger
+health.healthChanged.connect { hp, max -> bar.value = hp.toDouble() / max }  // HUD
+health.died.connect { showGameOver() }                                       // death
+val frac = health.fraction                                                   // one-off read
 ```
 
 ### When to switch to sealed actions
 
 For a 1–2 mutator component, `health.damage(10)` says the same thing as
-`health.onAction(HealthAction.Damage(10))` with less typing and the same
-testability. A sealed action type starts earning its keep around three or
-four actions, or as soon as more than one subsystem (UI + AI + network)
-dispatches into the same component:
+`health.onAction(HealthAction.Damage(10))` with less typing. A sealed
+action type starts earning its keep around three or four actions, or as
+soon as more than one subsystem (UI + AI + network) dispatches into the
+same component:
 
 ```kotlin
 sealed interface HealthAction {
@@ -229,30 +247,23 @@ sealed interface HealthAction {
 
 @RegisterClass
 class HealthComponent : Node() {
-    val state: StateFlow<HealthState> = ...
+    // ... properties + signals as above
 
     fun onAction(action: HealthAction) = when (action) {
-        is HealthAction.Damage -> handleDamage(action.amount)
-        is HealthAction.Heal   -> handleHeal(action.amount)
-        is HealthAction.SetMax -> handleSetMax(action.max)
-        HealthAction.Revive    -> handleRevive()
+        is HealthAction.Damage -> damage(action.amount)
+        is HealthAction.Heal   -> heal(action.amount)
+        is HealthAction.SetMax -> setMax(action.max)
+        HealthAction.Revive    -> revive()
     }
-
-    private fun handleDamage(amount: Int) = _state.update {
-        if (it.isDead) it else it.copy(hp = (it.hp - amount).coerceAtLeast(0))
-    }
-    // ...
+    // private handlers mutate hp and emit the matching signals
 }
 ```
 
 `onAction` is a single `when` that fans out directly into the concrete
 handlers. The `when` *is* the dispatch — no extra `reduce` indirection.
-Each handler stays small and individually readable, and you can call them
-directly from inside the class without constructing an action just to
-route through `onAction`.
-
+You can also call the handlers directly without constructing an action.
 The migration from methods to actions doesn't change the consumer side
-(state Flow stays identical), so it's safe to defer until the component
+(the same properties and signals stay), so defer it until the component
 actually grows.
 
 ## MovementComponent (Node, drives its parent CharacterBody2D)
@@ -262,7 +273,8 @@ Takes a `Vector2` direction so an AI-controlled enemy can reuse the same
 component by feeding in a computed direction instead of player input. The
 *parent* CharacterBody2D is fetched via `getParent()` typed cast — this
 component only makes sense as a direct child of one — and `speed` is
-exported per instance.
+exported per instance. `isMoving` is a plain read for the animation
+component to poll.
 
 ```kotlin
 // components/MovementComponent.kt
@@ -274,8 +286,8 @@ class MovementComponent : Node() {
 
     private var body: CharacterBody2D? = null
 
-    private val _velocity = MutableStateFlow(Vector2.ZERO)
-    val velocity: StateFlow<Vector2> = _velocity.asStateFlow()
+    var isMoving: Boolean = false
+        private set
 
     @RegisterFunction
     override fun _ready() {
@@ -287,12 +299,12 @@ class MovementComponent : Node() {
         val b = body ?: return
         b.velocity = direction.normalized() * speed.toDouble()
         b.moveAndSlide()
-        _velocity.value = b.velocity
+        isMoving = b.velocity != Vector2.ZERO
     }
 
     fun stop() {
         body?.velocity = Vector2.ZERO
-        _velocity.value = Vector2.ZERO
+        isMoving = false
     }
 }
 ```
@@ -327,7 +339,7 @@ object DamageCalculator {
 ```
 
 A `CombatComponent` (Node) calls this from inside its `applyHit(...)` and
-broadcasts the result through its own `SharedFlow`:
+announces the result with its own signal:
 
 ```kotlin
 // components/CombatComponent.kt
@@ -336,32 +348,33 @@ class CombatComponent : Node() {
 
     @RegisterProperty @Export lateinit var health: HealthComponent
 
-    private val _events = MutableSharedFlow<DamageEvent>(extraBufferCapacity = 16)
-    val events: SharedFlow<DamageEvent> = _events.asSharedFlow()
+    @RegisterSignal val hit by signal1<Int>()   // actual damage dealt
 
     fun applyHit(rawDamage: Int, defense: DefenseStats) {
         val actual = DamageCalculator.calc(rawDamage, defense)
         health.damage(actual)
-        _events.tryEmit(DamageEvent(amount = actual))
+        hit.emit(actual)
     }
 }
-
-data class DamageEvent(val amount: Int)
 ```
 
-`SharedFlow` is the right primitive precisely because two identical
-`DamageEvent(amount = 10)` emissions stay distinct. A `StateFlow` would
-collapse them via `distinctUntilChanged` semantics and the second damage
-number would never show up.
+A signal fires on every `emit`, so two identical `hit(10)` events both
+reach the listener — exactly what hit feedback needs. (A polled
+`var lastHit = 10` would be indistinguishable across the two hits and the
+second damage number would never show.)
 
-## AnimationComponent (Node, subscribes to sibling Flows)
+## AnimationComponent (Node, reads siblings + reacts to their signals)
 
 Lives in `components/AnimationComponent.kt` with `animation_component.tscn`.
-Subscribes once in `_ready`. Nothing per-frame; the animation reacts to
-state changes published by sibling components. Sibling references come
-from the inspector (drag the HealthComponent and MovementComponent child
-nodes onto the `@Export` fields of the AnimationComponent in the entity
-scene).
+It uses **both** channels, matched to the kind of information:
+
+- locomotion (idle/walk) is continuous *state*, so it **polls**
+  `movement.isMoving` in `_process`;
+- hurt/death are discrete *events*, so it **connects** to
+  HealthComponent's signals once in `_ready`.
+
+Sibling references come from the inspector (drag the child nodes onto the
+`@Export` fields in the entity scene).
 
 ```kotlin
 // components/AnimationComponent.kt
@@ -372,44 +385,45 @@ class AnimationComponent : Node() {
     @RegisterProperty @Export lateinit var movement: MovementComponent
     @RegisterProperty @Export lateinit var health: HealthComponent
 
-    private val scope = NodeScope()
+    private var current = ""
 
     @RegisterFunction
     override fun _ready() {
-        movement.velocity
-            .map { if (it == Vector2.ZERO) "idle" else "walk" }
-            .distinctUntilChanged()
-            .onEach { sprite.play(it) }
-            .launchIn(scope)
-
-        health.state
-            .map { it.isDead }
-            .distinctUntilChanged()
-            .filter { it }
-            .onEach { sprite.play("death") }
-            .launchIn(scope)
-
-        scope.launch {
-            health.damaged.collect { sprite.play("hurt") }
-        }
+        // one-shot reactions: connect to the discrete events
+        health.damaged.connect { _ -> playOnce("hurt") }
+        health.died.connect { playOnce("death") }
     }
 
     @RegisterFunction
-    override fun _exitTree() { scope.cancel() }
+    override fun _process(delta: Double) {
+        if (health.isDead) return
+        // locomotion is continuous state — poll it
+        val next = if (movement.isMoving) "walk" else "idle"
+        if (next != current) {
+            current = next
+            sprite.play(next)
+        }
+    }
+
+    private fun playOnce(name: String) {
+        sprite.play(name)
+        current = ""   // force _process to re-apply locomotion next frame
+    }
 }
 ```
 
-The hit-flash listener uses the `damaged` SharedFlow on HealthComponent,
-not the state Flow — exactly the case where state diffing would miss
-repeated values.
+The hurt-flash uses the `damaged` signal, not a polled value — repeated
+equal-damage hits each flash, which a state read would miss. `current`
+tracks the last locomotion animation so `_process` only calls `play` on a
+real change; `playOnce` resets it so locomotion resumes after the one-shot.
+No coroutine, no scope, nothing to cancel.
 
 ## Player (the parent Node that holds the components)
 
 Lives in `entities/player/Player.kt` with `entities/player.tscn`. The
-Player scene has the four component scenes (HealthComponent,
-MovementComponent, AnimationComponent, CombatComponent) instanced as
-children. The Kotlin class declares `@Export` references; in the editor,
-drag each child Node onto the matching field on the Player node.
+Player scene has the four component scenes instanced as children. The
+Kotlin class declares `@Export` references; in the editor, drag each
+child Node onto the matching field on the Player node.
 
 ```kotlin
 // entities/player/Player.kt
@@ -421,29 +435,18 @@ class Player : CharacterBody2D() {
     @RegisterProperty @Export lateinit var animation: AnimationComponent
     @RegisterProperty @Export lateinit var combat: CombatComponent
 
-    private val scope = NodeScope()
-
     @RegisterFunction
     override fun _ready() {
-        scope.launch {
-            health.state
-                .map { it.isDead }
-                .distinctUntilChanged()
-                .filter { it }
-                .collect { movement.stop() }
-        }
+        health.died.connect { movement.stop() }
     }
 
     @RegisterFunction
     override fun _physicsProcess(delta: Double) {
-        if (!health.state.value.isDead) {
+        if (!health.isDead) {
             val input = Input.getVector("move_left", "move_right", "move_up", "move_down")
             movement.move(input)
         }
     }
-
-    @RegisterFunction
-    override fun _exitTree() { scope.cancel() }
 
     fun gotHit(rawDamage: Int, attackerDefenseBreak: Int = 0) {
         val defense = DefenseStats(armor = 5 - attackerDefenseBreak, resistance = 0.1f)
@@ -452,16 +455,16 @@ class Player : CharacterBody2D() {
 }
 ```
 
-Note what Player *doesn't* do anymore: no `HealthComponent(initial = 100)`
-construction, no `getNodeAs<AnimatedSprite2D>(...)`. Instances and wiring
-live in the scene; the script just declares what it needs and uses what
-the inspector handed it. This is the payoff of the component-as-scene
-pattern — the Kotlin code stops being a DI container.
+Note what Player *doesn't* do: no `HealthComponent(initial = 100)`
+construction, no `getNodeAs<AnimatedSprite2D>(...)`, **and no `NodeScope`
+to create and cancel**. Instances and wiring live in the scene; the script
+declares what it needs and uses what the inspector handed it. The single
+`health.died.connect { }` reaction needs no `_exitTree` cleanup — the
+engine drops the connection when either node frees.
 
-`gotHit` is now a thin shim that delegates to CombatComponent. The
-animation flash happens automatically because AnimationComponent already
-subscribed to `health.damaged` in its own `_ready`. No manual fan-out
-required.
+`gotHit` is a thin shim delegating to CombatComponent. The animation flash
+happens automatically because AnimationComponent already connected to
+`health.damaged` in its own `_ready` — no manual fan-out.
 
 ## Reusing the same components on an enemy
 
@@ -481,17 +484,12 @@ class Slime : CharacterBody2D() {
     @RegisterProperty @Export lateinit var animation: AnimationComponent
     @RegisterProperty @Export lateinit var ai: SlimeAi  // bespoke
 
-    private val scope = NodeScope()
-
     @RegisterFunction
     override fun _physicsProcess(delta: Double) {
-        if (!health.state.value.isDead) {
+        if (!health.isDead) {
             movement.move(ai.desiredDirection())
         }
     }
-
-    @RegisterFunction
-    override fun _exitTree() { scope.cancel() }
 }
 ```
 
@@ -504,63 +502,56 @@ In the editor: `slime.tscn` instances `health_component.tscn` and sets
 adds a `SlimeAi` child. Drag the children onto Slime's `@Export` fields.
 No Kotlin-side changes for new enemy variants.
 
-## Signals to Flows: full pattern
+## Connecting to built-in signals (Area2D, Button, …)
 
-Built-in Godot signals on nodes are exposed as signal properties in the
-Kotlin binding. Wrapping them with `callbackFlow` gives a Flow whose
-collection lifecycle drives the connect/disconnect, so you never end up
-double-subscribed or leaking after the collector cancels.
+Built-in Godot signals on nodes (`bodyEntered`, `pressed`, `timeout`, …)
+are exposed as signal properties on the binding. Connect them with the
+trailing-lambda `.connect { }` in `_ready` — same `import godot.core.connect`
+that custom signals use. No `callbackFlow`, no scope; the engine
+disconnects automatically when the node frees.
 
 ```kotlin
+import godot.core.connect
+
 @RegisterClass
 class TriggerZone : Area2D() {
 
-    private val scope = NodeScope()
-
-    val playerEntered: Flow<Player> = callbackFlow {
-        val callable = Callable { body: Node2D -> trySend(body) }
-        bodyEntered.connect(callable)
-        awaitClose { bodyEntered.disconnect(callable) }
-    }
-        .filterIsInstance<Player>()
-        .shareIn(scope, SharingStarted.WhileSubscribed())
-
     @RegisterFunction
     override fun _ready() {
-        playerEntered
-            .onEach { onPlayerEnter(it) }
-            .launchIn(scope)
+        bodyEntered.connect { body -> onBodyEntered(body) }
     }
 
-    @RegisterFunction
-    override fun _exitTree() { scope.cancel() }
-
-    private fun onPlayerEnter(player: Player) {
+    private fun onBodyEntered(body: Node2D) {
+        val player = body as? Player ?: return   // plain cast, not filterIsInstance
         // ...
     }
 }
 ```
 
-`shareIn` is optional. Use it when more than one collector should observe
-the same stream without each one re-subscribing to the underlying signal.
-For a single consumer, skip it and expose the raw `callbackFlow`.
+If the zone needs to *broadcast* the entry to other systems, re-emit it
+as its own `@RegisterSignal` (`val playerEntered by signal1<Player>()`)
+and let any number of listeners `connect`. Multiple listeners on one
+signal is the engine-native "one-to-many" — it's what `SharedFlow` was
+standing in for, without the GC hazard.
 
 ### Binding-version caveats
 
-The following surfaces vary between plugin versions, so check the
-generated source if something below doesn't compile:
+The connect surface varies between plugin versions — check the generated
+source if something doesn't compile:
 
-- **Building a `Callable` from a lambda.** Some versions expose a
-  `Callable { ... }` lambda constructor as shown above; others want
-  `Callable(target, methodName)` with a `@RegisterFunction` on the target
-  method. Check `godot.core.Callable` in your binding.
-- **Signal property names.** Almost always camelCase
+- **`.connect { }` lambda overload (0.14.x)** requires
+  `import godot.core.connect`. Without it only the base
+  `connect(Callable, Int)` is in scope and the trailing lambda won't
+  resolve — the #1 gotcha. In **0.16.x** the typed form is
+  `connect(target, Class::method, flags)` with a member reference and an
+  explicit `Int` flag (see SKILL.md's per-version connect sections).
+- **Signal property names** are camelCase on the Kotlin side
   (`bodyEntered`, `inputEvent`), generated from Godot's snake_case
-  (`body_entered`, `input_event`). Confirm by hovering the property in
-  your IDE.
-- **connect / disconnect surface.** Either methods on the signal property
-  (`bodyEntered.connect(callable)`) or a `connect(signalName, callable)`
-  method on the Node. The `callbackFlow` pattern doesn't care which.
+  (`body_entered`, `input_event`). A custom `@RegisterSignal val
+  toolUse` registers as `tool_use`.
+- **Payloads are Variants.** Built-in signal args are already Variant
+  types. For custom signals, never pass a Kotlin `enum` — send `.name` /
+  `.ordinal` and map back (see SKILL.md's `@RegisterSignal` section).
 
 ## Code wiring vs editor wiring
 
@@ -587,9 +578,9 @@ designer composes the scene by drag-drop and needs the export slot. If
 the same scene is regularly edited by both Kotlin and the editor by
 different people, you genuinely need the editor refs.
 
-For signal connections (`bodyEntered.connect(...)`,
-`died.connect(::onDied)`), code wiring in `_ready` is the universal
-default regardless of the rest. The connection is behaviour, not scene
-arrangement, and the `.tscn`-serialised signal connections from the
-editor's right-click menu are the worst of both worlds (silent on
-method rename, invisible to `grep`).
+For signal connections (`bodyEntered.connect { }`, `health.died.connect
+{ }`), code wiring in `_ready` is the universal default regardless of the
+rest. The connection is behaviour, not scene arrangement, and the
+`.tscn`-serialised signal connections from the editor's right-click menu
+are the worst of both worlds (silent on method rename, invisible to
+`grep`).
