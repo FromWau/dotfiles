@@ -14,6 +14,7 @@ text/x-rust=nvim.desktop
 application/json=nvim.desktop
 application/xml=nvim.desktop
 application/vnd.ms-excel=nvim.desktop
+x-scheme-handler/slack=slack.desktop
 
 [Added Associations]
 x-scheme-handler/mailto=userapp-Thunderbird-FZO9P3.desktop;userapp-Thunderbird-2C1151.desktop;
