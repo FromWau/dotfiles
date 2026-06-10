@@ -103,6 +103,33 @@ This SKILL.md covers architecture and error-handling fundamentals. For domain-sp
 - `kotlin.uuid.Uuid` over `java.util.UUID`
 - `kotlinx.collections.immutable` for UI state lists
 
+## Ranked Domain Types — Don't Compare Enums with `<`/`>`
+
+- `<`/`>` on an enum uses `ordinal` (declaration order). Reorder/insert an entry
+  and every comparison silently changes meaning. You can't fix it on the enum:
+  `Enum.equals`/`compareTo` are `final`, and extension operators are shadowed.
+- Fix: a `sealed interface` with an abstract `rank`, `Comparable` from `rank`:
+  ```kotlin
+  sealed interface Role : Comparable<Role> {
+      val rank: Int
+      override fun compareTo(other: Role): Int = rank.compareTo(other.rank)
+
+      data object Visitor : Role { override val rank = 0 }
+      data object Worker : Role { override val rank = 1 }
+      data object Admin : Role { override val rank = 2 }
+  }
+  ```
+  `<`/`>` are now rank-correct, `when` stays exhaustive (adding a role = compile
+  error everywhere), `==` works. No `isGreaterThan`/infix helpers needed.
+- Prefer `interface` over `sealed class Role(val rank: Int)` here: the class form
+  works (its ctor is `protected`, not public) but still exposes a constructor in
+  the API, reading as "construct a Role with any rank" — wrong model for a closed
+  set. The interface's only cost is each entry needs a `{ override val rank = N }`
+  body instead of a one-liner; write it multiline so the IDE doesn't reformat it.
+- Not `@JvmInline value class` — not a closed set, reintroduces the fragility.
+- Before converting, grep for `valueOf`/`entries`/`.name`/`.ordinal` — safe to
+  convert if the type is only created, compared, and mapped to a display string.
+
 ## Error Handling
 
 - Use custom `Result<D, E : Error>` sealed types — never throw exceptions for expected failures, never pass error messages as strings
