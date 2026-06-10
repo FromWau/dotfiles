@@ -1,0 +1,87 @@
+#!/bin/sh
+# Auto-mount MTP/PTP phones (and PTP cameras) through gvfs as they are plugged
+# in. Fully user-level: the event source is `udevadm monitor` (the processed
+# UDEV stream is readable unprivileged) and the mounter is `gio` from glib2.
+# No root, no /etc udev rule, no interpreter runtime - so it ships in the
+# dotfiles repo and reproduces with a plain `systemctl --user enable`.
+
+# Mount every MTP/PTP volume gvfs currently exposes. Idempotent (re-mounting an
+# already-mounted volume is a no-op). Retries for a few seconds because the
+# gvfs volume can lag the udev event.
+notify_mounted() {
+    uri=$1
+    command -v notify-send >/dev/null 2>&1 || return 0
+    # Friendly name from gio (e.g. "Pixel 7 Pro"). Right at mount time gio often
+    # still reports the generic backend name ("mtp"), so on empty/generic fall
+    # back to the URI host with the trailing serial token stripped -> e.g.
+    # "Google Pixel 7 Pro".
+    name=$(gio mount -l 2>/dev/null \
+        | sed -n "s|^Mount([0-9]*): \(.*\) -> ${uri}.*|\1|p" | head -1)
+    case "$name" in
+        '' | mtp | gphoto2)
+            name=${uri#mtp://}
+            name=$(printf '%s' "${name%/}" | sed 's/_[^_]*$//' | tr '_' ' ')
+            ;;
+    esac
+    host=${uri#mtp://}
+    path="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/gvfs/mtp:host=${host%/}"
+    [ -d "${path}/Internal shared storage" ] && path="${path}/Internal shared storage"
+    # Persistent (-t 0 = never expire) notification with an "Open" action that
+    # xdg-opens the storage path. notify-send blocks until the notification is
+    # acted on or dismissed, so background it to keep the udev loop responsive.
+    # Trigger the action with a middle-click (dunst: mouse_middle_click=do_action).
+    (
+        act=$(notify-send -t 0 -a gvfs-mtp-automount -i phone \
+            --action='default=Open' "${name} mounted" "${path}")
+        if [ "$act" = default ] && command -v xdg-open >/dev/null 2>&1; then
+            # A login-started service may predate the compositor env import.
+            : "${WAYLAND_DISPLAY:=$(systemctl --user show-environment 2>/dev/null | sed -n 's/^WAYLAND_DISPLAY=//p')}"
+            export WAYLAND_DISPLAY
+            xdg-open "${path}" >/dev/null 2>&1
+        fi
+    ) &
+}
+
+mount_mtp() {
+    i=0
+    while [ "$i" -lt 5 ]; do
+        i=$((i + 1))
+        uris=$(gio mount -li 2>/dev/null \
+            | grep -oE 'activation_root=(mtp|gphoto2)://[^[:space:]]+' \
+            | cut -d= -f2-)
+        if [ -n "$uris" ]; then
+            printf '%s\n' "$uris" | while IFS= read -r uri; do
+                if gio mount "$uri" >/dev/null 2>&1; then
+                    notify_mounted "$uri"   # only fires on a NEW mount, not no-ops
+                fi
+            done
+            return 0
+        fi
+        sleep 1
+    done
+}
+
+# Catch anything already connected when the service starts.
+mount_mtp
+
+# Watch udev for MTP devices appearing. libmtp's mtp-probe has already set
+# ID_MTP_DEVICE=1 by the time the UDEV event is emitted, so we match on it
+# precisely and ignore every other USB plug event.
+action=''
+ismtp=''
+udevadm monitor --udev --property --subsystem-match=usb 2>/dev/null \
+| while IFS= read -r line; do
+    case "$line" in
+        '')
+            [ "$action" = add ] && [ "$ismtp" = 1 ] && mount_mtp
+            action=''
+            ismtp=''
+            ;;
+        ACTION=*)
+            action=${line#ACTION=}
+            ;;
+        ID_MTP_DEVICE=*)
+            ismtp=${line#ID_MTP_DEVICE=}
+            ;;
+    esac
+done

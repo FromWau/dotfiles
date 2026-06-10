@@ -1,0 +1,10 @@
+[Unit]
+Description=Auto-mount MTP/PTP devices via gvfs (user-level, no root/udev rule)
+
+[Service]
+ExecStart=%h/.local/bin/gvfs-mtp-automount
+Restart=always
+RestartSec=2s
+
+[Install]
+WantedBy=default.target

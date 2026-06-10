@@ -1,0 +1,11 @@
+[Unit]
+Description=udiskie automounter for removable block devices (USB sticks, SD, drives)
+
+[Service]
+# Defaults: automount on, desktop notifications on (via dunst), no tray.
+ExecStart=/usr/bin/udiskie
+Restart=on-failure
+RestartSec=2s
+
+[Install]
+WantedBy=default.target
