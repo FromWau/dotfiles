@@ -44,7 +44,24 @@ done
 
 ## Fix ladder — LEAST destructive first
 Try one rung, then relaunch, so you learn the real fix. (The old memory note jumped
-straight to rung 4; rung 1 was enough in practice — 2026-06.)
+straight to rung 4. Rung 1 was enough on 2026-06, but on 2026-06-12 it failed three
+clean attempts in a row and only the rung 2 launch-without-Northstar fixed it. On
+2026-06-13 it was worse still — the "EA Desktop UI wedge" variant (below) survived
+rungs 1-3 + a CEF reset and only rung 4 fixed it. Don't over-trust rung 1; if it
+re-hangs identically twice, skip ahead.)
+
+**⚠️ Never fix this by switching Proton version.** Proton Experimental shipped an
+April-2026 Xalia 0.4.9 fix for the EA-app lockup, BUT **Northstar requires GE-Proton**
+— forcing the game onto Experimental/stock Proton to dodge the lockup breaks Northstar.
+Keep GE-Proton selected and fix at the prefix/cache layer. (User confirmed 2026-06-13.)
+
+### "EA Desktop UI wedge" symptom (2026-06-13)
+A nastier shape than a pure handshake stall: `EADesktop.exe` + CEF
+(`CrBrowserMain`/`CrGpuMain`/`CrUtilityMain`) spawn and persist, but **no EA window
+ever renders** and **no fresh EA app log** is written (only stale ones in
+`.../EA Desktop/Logs/`), so it never hands off to `Titanfall2.exe`. Confirm via the
+process watch (CEF up, no `Titanfall2.exe`, no fresh nslog for 60s+) + the user
+reporting no window. This needed rung 4.
 
 ### Rung 1 — clear stale launch state, relaunch  ← worked 2026-06
 Failed attempts leave **orphaned `gameoverlayui` processes** (their target game pid
@@ -55,15 +72,26 @@ bookkeeping. Kill them, then relaunch normally.
 pkill -9 -f 'gameoverlayui.*-gameid 1237970'
 # any stale EA/game exe:
 pkill -9 -f 'EADesktop.exe|EABackgroundService.exe|Titanfall2.exe|NorthstarLauncher.exe'
-# stale prefix wineserver, if present:
-WINEPREFIX=~/.local/share/Steam/steamapps/compatdata/1237970/pfx wineserver -k 2>/dev/null || true
+# stale prefix wineserver, if present. MUST use Proton's OWN wineserver binary:
+# bare `wineserver` is absent/wrong on this host and silently no-ops, leaving the
+# whole EA tree (steam.exe/EADesktop/EABackgroundService) alive (verified 2026-06-12).
+# Glob the active GE-Proton build so this survives version bumps:
+PFX=~/.local/share/Steam/steamapps/compatdata/1237970/pfx
+WS=$(ls -t ~/.local/share/Steam/compatibilitytools.d/GE-Proton*/files/bin/wineserver 2>/dev/null | head -1)
+WINEPREFIX="$PFX" "$WS" -k 2>/dev/null || true
 ```
 To check whether a `gameoverlayui ... -gameid 1237970` is orphaned: its `-pid <N>`
 arg points at the game process — if that pid is dead, the overlay is stale.
 
-### Rung 2 — launch with NO args, let EA app fully come up
-Steam → remove ALL launch options → Launch → log into EA Desktop, wait until fully
-loaded → press **Stop** in Steam → relaunch. Non-destructive; re-add args after.
+### Rung 2 — launch WITHOUT Northstar once, then re-add  ← worked 2026-06-12
+The boot-hang is the EA handshake, and one full successful *vanilla* launch primes it.
+Steam → Properties → Launch Options → remove the Northstar args (`-northstar -vanilla
+-profile=R2Titanfall`), leaving e.g. just `LFX=1 gamemoderun %command%` (or clear the
+box entirely) → **Play**. Without `-northstar` the game boots **vanilla TF2 all the way
+into the main menu**, past the handshake that was hanging. Then **exit normally from
+inside the game**, **add the Northstar args back**, and Play → now loads with Northstar.
+Non-destructive. (Lighter variant if even vanilla hangs at the EA app: clear ALL
+options → Launch → let EA Desktop fully load and log in → Stop → relaunch.)
 
 ### Rung 3 — clear EA Desktop caches (surgical, auto-regenerated)
 ```bash
@@ -73,13 +101,34 @@ rm -rf "$AD/Local/EADesktop/cache" \
        "$AD/Local/Electronic Arts/EA Desktop/IGOCache"
 ```
 
-### Rung 4 — NUCLEAR: delete the whole Proton prefix (last resort)
-Loses EA install + all wine config; requires EA re-login + re-setup.
+### Rung 3.5 — reset EA Desktop's CEF profile (surgical; for the UI-wedge variant)
+Rung 3 clears OfflineCache/IGOCache but NOT the CEF browser profile where a wedged
+web-UI / blank-window lives. On 2026-06-13 this still didn't fix it, but it's worth a
+shot before nuking (regenerates; may force an EA re-login):
 ```bash
-rm -rf ~/.local/share/Steam/steamapps/compatdata/1237970
+EAD=~/.local/share/Steam/steamapps/compatdata/1237970/pfx/drive_c/users/steamuser/AppData/Local/Electronic\ Arts/EA\ Desktop
+mv "$EAD/CEF" "$EAD/CEF.bak"   # reversible; EA rebuilds it fresh on next launch
 ```
-Then: remove launch args → launch → log into EA, wait → Stop → launch again (should
-reach home) → exit → re-add launch args.
+
+### Rung 4 — NUCLEAR: wipe the Proton prefix (last resort; needed 2026-06-13)
+Loses EA install + all wine config; requires EA re-login + re-setup. Game files,
+mods, and the Northstar `R2Titanfall/` profile live in the game dir and are NOT
+touched. Prefer a reversible `mv` over `rm` (the prefix is only ~3 GB):
+```bash
+cd ~/.local/share/Steam/steamapps/compatdata/
+mv 1237970 1237970.broken.bak   # Steam rebuilds 1237970 fresh on next launch
+```
+Recovery flow (verified 2026-06-13, ~12 min end-to-end):
+1. Launch via Steam → first launch rebuilds the prefix (`pfx` reappears ~2-3 min in)
+   + the EA app re-installs. **Watch for the EA window** (the broken prefix never
+   rendered one; a fresh one does = the fix is working).
+2. **Log into EA** → reach the library → **close the EA app**.
+3. **Close EA app → Stop TF2 in Steam → clean-launch from Steam.** Let Steam drive
+   the link2ea handshake + `Titanfall2.exe`. **Never launch TF2 from inside the EA
+   app** — doing so mid-launch leaves a confused `Link2EA.exe` state with no handoff.
+4. Game boots **vanilla first** (no `-northstar` → **no nslog**, so success =
+   the main menu, not a log) → confirm → re-add `-northstar` → fresh nslog = Northstar
+   live. Delete `1237970.broken.bak` once confirmed good.
 
 ## Launching from the CLI (instead of clicking Play)
 `/usr/bin/steam` can drive it: `steam steam://rungameid/1237970` (respects the
