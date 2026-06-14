@@ -226,6 +226,24 @@ Any code that does its own viewport / camera / HUD math implicitly
 assumes the base resolution. Changing it later silently breaks hardcoded
 coordinates.
 
+### TileMap: `get_cell_tile_data().set_custom_data()` mutates the shared tile, not the cell
+
+`get_cell_tile_data(coords)` returns the **shared per-type `TileData`** from
+the TileSet, not a per-cell copy. Writing to it (`set_custom_data(...)`)
+changes that property for **every cell using the same atlas variant** across
+the whole layer — confirmed engine behaviour (godot issue #108067).
+
+The classic symptom: you write `seedable = false` on the cell you just
+planted, and seeding silently breaks on a scattering of *other* cells too —
+the ones sharing that autotile variant. Reads are fine (custom data is a
+static per-tile-type property); it's runtime **writes** that are the trap.
+
+**Fix:** track mutable per-cell state yourself (`var planted = {}  # Set of
+cells`), don't write it back into `TileData`. And to ask "is there a tile of
+this type here at all," prefer `get_cell_source_id(coords) != -1` over a
+per-variant custom-data flag you have to remember to tick on every autotile
+piece.
+
 ## Debug god mode
 
 Give the player a debug-only state with: faster movement, no gravity,
