@@ -14,6 +14,7 @@ This SKILL.md covers architecture and error-handling fundamentals. For domain-sp
 - **`references/coroutines-and-flows.md`** — structured concurrency, dispatchers, suspend vs flows, cold/hot flows, anti-patterns. Read when writing coroutine code, dealing with cancellation, or debugging flow behavior.
 - **`references/compose-deep-dive.md`** — state retention (`remember`/`retain`/`rememberSaveable`), UI state modeling, focus/keyboard, performance, stateful vs stateless, pagination, UX best practices. Read when building Compose UIs.
 - **`references/persistence-and-platform.md`** — File I/O (buffered reading), DataStore Preferences with KeyStore encryption, Room, KMP permissions via Moko, `inline` functions and `@JvmInline value class`. Read when persisting data or handling permissions.
+- **`references/viewmodel-scoping.md`** — composable-scoped ViewModels (lifecycle 2.11 `rememberViewModelStoreOwner`/`LocalViewModelStoreOwner`), one VM per list item/card/sheet, state ownership across multiple VMs, keeping many scoped VMs + per-item flows cheap, KMP/CMP availability. Read when scoping a VM to anything smaller than a screen.
 
 ## Gradle & Toolchain
 
@@ -169,3 +170,9 @@ This SKILL.md covers architecture and error-handling fundamentals. For domain-sp
 
 - Use `onCleared()` for cleanup (session logout, closing resources)
 - Don't pass data through navigation routes — use a central `Session` singleton
+- A VM no longer needs a backstack entry — with lifecycle 2.11 you can scope one to *any*
+  composable (per list item/card/bottom sheet) via `rememberViewModelStoreOwner` + a
+  `LocalViewModelStoreOwner` override. Reach for this only on complex screens with
+  independently-stateful subcomponents, not plain lists. For the pattern, state-ownership
+  rules, the "one hot source / cheap per-item slices" performance rule, and KMP/CMP
+  availability, read `references/viewmodel-scoping.md`
