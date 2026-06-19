@@ -1,20 +1,21 @@
 #!/bin/bash
 
-UB_PID_FILE="/tmp/.$(uuidgen)"
-ueberzugpp layer --no-stdin --silent --pid-file "$UB_PID_FILE"
-UB_PID=$(cat "$UB_PID_FILE")
 
-export SOCKET=/tmp/ueberzugpp-$UB_PID.socket
-export X=$(($(tput cols) / 2 + 1))
+if [[ "${1:-}" == "--__preview" ]]; then
+	file="$2"
+	dim="${FZF_PREVIEW_COLUMNS}x${FZF_PREVIEW_LINES}"
 
-# run fzf with preview
-fzf --preview='
-if string match -q -r ".*\.(png|jpg|jpeg)\$" {}
-    ueberzugpp cmd -s $SOCKET -i fzfpreview -a add -x $X -y 1 --max-width $FZF_PREVIEW_COLUMNS --max-height $FZF_PREVIEW_LINES -f {}
-else
-    ueberzugpp cmd -s $SOCKET -a remove
-    bat --color always {}
-end
-' "$@"
+	case "${file,,}" in
+	*.png | *.jpg | *.jpeg | *.webp | *.gif | *.bmp)
+		kitten icat --clear --transfer-mode=memory --unicode-placeholder \
+			--stdin=no --place="${dim}@0x0" "$file" 2>/dev/null |
+			sed '$d' | sed $'$s/$/\e[m/'
+		;;
+	*)
+		bat --color=always "$file" 2>/dev/null || cat -- "$file"
+		;;
+	esac
+	exit 0
+fi
 
-ueberzugpp cmd -s "$SOCKET" -a exit
+exec fzf --preview="$0 --__preview {}" "$@"
