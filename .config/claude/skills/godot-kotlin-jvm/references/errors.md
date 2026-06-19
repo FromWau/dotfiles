@@ -115,10 +115,14 @@ runtime, so this is required.
 **Fix:** Write an explicit empty primary constructor (or no params), plus a
 secondary for convenience.
 
-**Defaults do NOT satisfy the check** (verified on 0.14.3): both
-`class X(var n: Int = 0)` and `@JvmOverloads constructor(var n: Int = 0)` still
-fail — KSP inspects the Kotlin constructor (which has a parameter), not the
-synthetic JVM no-arg overload `@JvmOverloads` emits. So the reliable options are:
+**Defaults do NOT satisfy the check on 0.14.3:** both
+`class X(var n: Int = 0)` and `@JvmOverloads constructor(var n: Int = 0)` fail —
+KSP inspects the Kotlin constructor (which has a parameter), not the synthetic
+JVM no-arg overload. **On 0.16.x this is fixed:** the processor is ClassGraph-
+based (reads bytecode), so an all-defaults primary ctor (`class X(val n: Int =
+0)`) is accepted — Kotlin synthesizes a public no-arg ctor when every primary
+param has a default. A param *without* a default still fails. So the reliable
+options are:
 
 1. Write a secondary no-arg constructor:
    ```kotlin
@@ -131,6 +135,35 @@ synthetic JVM no-arg overload `@JvmOverloads` emits. So the reliable options are
 3. If the class isn't actually attached to a Godot node, remove
    `@RegisterClass` — plain Kotlin classes used from other Kotlin code don't
    need registration.
+
+**0.16.x variant — `You should provide a default constructor for class X`:**
+same root cause, different message and processor. The common 0.16.x trigger is a
+`sealed class : RefCounted()` used as a signal-payload parent — a sealed class
+compiles to an abstract class, abstract classes inheriting a Godot Object are
+auto-registered, and a `sealed class` ctor is `protected` (can't be made
+public). Fix by making the parent a `sealed interface` with
+`@RegisterClass ... : RefCounted()` leaves (see the signals section in SKILL.md).
+
+---
+
+### `NullPointerException` at a `connectLambda` call in `_ready()` (0.16.x)
+
+**Cause:** The signal's declared payload type isn't a registered Variant.
+`connectLambda` builds its `Callable` eagerly via `getVariantConverter<P0>()!!`
+= `variantMapper[P0::class]!!`; if `P0` is unregistered (a `sealed interface`,
+an `enum`, a plain class), the lookup is null and `!!` throws. It compiles fine;
+the NPE fires at the connect call when `_ready` runs. Because `connectLambda` is
+`inline`, the trace line is the inlined body (often a misleading line number).
+
+**Fix:** Type the signal on a registered Variant — a primitive, or a registered
+Godot Object / engine type such as `RefCounted` — and cast back to your sealed
+type on the receiving side:
+```kotlin
+@RegisterSignal val toolUsed by signal1<RefCounted>()
+source.toolUsed.connectLambda { ref -> onToolUsed(ref as Tool) }
+```
+Or connect with `connectMethod(target, ::handler)`, which routes through a named
+`MethodCallable` and skips the `variantMapper` lookup at connect time.
 
 ---
 

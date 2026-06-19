@@ -169,10 +169,12 @@ A class that Godot can attach to a node must:
 3. Have `@RegisterFunction` on each lifecycle method (`_ready`, `_process`, ...).
 4. Have a **public no-arg constructor** — the plugin instantiates via
    reflection. The reliable form is an explicit empty primary constructor (or
-   no params at all) plus a secondary for convenience. **Defaults do not
-   count:** on 0.14.3, both `class X(var n: Int = 0)` and
-   `@JvmOverloads constructor(var n: Int = 0)` FAIL the KSP no-arg check (it
-   reads the Kotlin constructor, not the synthetic JVM overload).
+   no params at all) plus a secondary for convenience. **Version-dependent:** on
+   0.14.3 both `class X(var n: Int = 0)` and `@JvmOverloads constructor(var n:
+   Int = 0)` FAIL the KSP no-arg check (it reads the source ctor). On 0.16.x an
+   all-defaults primary ctor (`class X(val n: Int = 0)`) is accepted — the
+   ClassGraph processor sees Kotlin's synthetic no-arg ctor in bytecode; only a
+   param *without* a default fails.
 
 ```kotlin
 import godot.annotation.RegisterClass
@@ -243,7 +245,34 @@ and the generated `scripts/<Class>.gdj` shows `signals = [ ]`. The `.gdj` is a
 generated file — never edit *or delete* it (see the ⚠️ rule in Mental model);
 fix the Kotlin source and rebuild.
 
-### Signal payloads: a primitive, or a registered `sealed class`
+### Signal payloads: a primitive, or a registered leaf type
+
+> **⚠️ Plugin 0.16.x changed this — read first.** The `sealed class : RefCounted()`
+> "house standard" described below is **0.14.x**. On **0.16.x** it no longer
+> builds: any abstract class inheriting a Godot Object is *auto-registered*
+> (`isAbstractAndInheritsGodotObject` in the ClassGraph processor), and a
+> registered class needs a **public no-arg constructor** — which a `sealed class`
+> can't have (its constructors are forced `protected`), so entry generation fails
+> with `You should provide a default constructor for class Tool`.
+>
+> **0.16.x pattern:** make the parent a **`sealed interface`** (excluded from
+> auto-registration via `!isInterface`, still gives exhaustive `when`); each leaf
+> is `@RegisterClass class Hoe : RefCounted(), Tool`; and **type the signal on a
+> registered base — `RefCounted` (or a primitive), never the sealed interface**
+> (it isn't a Variant → `connectLambda` NPEs). Emit the leaf, cast back on receive:
+> ```kotlin
+> sealed interface Tool { val stateName: String }
+> @RegisterClass class Hoe : RefCounted(), Tool { override val stateName = "Hoe" }
+>
+> @RegisterSignal val toolUsed by signal1<RefCounted>()              // registered wire type
+> fun onAction() = toolUsed.emit(Hoe() as RefCounted)               // emit the leaf
+> source.toolUsed.connectLambda { ref -> onToolUsed(ref as Tool) }  // cast at the boundary
+> fun onToolUsed(tool: Tool) = when (tool) { is Hoe -> … }          // sealed ⇒ exhaustive
+> ```
+> Per-leaf data works on 0.16.x: `@RegisterClass class WateringCan(val water: Int = 0)
+> : RefCounted(), Tool`. A primary ctor whose params **all have defaults** is
+> accepted (Kotlin synthesizes a public no-arg ctor; the ClassGraph processor reads
+> it from bytecode). A param **without** a default still fails.
 
 A signal argument crosses the JVM↔C++ boundary as a **Variant**, so it must be
 a Variant primitive or a Godot `Object` — nothing else. This is the same rule
@@ -324,9 +353,10 @@ Two payload shapes, by richness:
 
 Hard constraints the compiler enforces (each verified on 0.14.3):
 
-- **`sealed class`, never `sealed interface`** — an interface can't extend
-  `RefCounted()` (no superclass constructor call), so
-  `sealed interface X : RefCounted()` won't compile.
+- **`sealed class`, never `sealed interface`** *(0.14.x only — on 0.16.x it's the
+  reverse: a `sealed interface` parent with `RefCounted` leaves, per the callout
+  above)*. The interface still can't extend `RefCounted()`, but on 0.16.x it
+  doesn't need to — the leaves carry `RefCounted`.
 - **The payload class must be top-level, not nested.** `@RegisterClass` on a
   class nested in another (`class Player { @RegisterClass class ToolUse … }`) is
   **silently ignored** — no registrar, no `.gdj`, never added to `variantMapper`.
@@ -336,13 +366,15 @@ Hard constraints the compiler enforces (each verified on 0.14.3):
   needs a public no-arg constructor; the registrar emits `KtConstructor0(::Hoe)`,
   which a singleton object has no `::Hoe` for (`@RegisterClass object Hoe` →
   "Unresolved reference 'Hoe'").
-- **A no-arg constructor is mandatory, and defaults do NOT count.** A primary
-  ctor with all-default params (`class WateringCan(var water: Int = 0)`) *and*
+- **A no-arg constructor is mandatory; on 0.14.3 defaults do NOT count** *(0.16.x
+  differs)*. On **0.14.3** a primary ctor with all-default params
+  (`class WateringCan(var water: Int = 0)`) *and*
   `@JvmOverloads constructor(var water: Int = 0)` both FAIL the KSP check
-  ("RegisteredClass does not have a public default constructor") on 0.14.3 — KSP
-  doesn't see the synthetic no-arg overload. No-data cases use the implicit ctor
-  (`class Hoe : Tool()`); data cases need an explicit empty primary ctor plus
-  a secondary (as in `WateringCan` above).
+  ("RegisteredClass does not have a public default constructor") — KSP reads the
+  source ctor and doesn't see the synthetic no-arg overload. On **0.16.x** the
+  ClassGraph processor reads bytecode, so an **all-defaults primary ctor IS
+  accepted** (`class WateringCan(val water: Int = 0)`); only a param *without* a
+  default fails. No-data cases use the implicit ctor (`class Hoe : Tool()`).
 - **The no-arg ctor must be `public` — you can't hide it.** `private`/`internal`
   both fail the same "public default constructor" check (the engine
   reflection-instantiates registered classes). To stop the mandatory empty ctor
@@ -378,41 +410,56 @@ fixed set of interchangeable labels with no per-case data, shape (1) — a
 primitive — is genuinely lighter. The `sealed class` standard earns its keep
 once the cases actually differ.
 
-### Direct one-off connect: typed `Signal1` in plugin 0.16.x
+### Direct one-off connect: `connectLambda` / `connectMethod` in plugin 0.16.x
 
-For a single callback (not a Flow), connect in `_ready()`. In **0.16.x** a
-typed signal like `AnimationMixer.animationFinished` is a
-`godot.core.Signal1<StringName>`, whose only typed overload is:
+For a single callback (not a Flow), connect in `_ready()`. In **0.16.x** the
+base `connect` on a typed signal takes a pre-built `CallableN` plus a
+`ConnectFlags` **enum** (not an `Int`):
 
 ```
-connect(target: T, fn: (T, P0) -> Unit, flags: Int)   // T : godot.api.Object
+Signal2<P0, P1>.connect(callable: Callable2<*, P0, P1>, flags: Object.ConnectFlags = DEFAULT)
 ```
 
-Use an **unbound member reference** for `fn` and pass `flags` explicitly as
-an `Int`:
+You rarely build the `Callable` by hand — two extensions in `godot.extension`
+do it, both with a defaulted `flags` so the trailing-lambda / reference form is
+clean:
 
 ```kotlin
+import godot.extension.connectLambda
+import godot.extension.connectMethod
+
 override fun _ready() {
-    val tree = getNode("Animation/AnimationTree") as AnimationTree
-    tree.animationFinished.connect(this, Player::onAnimFinished, 0)
+    tree.animationStarted.connectLambda { animName -> onAnimStarted(animName) }
+    tree.animationFinished.connectLambda { onAnimFinished() }   // arg ignorable
+
+    source.toolUsed.connectMethod(this, Level::onToolUsed)      // named MethodCallable
 }
-private fun onAnimFinished(animName: StringName) { /* swingDone = true */ }
 ```
 
-Time-wasting pitfalls — each silently resolves to the base
-`Signal.connect(Callable, Int)` overload and then fails to typecheck:
+**`connectLambda` resolves the payload converters eagerly** at the connect
+call: `method.asCallable()` → `lambdaCallableN(...)` →
+`getVariantConverter<P0>()!!` = `variantMapper[P0::class]!!`. So **every declared
+payload type must be a registered Variant** — a primitive, or a registered
+Godot Object / engine type (`RefCounted`, `StringName`, `Node2D`, …). If the
+declared type is unregistered (a `sealed interface`, an `enum`, a plain class),
+`variantMapper[it]` is null and you get a **`NullPointerException` at the
+connect line in `_ready()`** — compiles clean, crashes at runtime. (Because
+`connectLambda` is `inline`, the trace line is the inlined body, often
+misleading.) This is the #1 0.16.x signal trap: see the payload callout above —
+type the signal on `RefCounted` (or a primitive), never the sealed parent.
 
-- A **lambda** does not work: untyped → "cannot infer parameter"; an
-  explicit-typed `{ _: T, _: P0 -> ... }` mis-resolves to `Function3`. Use a
-  member reference (`Class::method`), not a lambda.
-- `flags` is **`Int`**, not `Long` — pass `0`, not `0L`.
-- **Omitting `flags`** with a trailing lambda makes Kotlin prefer the
-  exact-arity `connect(Callable, Int)` overload and fail. Pass `0` explicitly.
+`connectMethod(target, Class::method)` builds a `MethodCallable(target,
+"method_name")` and does **no `variantMapper` lookup at connect time** (arg
+conversion happens at call time through the `@RegisterFunction`'s own
+converters) — the escape hatch when the lambda path can't resolve a type.
 
-There is no top-level `callable { }` builder; the lambda→Callable helpers are
-`callableN(...)` / `Function.asCallable(...)` in `godot.core` (see
-`CallablesKt`), but the member-reference form above is simpler for a
-one-off connect.
+The `connect { }` + `import godot.core.connect` trailing-lambda form is **0.14.x
+only** and does not exist in 0.16.x. (A `connect(target, Class::method, flags:
+Int)` member-reference overload exists in **neither** version — earlier notes
+claiming it for 0.16.x were wrong; use `connectLambda` / `connectMethod`.) There
+is no top-level `callable { }` builder; the underlying helpers are
+`lambdaCallableN(...)` / `.asCallable()` and `methodCallableN(...)` in
+`godot.core`.
 
 ### Direct one-off connect: typed `Signal1` in plugin 0.14.x (trailing lambda)
 
@@ -445,11 +492,11 @@ Pitfalls in 0.14.x:
   reference directly). Add `@RegisterFunction` only if Godot/GDScript also
   calls it by name.
 
-Contrast with **0.16.x**, where the typed overload is
-`connect(target, Class::method, flags)` with a member reference and explicit
-`Int` flags (see the section above). When in doubt which DSL you're on, check
-the plugin tag in `gradle/libs.versions.toml`: `0.14.x` → trailing lambda +
-`import godot.core.connect`; `0.16.x` → member reference + `flags`.
+Contrast with **0.16.x**, where `import godot.core.connect` is gone and you use
+`connectLambda { }` / `connectMethod(target, ::m)` from `godot.extension` (see
+the section above). When in doubt which DSL you're on, check the plugin tag in
+`gradle/libs.versions.toml`: `0.14.x` → `connect { }` + `import godot.core.connect`;
+`0.16.x` → `connectLambda` / `connectMethod`.
 
 ## Architecture: Kotlin-side patterns
 
@@ -581,9 +628,11 @@ projects never need to escalate.
 A `@RegisterClass` needs a **public no-arg constructor** — the plugin
 instantiates via reflection. Write an explicit empty primary constructor
 (plus a secondary if you want a convenience overload). Parameter **defaults
-do not satisfy the KSP check** on 0.14.3 — neither `class X(var n: Int = 0)`
+do not satisfy the KSP check on 0.14.3** — neither `class X(var n: Int = 0)`
 nor `@JvmOverloads constructor(var n: Int = 0)` works; KSP inspects the Kotlin
-constructor, which still has a parameter, not the synthetic JVM no-arg overload.
+constructor, which still has a parameter. **On 0.16.x this is fixed** — an
+all-defaults primary ctor (`class X(val n: Int = 0)`) is accepted because the
+ClassGraph processor reads Kotlin's synthetic no-arg ctor from bytecode.
 
 `@Export` fields are populated by the engine *after construction, but
 before `_ready`*. So:
@@ -730,7 +779,8 @@ See `references/errors.md` for the full lookup table. The most common ones:
 |-------|-------|-----|
 | `Version mismatch! C++ module is X / Jar is Y` | Plugin tag's Godot version ≠ editor binary | Change plugin tag in `build.gradle.kts` to match |
 | `Inconsistent JVM-target compatibility detected for tasks 'compileJava' (N) and 'kspKotlin' (M)` | JDK too new for plugin's pinned Kotlin | Add `kotlin { jvmToolchain(17) }` |
-| `RegisteredClass does not have a public default constructor` | Registered class lacks no-arg ctor (defaults/`@JvmOverloads` do NOT count on 0.14.3) | Add an explicit empty primary ctor + secondary, or don't register a plain data class |
+| `RegisteredClass does not have a public default constructor` (0.14.3) / `You should provide a default constructor for class X` (0.16.x) | Registered class lacks a public no-arg ctor. On 0.14.3 defaults/`@JvmOverloads` don't count; on 0.16.x a `sealed class : RefCounted()` parent also trips this (auto-registered, `protected` ctor) | 0.14.3: explicit empty primary ctor + secondary. 0.16.x: all-defaults primary ctor (`class X(val n: Int = 0)`) works; for a sealed parent use a `sealed interface` + `RefCounted` leaves |
+| `NullPointerException` at a `connectLambda` call in `_ready()` (0.16.x) | Signal's declared payload type isn't a registered Variant — `connectLambda` does `variantMapper[P0]!!` | Type the signal on a registered base (`RefCounted`) or a primitive and cast on receive, or use `connectMethod(target, ::handler)` |
 | `Unresolved reference 'Instant'` / `'Clock'` from `kotlin.time.*` | `kotlin.time.Instant` needs Kotlin 2.1+; plugin pins older | Add `org.jetbrains.kotlinx:kotlinx-datetime:0.6.2` and import from `kotlinx.datetime.*` |
 | KSP: `Collection contains no element matching the predicate` | `@RegisterClass` on class that doesn't extend a Godot type | Make the class extend a `godot.api.*` type, or remove `@RegisterClass` |
 | `Unresolved reference 'set'` on `javaHome.set(...)` | `javaHome` on `GenerateEmbeddedJreTask` is `String`, not `Property<T>` | Use `javaHome = "..."` (direct assignment) |

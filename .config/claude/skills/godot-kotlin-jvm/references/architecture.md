@@ -133,12 +133,14 @@ None of them involve a coroutine.
 
 - **Discrete event** — "something happened at this instant" (died,
   damaged, tool used, item picked up). → a `@RegisterSignal` the
-  component `emit`s; siblings/parents `connect { }` in their `_ready`.
+  component `emit`s; siblings/parents connect in their `_ready`
+  (`connect { }` on 0.14.x, `connectLambda`/`connectMethod` on 0.16.x).
   Fires on every `emit`, so two identical events both notify. Payload must
-  be a Variant — a primitive, or a registered `sealed class : RefCounted`
-  for a domain type (the examples below use primitives like `Int`; see
-  SKILL.md's "Signal payloads" for the `sealed class` standard and why a
-  plain `enum` won't even compile as a signal arg).
+  be a Variant — a primitive, or a registered Godot Object for a domain type
+  (0.14.x: `sealed class : RefCounted`; 0.16.x: `sealed interface` +
+  `RefCounted` leaves, signal typed on `RefCounted`). The examples below use
+  primitives like `Int`; see SKILL.md's "Signal payloads" for the full pattern
+  and the per-version differences.
 - **State / derived value** — "what is true right now" (current HP, HP
   fraction, velocity, `isMoving`). → a plain property the consumer reads
   when it needs it. If it drives per-frame visuals, the consumer polls it
@@ -542,9 +544,9 @@ source if something doesn't compile:
 - **`.connect { }` lambda overload (0.14.x)** requires
   `import godot.core.connect`. Without it only the base
   `connect(Callable, Int)` is in scope and the trailing lambda won't
-  resolve — the #1 gotcha. In **0.16.x** the typed form is
-  `connect(target, Class::method, flags)` with a member reference and an
-  explicit `Int` flag (see SKILL.md's per-version connect sections).
+  resolve — the #1 gotcha. In **0.16.x** that form is gone; use
+  `connectLambda { }` / `connectMethod(target, ::m)` from `godot.extension`
+  (see SKILL.md's per-version connect sections).
 - **Signal property names** are camelCase on the Kotlin side
   (`bodyEntered`, `inputEvent`), generated from Godot's snake_case
   (`body_entered`, `input_event`). A custom `@RegisterSignal val
