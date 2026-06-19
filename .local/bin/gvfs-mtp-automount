@@ -11,10 +11,6 @@
 notify_mounted() {
     uri=$1
     command -v notify-send >/dev/null 2>&1 || return 0
-    # Friendly name from gio (e.g. "Pixel 7 Pro"). Right at mount time gio often
-    # still reports the generic backend name ("mtp"), so on empty/generic fall
-    # back to the URI host with the trailing serial token stripped -> e.g.
-    # "Google Pixel 7 Pro".
     name=$(gio mount -l 2>/dev/null \
         | sed -n "s|^Mount([0-9]*): \(.*\) -> ${uri}.*|\1|p" | head -1)
     case "$name" in
@@ -26,12 +22,8 @@ notify_mounted() {
     host=${uri#mtp://}
     path="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/gvfs/mtp:host=${host%/}"
     [ -d "${path}/Internal shared storage" ] && path="${path}/Internal shared storage"
-    # Persistent (-t 0 = never expire) notification with an "Open" action that
-    # xdg-opens the storage path. notify-send blocks until the notification is
-    # acted on or dismissed, so background it to keep the udev loop responsive.
-    # Trigger the action with a middle-click (dunst: mouse_middle_click=do_action).
     (
-        act=$(notify-send -t 0 -a gvfs-mtp-automount -i phone \
+        act=$(notify-send -t 2000 -a gvfs-mtp-automount -i phone \
             --action='default=Open' "${name} mounted" "${path}")
         if [ "$act" = default ] && command -v xdg-open >/dev/null 2>&1; then
             # A login-started service may predate the compositor env import.
