@@ -23,13 +23,9 @@ training-data recall.
 - `titanfall-northstar` — Titanfall 2 / Northstar mod development
 - `rrplug-northstar` — Rust native plugins for Northstar
 - `spacetimedb-dev` — SpacetimeDB build, codegen, and SDK testing
+- `python` — Python conventions: `uv` package management and PEP 723 single-file scripts
 
 # Default Preferences
-
-## Python Projects
-  - Always use `uv` for Python package management and virtual environments
-  - Use `uv pip install` instead of `pip install`
-  - Create virtual environments with `uv venv`
 
 ## Gradle (XDG layout)
   - My Gradle home follows XDG Base Directory and lives at
