@@ -7,10 +7,12 @@
 """
 
 import argparse
+import concurrent.futures
 import os
 import shutil
 import subprocess
 import sys
+import threading
 from urllib.parse import urlparse
 
 import browser_cookie3
@@ -71,58 +73,64 @@ def fetch_listing(session, subreddit, want):
             return
 
 
-_dl_session = None
+_local = threading.local()
 
 
 def downloader():
-    # A plain client: NO browser impersonation and NO Reddit cookies. With the
-    # Firefox Accept header / a logged-in session, i.redd.it content-negotiates
-    # and returns an HTML media-viewer page instead of the actual image.
-    global _dl_session
-    if _dl_session is None:
-        _dl_session = requests.Session()
-    return _dl_session
+    session = getattr(_local, "session", None)
+    if session is None:
+        session = requests.Session()
+        _local.session = session
+    return session
 
 
-def download(url, dest_dir):
+def download_one(task):
+    """Download a single (subreddit, url, dest_dir, w, h) task. Returns (task, error_or_None)."""
+    _subreddit, url, dest_dir, _w, _h = task
     os.makedirs(dest_dir, exist_ok=True)
-    name = os.path.basename(urlparse(url).path) or "image"
-    path = os.path.join(dest_dir, name)
+    path = os.path.join(dest_dir, os.path.basename(urlparse(url).path) or "image")
     try:
-        r = downloader().get(url, stream=True, timeout=60)
-        try:
-            ctype = r.headers.get("content-type", "")
-            if r.status_code != 200 or not ctype.startswith("image/"):
-                print(f"  skipped {url}: HTTP {r.status_code}, {ctype or 'unknown type'}", file=sys.stderr)
-                return
-            total = int(r.headers.get("content-length") or 0)
-            done = 0
-            tty = sys.stdout.isatty()
-            with open(path, "wb") as f:
-                for chunk in r.iter_content(chunk_size=65536):
-                    f.write(chunk)
-                    done += len(chunk)
-                    if tty and total:
-                        print(f"\r  {done * 100 // total:3d}%", end="", flush=True)
-            if tty:
-                print("\r      \r", end="", flush=True)
-        finally:
-            r.close()
+        r = downloader().get(url, timeout=60)
+        ctype = r.headers.get("content-type", "")
+        if r.status_code != 200 or not ctype.startswith("image/"):
+            return task, f"HTTP {r.status_code}, {ctype or 'unknown type'}"
+        with open(path, "wb") as f:
+            f.write(r.content)
+        return task, None
     except Exception as e:
-        print(f"  failed: {e}", file=sys.stderr)
+        return task, str(e)
 
 
-def process_subreddit(session, subreddit, args, output_dir):
+def run_downloads(tasks, parallel):
+    """Download all tasks with up to `parallel` workers, printing a [N/total] counter."""
+    total = len(tasks)
+    if not total:
+        return
+    done = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, parallel)) as pool:
+        futures = [pool.submit(download_one, t) for t in tasks]
+        for future in concurrent.futures.as_completed(futures):
+            task, error = future.result()
+            done += 1
+            subreddit, url, _dest, width, height = task
+            if error:
+                print(f"[{done}/{total}] r/{subreddit} FAILED {url}: {error}", file=sys.stderr)
+            else:
+                print(f"[{done}/{total}] r/{subreddit} {url} [ {width} x {height} ]")
+
+
+def collect_subreddit(session, subreddit, args, output_dir):
+    """Fetch + filter r/<subreddit>, returning a list of download tasks (no I/O yet)."""
     def debug(msg):
         if args.debug:
             print(msg)
 
     debug(f"Processing subreddit: {subreddit}")
-    posts = fetch_listing(session, subreddit, args.limit)
     sub_dir = os.path.join(output_dir, subreddit)
+    tasks = []
     found = False
 
-    for d in posts:
+    for d in fetch_listing(session, subreddit, args.limit):
         found = True
         url = d.get("url_overridden_by_dest")
         if not url:
@@ -148,15 +156,15 @@ def process_subreddit(session, subreddit, args, output_dir):
             debug(f"Ignoring {url} due to low resolution [ {width} x {height} ]")
             continue
 
-        print(f"[r/{subreddit}] Downloading {url} [ {width} x {height} ]")
-        download(url, sub_dir)
+        tasks.append((subreddit, url, sub_dir, width, height))
 
     if not found:
         debug(f"No posts found for r/{subreddit} (empty, private, banned, or fetch error)")
+    return tasks
 
 
-def fzf_select_and_copy(output_dir, debug):
-    """Let the user pick files to delete via fzf, then copy survivors to output_dir."""
+def fzf_keep_selected(output_dir, debug):
+    """Let the user pick which downloaded files to keep via fzf, then copy them to output_dir."""
     files = sorted(
         os.path.relpath(os.path.join(dp, f), FZF_DIR)
         for dp, _, names in os.walk(FZF_DIR)
@@ -170,30 +178,28 @@ def fzf_select_and_copy(output_dir, debug):
     try:
         proc = subprocess.run(
             ["fzf-previewer", "-m", "--reverse", "--cycle", "-i", "-d", "|",
-             "--prompt", "Select files to delete: "],
+             "--prompt", "Select files to keep: "],
             input="\n".join(files), text=True, cwd=FZF_DIR, stdout=subprocess.PIPE,
         )
         selected = [line for line in proc.stdout.splitlines() if line.strip()]
     except FileNotFoundError:
         selected = []
 
-    for rel in selected:
-        try:
-            os.remove(os.path.join(FZF_DIR, rel))
-            if debug:
-                print(f"removed {rel}")
-        except OSError:
-            pass
+    if not selected:
+        print(f"Nothing selected; kept nothing. Downloads left in {FZF_DIR}")
+        return
 
     os.makedirs(output_dir, exist_ok=True)
-    for dp, _, names in os.walk(FZF_DIR):
-        for f in names:
-            src = os.path.join(dp, f)
-            dst = os.path.join(output_dir, os.path.relpath(src, FZF_DIR))
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.copy2(src, dst)
+    for rel in selected:
+        src = os.path.join(FZF_DIR, rel)
+        dst = os.path.join(output_dir, rel)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy2(src, dst)
+        if debug:
+            print(f"kept {rel}")
 
     shutil.rmtree(FZF_DIR, ignore_errors=True)
+    print(f"Kept {len(selected)} of {len(files)} images in {output_dir}")
 
 
 def main():
@@ -202,6 +208,7 @@ def main():
     p.add_argument("--minsize", type=int, default=2000, help="minimum width/height in px (default: 2000)")
     p.add_argument("--include-animated", action="store_true", help="include .gif content")
     p.add_argument("--output-dir", default="~/Pictures/wallpapers/reddits", help="where to save images")
+    p.add_argument("-p", "--parallel", type=int, default=5, help="number of parallel downloads (default: 5)")
     p.add_argument("--no-fzf", action="store_true", help="skip the fzf select-to-delete step")
     p.add_argument("--debug", action="store_true", help="verbose logging")
     p.add_argument("subreddits", nargs="+", help="one or more subreddit names")
@@ -210,15 +217,20 @@ def main():
     output_dir = os.path.abspath(os.path.expanduser(args.output_dir))
     session = make_session()
 
-    if args.no_fzf:
-        for sub in args.subreddits:
-            process_subreddit(session, sub, args, output_dir)
-    else:
+    # When using fzf, download into a scratch dir first, then copy survivors.
+    target = output_dir if args.no_fzf else FZF_DIR
+    if not args.no_fzf:
         shutil.rmtree(FZF_DIR, ignore_errors=True)
         os.makedirs(FZF_DIR, exist_ok=True)
-        for sub in args.subreddits:
-            process_subreddit(session, sub, args, FZF_DIR)
-        fzf_select_and_copy(output_dir, args.debug)
+
+    tasks = []
+    for sub in args.subreddits:
+        tasks += collect_subreddit(session, sub, args, target)
+
+    run_downloads(tasks, args.parallel)
+
+    if not args.no_fzf:
+        fzf_keep_selected(output_dir, args.debug)
 
 
 if __name__ == "__main__":
