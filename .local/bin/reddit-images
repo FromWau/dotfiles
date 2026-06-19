@@ -1,201 +1,225 @@
-#!/bin/bash
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["curl_cffi", "browser-cookie3"]
+# ///
+"""Download images from subreddits using your logged-in Firefox session.
+"""
 
-print_usage() {
-	echo "Usage: $0 [--limit <value>] [--minsize <value>] [--include-animated] [--output-dir <directory>] [--no-fzf] [--debug] <subreddit1> [<subreddit2> ...]"
-	echo "Options:"
-	echo "  --limit             Set the limit value (default: 300)"
-	echo "  --minsize           Set the minsize value (default: 2000)"
-	echo "  --include-animated  Include animated content"
-	echo "  --output-dir        Set the output directory for saving images (default: ~/Pictures/wallpapers/reddits)"
-	echo "  --no-fzf            Skip user selection of the downloaded files to get deleted"
-	echo "  --debug             Sets the log level to debug"
-	echo "  --help              Display this help message"
-	echo "Subreddits:"
-	echo "  One or more subreddit names must be provided"
-}
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+from urllib.parse import urlparse
 
-debug_echo() {
-	if [[ "$log_level" == "debug" ]]; then
-		echo "$@"
-	fi
-}
+import browser_cookie3
+from curl_cffi import requests
 
-process_subreddit() {
-	local log_level="$1"
-	local subreddit="$2"
-	local limit="$3"
-	local minsize="$4"
-	local include_animated="$5"
-	local output_dir="$6"
-	local subreddit_dir="$output_dir/$subreddit"
-
-	debug_echo "Processing subreddit: $subreddit"
-
-	# Check if subreddit exists
-	sub_exits=$(
-		curl --silent --header "User-agent: 'Bot'" https://www.reddit.com/r/$subreddit.json\?limit=1 |
-			jq >/dev/null 2>&1
-		echo "$?"
-	)
-
-	[[ ! "$sub_exits" -eq "0" ]] &&
-		debug_echo "unknown subreddit $subreddit" &&
-		return
-
-	# Create reddit dir if not exists
-
-	[[ ! -d "$subreddit_dir" ]] &&
-		debug_echo "Creating $subreddit_dir directory" &&
-		mkdir -p "$subreddit_dir"
-
-	# curl the data
-	data=$(curl --silent --header "User-agent: 'Bot'" https://www.reddit.com/r/"$subreddit".json\?limit=$limit |
-		jq -r ".data.children" | jq -r ".[] | @base64")
-
-	for item in $data; do
-
-		# needed for json array to bash array
-		_jq() {
-			echo "${item}" | base64 --decode | jq -r "${1}"
-		}
-
-		url=$(_jq '.data.url_overridden_by_dest')
-
-		if [[ "$url" == "null" ]]; then
-			debug_echo "Skipping null entry"
-			continue
-		fi
-
-		case $url in
-
-		*".png" | *".jpg" | *".jpeg" | *".webp" | *".gif")
-			if [[ "$include_animated" == "false" && "$url" == *".gif" ]]; then
-				debug_echo "Ignoring animated content: $url"
-				continue
-			fi
-
-			source_width=$(_jq ".data.preview.images" | jq ".[0].source.width")
-			source_height=$(_jq ".data.preview.images" | jq ".[0].source.height")
-
-			if [[ "$minsize" -gt "$source_height" || "$minsize" -gt "$source_width" ]]; then
-				debug_echo "Ignoring $url due to low resolution [ $source_width x $source_height ]"
-				continue
-			fi
-
-			echo "[r/$subreddit] Downloading $url [ $source_width x $source_height ]"
-			curl --remote-name --progress-bar "$url" --output-dir "$subreddit_dir"
-			;;
-
-		*)
-			debug_echo "Ignoring $url due to unknown format"
-			;;
-		esac
-
-	done
-}
-
-minsize=2000
-limit=300
-include_animated="false"
-subreddits=()
-output_dir=~/Pictures/wallpapers/reddits
-no_fzf="false"
-log_level="info"
-
-while [[ $# -gt 0 ]]; do
-	case "$1" in
-	--limit)
-		if [[ $# -gt 1 && "$2" =~ ^[0-9]+$ ]]; then
-			limit="$2"
-			shift 2
-		else
-			echo "Error: Invalid or missing value for --limit."
-			exit 1
-		fi
-		;;
-	--minsize)
-		if [[ $# -gt 1 && "$2" =~ ^[0-9]+$ ]]; then
-			minsize="$2"
-			shift 2
-		else
-			echo "Error: Invalid or missing value for --minsize."
-			exit 1
-		fi
-		;;
-	--include-animated)
-		include_animated="true"
-		shift
-		;;
-	--output-dir)
-		if [[ $# -gt 1 ]]; then
-			output_dir="$2"
-			shift 2
-		else
-			echo "Error: Invalid or missing value for --output-dir."
-			exit 1
-		fi
-		;;
-	--no-fzf)
-		no_fzf="true"
-		shift
-		;;
-	--debug)
-		log_level="debug"
-		shift
-		;;
-	--help)
-		print_usage
-		exit 0
-		;;
-	*)
-		subreddits+=("$1")
-		shift
-		;;
-	esac
-done
-
-# Expand ~ using eval and then convert to absolute path
-output_dir=$(eval "echo $output_dir")
-output_dir=$(realpath "$output_dir")
-
-if [[ ${#subreddits[@]} -eq 0 ]]; then
-	echo "Error: At least one subreddit is required."
-	exit 1
-fi
-
-if [[ -n "$limit" ]]; then
-	debug_echo "Limit set to: $limit"
-fi
-
-if [[ -n "$minsize" ]]; then
-	debug_echo "Minsize set to: $minsize"
-fi
-
-if [[ "$no_fzf" == "true" ]]; then
-	for subreddit in "${subreddits[@]}"; do
-		process_subreddit "$log_level" "$subreddit" "$limit" "$minsize" "$include_animated" "$output_dir"
-	done
-
-elif [[ "$no_fzf" == "false" ]]; then
-	fzf_dir=/tmp/reddit-images
-	for subreddit in "${subreddits[@]}"; do
-		process_subreddit "$log_level" "$subreddit" "$limit" "$minsize" "$include_animated" "$fzf_dir"
-	done
+IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+FZF_DIR = "/tmp/reddit-images"
 
 
-    cd $fzf_dir
-	selected_files=$(fd --type f --base-directory "$fzf_dir" | fzf-previewer -m --reverse --cycle -i -d "|" --prompt "Select files to delete: ")
-	selected_files=$(echo "$selected_files" | awk -v dir=$fzf_dir '{ print dir "/" $0 }')
+def die(msg):
+    sys.exit(f"reddit-images: {msg}")
 
-	if [[ -n "$selected_files" ]]; then
-        debug_echo $(echo "$selected_files" | xargs rm -v)
-	fi
-	find "$fzf_dir" -type d -empty -delete
 
-	mkdir -p "$output_dir"
-	cp -pr "$fzf_dir"/* "$output_dir"
+def make_session():
+    cookie_file = os.environ.get("REDDIT_COOKIE_FILE") or None
+    try:
+        cj = (
+            browser_cookie3.firefox(cookie_file=cookie_file, domain_name="reddit.com")
+            if cookie_file
+            else browser_cookie3.firefox(domain_name="reddit.com")
+        )
+    except Exception as e:
+        die(f"could not read Firefox cookies: {e}")
+    if not {c.name for c in cj} & {"reddit_session", "token_v2"}:
+        die("no Reddit login cookies found in Firefox. Log in to reddit.com in Firefox first.")
+    session = requests.Session(impersonate="firefox")
+    for c in cj:
+        session.cookies.set(c.name, c.value, domain=c.domain)
+    return session
 
-    if [[ -d "$fzf_dir" ]]; then
-	    debug_echo $(rm -rv "$fzf_dir")
-    fi
-fi
+
+def fetch_listing(session, subreddit, want):
+    """Yield each post's 'data' dict from r/<subreddit>/hot, paginating to `want`."""
+    after, got = "", 0
+    while got < want:
+        page = min(100, want - got)
+        url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit={page}&raw_json=1"
+        if after:
+            url += f"&after={after}"
+        try:
+            r = session.get(url, timeout=30)
+        except Exception as e:
+            die(f"request failed for r/{subreddit}: {e}")
+        if r.status_code == 403:
+            die("Reddit returned 403 (login likely expired). Re-open reddit.com in Firefox and log in again.")
+        if r.status_code != 200 or not r.headers.get("content-type", "").startswith("application/json"):
+            print(f"reddit-images: unexpected response for r/{subreddit}: HTTP {r.status_code}", file=sys.stderr)
+            return
+        data = r.json().get("data", {})
+        children = data.get("children", [])
+        if not children:
+            return
+        for child in children:
+            yield child.get("data", {})
+        got += len(children)
+        after = data.get("after") or ""
+        if not after:
+            return
+
+
+_dl_session = None
+
+
+def downloader():
+    # A plain client: NO browser impersonation and NO Reddit cookies. With the
+    # Firefox Accept header / a logged-in session, i.redd.it content-negotiates
+    # and returns an HTML media-viewer page instead of the actual image.
+    global _dl_session
+    if _dl_session is None:
+        _dl_session = requests.Session()
+    return _dl_session
+
+
+def download(url, dest_dir):
+    os.makedirs(dest_dir, exist_ok=True)
+    name = os.path.basename(urlparse(url).path) or "image"
+    path = os.path.join(dest_dir, name)
+    try:
+        r = downloader().get(url, stream=True, timeout=60)
+        try:
+            ctype = r.headers.get("content-type", "")
+            if r.status_code != 200 or not ctype.startswith("image/"):
+                print(f"  skipped {url}: HTTP {r.status_code}, {ctype or 'unknown type'}", file=sys.stderr)
+                return
+            total = int(r.headers.get("content-length") or 0)
+            done = 0
+            tty = sys.stdout.isatty()
+            with open(path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=65536):
+                    f.write(chunk)
+                    done += len(chunk)
+                    if tty and total:
+                        print(f"\r  {done * 100 // total:3d}%", end="", flush=True)
+            if tty:
+                print("\r      \r", end="", flush=True)
+        finally:
+            r.close()
+    except Exception as e:
+        print(f"  failed: {e}", file=sys.stderr)
+
+
+def process_subreddit(session, subreddit, args, output_dir):
+    def debug(msg):
+        if args.debug:
+            print(msg)
+
+    debug(f"Processing subreddit: {subreddit}")
+    posts = fetch_listing(session, subreddit, args.limit)
+    sub_dir = os.path.join(output_dir, subreddit)
+    found = False
+
+    for d in posts:
+        found = True
+        url = d.get("url_overridden_by_dest")
+        if not url:
+            debug("Skipping non-image entry")
+            continue
+
+        ext = os.path.splitext(urlparse(url).path)[1].lower()
+        if ext not in IMAGE_EXTS:
+            debug(f"Ignoring {url} due to unknown format")
+            continue
+        if ext == ".gif" and not args.include_animated:
+            debug(f"Ignoring animated content: {url}")
+            continue
+
+        try:
+            source = d["preview"]["images"][0]["source"]
+            width, height = source["width"], source["height"]
+        except (KeyError, IndexError, TypeError):
+            debug(f"Ignoring {url} (no preview dimensions)")
+            continue
+
+        if args.minsize > height or args.minsize > width:
+            debug(f"Ignoring {url} due to low resolution [ {width} x {height} ]")
+            continue
+
+        print(f"[r/{subreddit}] Downloading {url} [ {width} x {height} ]")
+        download(url, sub_dir)
+
+    if not found:
+        debug(f"No posts found for r/{subreddit} (empty, private, banned, or fetch error)")
+
+
+def fzf_select_and_copy(output_dir, debug):
+    """Let the user pick files to delete via fzf, then copy survivors to output_dir."""
+    files = sorted(
+        os.path.relpath(os.path.join(dp, f), FZF_DIR)
+        for dp, _, names in os.walk(FZF_DIR)
+        for f in names
+    )
+    if not files:
+        print("No images downloaded. Try a larger --limit or a lower --minsize.")
+        shutil.rmtree(FZF_DIR, ignore_errors=True)
+        return
+
+    try:
+        proc = subprocess.run(
+            ["fzf-previewer", "-m", "--reverse", "--cycle", "-i", "-d", "|",
+             "--prompt", "Select files to delete: "],
+            input="\n".join(files), text=True, cwd=FZF_DIR, stdout=subprocess.PIPE,
+        )
+        selected = [line for line in proc.stdout.splitlines() if line.strip()]
+    except FileNotFoundError:
+        selected = []
+
+    for rel in selected:
+        try:
+            os.remove(os.path.join(FZF_DIR, rel))
+            if debug:
+                print(f"removed {rel}")
+        except OSError:
+            pass
+
+    os.makedirs(output_dir, exist_ok=True)
+    for dp, _, names in os.walk(FZF_DIR):
+        for f in names:
+            src = os.path.join(dp, f)
+            dst = os.path.join(output_dir, os.path.relpath(src, FZF_DIR))
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy2(src, dst)
+
+    shutil.rmtree(FZF_DIR, ignore_errors=True)
+
+
+def main():
+    p = argparse.ArgumentParser(description="Download images from subreddits via your Firefox login.")
+    p.add_argument("--limit", type=int, default=300, help="number of posts to scan (default: 300)")
+    p.add_argument("--minsize", type=int, default=2000, help="minimum width/height in px (default: 2000)")
+    p.add_argument("--include-animated", action="store_true", help="include .gif content")
+    p.add_argument("--output-dir", default="~/Pictures/wallpapers/reddits", help="where to save images")
+    p.add_argument("--no-fzf", action="store_true", help="skip the fzf select-to-delete step")
+    p.add_argument("--debug", action="store_true", help="verbose logging")
+    p.add_argument("subreddits", nargs="+", help="one or more subreddit names")
+    args = p.parse_args()
+
+    output_dir = os.path.abspath(os.path.expanduser(args.output_dir))
+    session = make_session()
+
+    if args.no_fzf:
+        for sub in args.subreddits:
+            process_subreddit(session, sub, args, output_dir)
+    else:
+        shutil.rmtree(FZF_DIR, ignore_errors=True)
+        os.makedirs(FZF_DIR, exist_ok=True)
+        for sub in args.subreddits:
+            process_subreddit(session, sub, args, FZF_DIR)
+        fzf_select_and_copy(output_dir, args.debug)
+
+
+if __name__ == "__main__":
+    main()
