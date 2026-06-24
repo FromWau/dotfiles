@@ -62,6 +62,20 @@ nothing, rewrite the claim with explicit grounding ("the stack trace
 shows…", "I could not verify…", "likely, but unconfirmed"). Never invent
 tracker IDs, URLs, or version numbers to lend false authority.
 
+# Date and time — check the clock first
+
+Before any date/time reasoning, scheduling, or deferral, run `date`
+(e.g. `date '+%A %Y-%m-%d %H:%M %Z'`) for the real weekday, date, and
+time of day. Don't rely on memory, a stale assumption, or a date-only
+system hint.
+
+This governs anything time-relative a reader could act on: "this
+evening / same day / tomorrow", "by Friday", "in N days", "still time
+before <deadline>", and weekday↔date mappings. Compute from the real
+`date` output and verify the mapping (`date -d <date> '+%a'`) before
+asserting it. Whether it is morning or evening, and exactly how many
+days remain to a deadline, changes the advice.
+
 # When stuck, don't assume — ask
 
 If you are stuck or uncertain about an implementation path, do not pick
