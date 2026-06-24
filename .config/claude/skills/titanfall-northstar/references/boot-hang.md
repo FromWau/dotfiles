@@ -48,7 +48,11 @@ straight to rung 4. Rung 1 was enough on 2026-06, but on 2026-06-12 it failed th
 clean attempts in a row and only the rung 2 launch-without-Northstar fixed it. On
 2026-06-13 it was worse still — the "EA Desktop UI wedge" variant (below) survived
 rungs 1-3 + a CEF reset and only rung 4 fixed it. Don't over-trust rung 1; if it
-re-hangs identically twice, skip ahead.)
+re-hangs identically twice, skip ahead. On 2026-06-21 a clean rung-1-state attempt
+failed identically — `EADesktop.exe` NEVER spawned (only `EABackgroundService` + a
+`CrBrowserMain` CEF proc, collapsing after ~60s, no fresh nslog) — and **rung 3
+(clear EA caches) fixed it on the first relaunch**; leaving `CEF` intact avoided an
+EA re-login.)
 
 **⚠️ Never fix this by switching Proton version.** Proton Experimental shipped an
 April-2026 Xalia 0.4.9 fix for the EA-app lockup, BUT **Northstar requires GE-Proton**
@@ -94,6 +98,11 @@ Non-destructive. (Lighter variant if even vanilla hangs at the EA app: clear ALL
 options → Launch → let EA Desktop fully load and log in → Stop → relaunch.)
 
 ### Rung 3 — clear EA Desktop caches (surgical, auto-regenerated)
+**Best fit when `EADesktop.exe` NEVER spawns** (only `EABackgroundService` + a
+`CrBrowserMain` CEF proc come up, then the whole tree self-collapses after ~60s with no
+fresh nslog) — distinct from the UI-wedge variant where `EADesktop.exe` *does* persist.
+Fixed it first-try on 2026-06-21. Deleting only the three caches below (NOT the sibling
+`CEF` dir) preserves the EA login, so no re-login is needed.
 ```bash
 AD=~/.local/share/Steam/steamapps/compatdata/1237970/pfx/drive_c/users/steamuser/AppData
 rm -rf "$AD/Local/EADesktop/cache" \
