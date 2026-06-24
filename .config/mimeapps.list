@@ -15,7 +15,9 @@ application/json=nvim.desktop
 application/xml=nvim.desktop
 application/vnd.ms-excel=nvim.desktop
 x-scheme-handler/slack=slack.desktop
+x-scheme-handler/net.thunderbird=userapp-Thunderbird-LQ3BR3.desktop
 
 [Added Associations]
 x-scheme-handler/mailto=userapp-Thunderbird-FZO9P3.desktop;userapp-Thunderbird-2C1151.desktop;
 x-scheme-handler/mid=userapp-Thunderbird-FZO9P3.desktop;userapp-Thunderbird-2C1151.desktop;
+x-scheme-handler/net.thunderbird=userapp-Thunderbird-LQ3BR3.desktop;
