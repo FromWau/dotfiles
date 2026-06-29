@@ -10,8 +10,7 @@ fun SemanticsNode.toUiNode(): UiNode {
     val cfg = config
     val b = boundsInWindow
     val role = cfg.getOrNull(SemanticsProperties.Role)?.toString()
-    val text = cfg.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }
-        ?: cfg.getOrNull(SemanticsProperties.ContentDescription)?.joinToString(" ")
+    val text = nodeLabel()
     val testTag = cfg.getOrNull(SemanticsProperties.TestTag)
     val actions = buildList {
         if (cfg.getOrNull(SemanticsActions.OnClick) != null) add("OnClick")

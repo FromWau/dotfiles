@@ -29,7 +29,11 @@ import java.util.concurrent.atomic.AtomicBoolean
  * - `GET  /screenshot` -> PNG of the active Compose window (in-process Skiko render)
  */
 object ControlServer {
-    const val PORT = 6699
+    /**
+     * Control-server port. Defaults to 6699, overridable via the `ECHO_HARNESS_PORT` env var so
+     * several sandboxed harness instances can run in parallel (each on its own port + XDG sandbox).
+     */
+    val PORT: Int = System.getenv("ECHO_HARNESS_PORT")?.toIntOrNull() ?: 6699
     private val started = AtomicBoolean(false)
 
     fun startOnce() {
@@ -48,6 +52,17 @@ object ControlServer {
                 post("/setText") {
                     val parts = call.receiveText().split(",", limit = 3)
                     val hit = harnessSetText(parts[0].trim().toInt(), parts[1].trim().toInt(), parts.getOrElse(2) { "" })
+                    call.respondText(if (hit) "ok" else "miss")
+                }
+                post("/tapLabel") {
+                    call.respondText(if (harnessTapLabel(call.receiveText().trim())) "ok" else "miss")
+                }
+                post("/longPressLabel") {
+                    call.respondText(if (harnessLongPressLabel(call.receiveText().trim())) "ok" else "miss")
+                }
+                post("/setTextLabel") {
+                    val parts = call.receiveText().split(",", limit = 2)
+                    val hit = harnessSetTextLabel(parts[0].trim(), parts.getOrElse(1) { "" })
                     call.respondText(if (hit) "ok" else "miss")
                 }
                 post("/scroll") {

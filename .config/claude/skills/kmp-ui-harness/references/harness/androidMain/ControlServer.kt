@@ -20,7 +20,11 @@ import java.util.concurrent.atomic.AtomicBoolean
  * HarnessControl/HarnessSeams. Requires `android.permission.INTERNET` (debug only).
  */
 object ControlServer {
-    const val PORT = 6699
+    /**
+     * Control-server port. Defaults to 6699, overridable via the `ECHO_HARNESS_PORT` env var for
+     * parity with desktop (lets a host script pick the port to `adb forward`).
+     */
+    val PORT: Int = System.getenv("ECHO_HARNESS_PORT")?.toIntOrNull() ?: 6699
     private val started = AtomicBoolean(false)
 
     fun startOnce() {
@@ -39,6 +43,17 @@ object ControlServer {
                 post("/setText") {
                     val parts = call.receiveText().split(",", limit = 3)
                     val hit = harnessSetText(parts[0].trim().toInt(), parts[1].trim().toInt(), parts.getOrElse(2) { "" })
+                    call.respondText(if (hit) "ok" else "miss")
+                }
+                post("/tapLabel") {
+                    call.respondText(if (harnessTapLabel(call.receiveText().trim())) "ok" else "miss")
+                }
+                post("/longPressLabel") {
+                    call.respondText(if (harnessLongPressLabel(call.receiveText().trim())) "ok" else "miss")
+                }
+                post("/setTextLabel") {
+                    val parts = call.receiveText().split(",", limit = 2)
+                    val hit = harnessSetTextLabel(parts[0].trim(), parts.getOrElse(1) { "" })
                     call.respondText(if (hit) "ok" else "miss")
                 }
                 post("/scroll") {

@@ -31,6 +31,9 @@ frame, so it captures the app window specifically on any OS/compositor).
 - `POST /tap`        → body `"x,y"` → invokes the smallest `OnClick` node containing (x,y). Reply `ok`|`miss`.
 - `POST /longPress`  → body `"x,y"` → `OnLongClick`.
 - `POST /setText`    → body `"x,y,text"` → `SetText` on the field at (x,y).
+- `POST /tapLabel`   → body `"<label>"` → clicks the smallest `OnClick` node whose label (its text, else its contentDescription; case-insensitive substring) contains `<label>`. Prefer this over `/tap` for buttons with a stable label, especially icon-only ones (play/pause, an overflow `⋮`): it hit-tests in-process so it never depends on window size / DPI, no coordinate math. Reply `ok`|`miss`.
+- `POST /longPressLabel` → body `"<label>"` → `OnLongClick` the smallest node whose label matches.
+- `POST /setTextLabel`   → body `"<label>,<text>"` → `SetText` on the smallest field whose label/placeholder matches `<label>` (split on the first comma; `<text>` may contain commas).
 - `POST /scroll`     → body `"dx,dy"` scrolls the largest scrollable supporting the axis; `"x,y,dx,dy"` scrolls the smallest scrollable under (x,y). `+dx`→right, `-dx`→left, `+dy`→down, `-dy`→up. Use the 4-arg form to target a horizontal row nested in a vertical list (find it via `scrollAxes` in `/layout`).
 - `GET  /screenshot` → PNG of the active Compose window, rendered in-process via Skiko (`SkiaLayer.screenshot()`). No external tool; works on any OS/compositor and grabs the app window specifically.
 

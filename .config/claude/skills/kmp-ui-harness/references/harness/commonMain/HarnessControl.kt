@@ -37,6 +37,28 @@ fun harnessSetText(x: Int, y: Int, text: String): Boolean = harnessRunOnUiThread
         ?.config?.getOrNull(SemanticsActions.SetText)?.action?.invoke(AnnotatedString(text)) != null
 }
 
+/**
+ * `/tapLabel <label>` -> click the smallest OnClick node whose label (its Text, else its
+ * ContentDescription) contains <label>, case-insensitive. Robust where coordinates aren't: it
+ * reaches icon-only buttons by their accessibility label and never depends on window size / DPI.
+ */
+fun harnessTapLabel(label: String): Boolean = harnessRunOnUiThread {
+    nodeWithLabel(label) { it.config.getOrNull(SemanticsActions.OnClick) != null }
+        ?.config?.getOrNull(SemanticsActions.OnClick)?.action?.invoke() != null
+}
+
+/** `/longPressLabel <label>` -> OnLongClick the smallest node whose label contains <label>. */
+fun harnessLongPressLabel(label: String): Boolean = harnessRunOnUiThread {
+    nodeWithLabel(label) { it.config.getOrNull(SemanticsActions.OnLongClick) != null }
+        ?.config?.getOrNull(SemanticsActions.OnLongClick)?.action?.invoke() != null
+}
+
+/** `/setTextLabel <label>,<text>` -> SetText on the smallest field whose label contains <label>. */
+fun harnessSetTextLabel(label: String, text: String): Boolean = harnessRunOnUiThread {
+    nodeWithLabel(label) { it.config.getOrNull(SemanticsActions.SetText) != null }
+        ?.config?.getOrNull(SemanticsActions.SetText)?.action?.invoke(AnnotatedString(text)) != null
+}
+
 /** `/scroll` -> `[dx,dy]` (largest scrollable) or `[x,y,dx,dy]` (scrollable at point). +dx right, +dy down. */
 fun harnessScroll(nums: List<Int>): Boolean = harnessRunOnUiThread {
     when (nums.size) {
@@ -60,6 +82,22 @@ private fun nodeWithActionAt(x: Int, y: Int, has: (SemanticsNode) -> Boolean): S
     val point = Offset(x.toFloat(), y.toFloat())
     return allNodes()
         .filter { has(it) && it.boundsInWindow.contains(point) }
+        .minByOrNull { it.boundsInWindow.width * it.boundsInWindow.height }
+}
+
+/**
+ * A node's display label: its Text, else its ContentDescription — the same value `/layout` emits as
+ * `text`. Shared by the dump ([toUiNode]) and label hit-testing so the two never diverge.
+ */
+internal fun SemanticsNode.nodeLabel(): String? =
+    config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }
+        ?: config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString(" ")
+
+/** Smallest node satisfying [has] whose label contains [label] (case-insensitive). */
+private fun nodeWithLabel(label: String, has: (SemanticsNode) -> Boolean): SemanticsNode? {
+    val needle = label.lowercase()
+    return allNodes()
+        .filter { has(it) && it.nodeLabel()?.lowercase()?.contains(needle) == true }
         .minByOrNull { it.boundsInWindow.width * it.boundsInWindow.height }
 }
 
