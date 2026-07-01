@@ -15,6 +15,7 @@ This SKILL.md covers architecture and error-handling fundamentals. For domain-sp
 - **`references/compose-deep-dive.md`** — state retention (`remember`/`retain`/`rememberSaveable`), UI state modeling, focus/keyboard, performance, stateful vs stateless, pagination, UX best practices. Read when building Compose UIs.
 - **`references/persistence-and-platform.md`** — File I/O (buffered reading), DataStore Preferences with KeyStore encryption, Room, KMP permissions via Moko, `inline` functions and `@JvmInline value class`. Read when persisting data or handling permissions.
 - **`references/viewmodel-scoping.md`** — composable-scoped ViewModels (lifecycle 2.11 `rememberViewModelStoreOwner`/`LocalViewModelStoreOwner`), one VM per list item/card/sheet, state ownership across multiple VMs, keeping many scoped VMs + per-item flows cheap, KMP/CMP availability. Read when scoping a VM to anything smaller than a screen.
+- **`references/concurrent-service.md`** — architecting an injectable, thread-safe service with an internal state machine (`Idle`/`Starting`/`Running`/`Stopping`/`Stopped`) and `run()`/`stop()` callable in parallel. Recommends the single-owner command-channel (actor-style) pattern where one coroutine owns the state and `run()`/`stop()` send it commands: typed `Result` replies via the ask pattern, guarding transitions not work, `ensureActive()` over catching `CancellationException`. Read when building a service/manager/controller that holds lifecycle state and is called concurrently.
 
 ## Gradle & Toolchain
 
