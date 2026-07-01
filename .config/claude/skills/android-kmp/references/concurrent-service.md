@@ -181,6 +181,34 @@ class WorkerService(
 - **`WorkEnded` closes the machine honestly.** `runWork()` is a child of the loop coroutine, so an uncaught throw would cancel the loop and silently kill the service. Reporting termination back as an internal command keeps every `_state` write inside the one owner and gives the machine an honest `Running -> Stopped` edge for when the work finishes or crashes on its own (model `State` as a sealed interface with a `Failed(cause)` case if you need to carry the crash cause). The `Stop` and `WorkEnded` interleavings are consistent either way (FIFO channel + the `if (_state.value == Running)` guard).
 - **Scope ownership:** give the injected scope a `SupervisorJob` so one crash cannot propagate upward, and cancel that scope on service disposal to tear everything down structurally.
 
+## Common miss: a handler that throws outside its `try` hangs the whole service
+
+Loop survival is the whole ballgame. Every entry point blocks on `ack.await()`, so when the owner coroutine dies the service does not return an error, it **hangs forever** - and every future `run()`/`stop()` hangs with it. `WorkEnded` guards the *work job*; you must also guard the *command handlers themselves*.
+
+The trap is subtle because it hides in code that looks harmless: it is natural to do the "real" work in a `try` but resolve dependencies or build helpers *just before* it, assuming those can't fail. They can - a DI lookup (`scope.get<Foo>()`), a lazy property, a builder that validates its input - and that throw escapes the handler, unwinds `for (cmd in commands)`, and kills the loop with the ack still pending.
+
+```kotlin
+// WRONG - resolution sits outside the try; a get() throw escapes the handler and kills the loop
+is Command.Serve -> {
+    val server = RpcServer(scope.get<Daemon>(), scope.get<Registry>()) // can throw -> loop dies
+    cmd.ack.complete(runCatching { server.start(); Ok(server.port) }.getOrElse { Err(BindFailed(it)) })
+}
+
+// RIGHT - the entire fallible body, resolution included, is inside the protected region
+is Command.Serve -> cmd.ack.complete(
+    try {
+        val server = RpcServer(scope.get<Daemon>(), scope.get<Registry>()) // now guarded
+        server.start()
+        Ok(server.port)
+    } catch (e: Exception) {
+        currentCoroutineContext().ensureActive()
+        Err(BindFailed(e))
+    },
+)
+```
+
+Rule of thumb: in a command handler, everything from "read the current state" onward that can throw belongs inside the region whose only exits are `ack.complete(...)`. If a handler can throw without completing its ack, the machine is one unlucky call away from a permanent hang. (If you would rather not audit every handler, wrap the `when` body in a `try` that does `cmd.ack.completeExceptionally(t)` and re-throws only on cancellation - the caller then gets an exception instead of a hang. The per-handler discipline above is cleaner and keeps typed errors; the outer net is a backstop.)
+
 ## Cancellation: `ensureActive()` over `catch (CancellationException)`
 
 Both aim at "do not swallow cancellation," but they key off different things:
@@ -198,6 +226,7 @@ Never combine `catch (CancellationException) { throw e }` *and* `ensureActive()`
 
 - Do not hold a lock (or block the owner loop) across the actual start/stop *work* - only across the transition.
 - Do not let the work `Job` mutate `_state` or complete an ack directly; report back to the owner so all state writes stay in one place.
+- Keep **every fallible step inside the handler's protected region** - dependency/handle resolution (`scope.get<>()`) and object construction too, not just the core start/stop work. A throw that escapes a command handler kills the owner loop and hangs every future call on `ack.await()`. See "Common miss" above.
 - Do not forget `SupervisorJob` on the scope, or one work crash cancels the whole service.
 - Do not use `catch (CancellationException)` where `ensureActive()` belongs.
 - Do not reach for the deprecated `actor { }` builder (`@ObsoleteCoroutinesApi`); a plain `launch` consuming a `Channel` is the current idiom.
