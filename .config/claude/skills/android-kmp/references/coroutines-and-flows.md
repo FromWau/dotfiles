@@ -32,6 +32,7 @@
   ```
 - **Diagnostic**: if everything inside your `withContext` block is already a suspending function, remove it
 - **Use `flowOn(Dispatchers.Default)`** for complex flow chains (filter + map + combine) to move the entire upstream off the main thread
+- **KMP `commonMain` gotcha**: in `commonMain`, `Dispatchers.IO` is an extension property, not a member of the `Dispatchers` object, so it needs an explicit `import kotlinx.coroutines.IO`. Without that import the JVM/Android compile still resolves `Dispatchers.IO` (it is a real member there), so `:module:jvmTest` passes, but `compileCommonMainKotlinMetadata` fails with `Unresolved reference 'IO'`. Lesson: per-target test tasks are a false green for `commonMain` changes. Validate `commonMain` edits with `./gradlew build` (it runs the metadata compile), not just `:module:jvmTest`.
 
 ## Coroutine Advanced Patterns
 
