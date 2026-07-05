@@ -55,6 +55,7 @@ This SKILL.md covers architecture and error-handling fundamentals. For domain-sp
 - **Use cases vs. Repositories — it's either/or:**
   - Rich Repository with real orchestration logic → use cases that just delegate are pointless overhead
   - Want real use cases → move orchestration into them and remove the redundant repository class
+- **Scale the decision to project size** — even done correctly, many use cases end up as empty forwarders (`GetNotesUseCase` just calls the repository, no orchestration). For small/medium projects, lean toward *no* use cases and keep orchestration in the ViewModel or repository; the pattern pays off in **larger** projects where bundling steps behind one call (`LogoutUseCase` = network call + clear session + clear cart) saves re-memorizing what an operation entails
 - Good use cases: `StoreTodoUseCase` (insert locally → sync remotely → schedule retry on failure), `RegisterUseCase`, `ExportDataUseCase`
 - Use cases that combine data from multiple repositories (e.g. `UserDataSource` + `TodoDataSource`) are cleaner than forcing the logic into either `UserRepository` or `TodoRepository`
 - Implementation details (Ktor, Room, WorkManager) should stay hidden behind interfaces — use cases depend on abstractions, not concrete libraries
