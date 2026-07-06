@@ -13,7 +13,7 @@ Launch applications: first check for `.run/*.xml` configs — these are used by 
 
 ## When to read references
 
-- **`references/compose-deep-dive.md`** — state retention (`remember`/`retain`/`rememberSaveable`), UI state modeling, focus/keyboard, performance, stateful vs stateless, pagination, UX best practices. Read when building Compose UIs.
+- **`references/compose-deep-dive.md`** — state retention (`remember`/`retain`/`rememberSaveable`), UI state modeling, focus/keyboard, performance, stateful vs stateless, pagination, adaptive sizing (the Size-object pattern for device-adaptive screens), UX best practices. Read when building Compose UIs or making layouts adapt to device classes.
 - **`references/viewmodel-scoping.md`** — composable-scoped ViewModels (lifecycle 2.11 `rememberViewModelStoreOwner`/`LocalViewModelStoreOwner`), one VM per list item/card/sheet, state ownership across multiple VMs, keeping many scoped VMs + per-item flows cheap, KMP/CMP availability. Read when scoping a VM to anything smaller than a screen.
 - **`references/persistence-and-platform.md`** — DataStore Preferences with KeyStore encryption, Room, KMP permissions via Moko. Read when persisting data or handling permissions. (Kotlin/JVM file I/O and `inline`/`value class` live in the `kotlin` skill.)
 

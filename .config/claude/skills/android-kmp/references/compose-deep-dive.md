@@ -204,6 +204,70 @@ Never use stateful for:
 
 If you do use local `remember`: use `rememberSaveable` for anything that should survive config changes (rotation, theme switch)
 
+## Adaptive Sizing — the Size-object Pattern
+
+For screens that adapt to device classes (phone/tablet/desktop, or project-specific
+types like `LocalDeviceType`), collect all adaptive dimensions and text styles into
+one `XSize` type per screen — never scatter `LocalDeviceType.current` /
+`WindowSizeClass` reads through child composables.
+
+```kotlin
+object CheckoutSize {
+    @Immutable
+    data class FooterSize(
+        val height: Dp,
+        val buttonTextStyle: TextStyle,
+    )
+
+    val footer: FooterSize
+        @Composable @ReadOnlyComposable get() {
+            return when (LocalDeviceType.current) {   // adaptive resolution lives ONLY here
+                is DeviceType.MobilePortrait -> FooterSize(80.dp, MaterialTheme.typography.headlineMedium)
+                else -> FooterSize(100.dp, MaterialTheme.typography.headlineLarge)
+            }
+        }
+}
+
+@Composable
+fun CheckoutScreen(
+    state: CheckoutState,
+    onAction: (CheckoutAction) -> Unit,
+    modifier: Modifier = Modifier,
+    size: CheckoutSize = CheckoutSize,        // injected at the ROOT
+) {
+    Footer(size = size.footer)                // getters read off the param, once
+}
+
+@Composable
+private fun Footer(
+    size: CheckoutSize.FooterSize,            // children take plain data params
+    modifier: Modifier = Modifier,
+) { /* uses size.height, size.buttonTextStyle */ }
+```
+
+The rules and why they matter:
+
+- **Screen-level Size type is an `object`** with `@Composable @ReadOnlyComposable`
+  property getters returning nested `@Immutable` data classes. The getters are the
+  single place where the device class is resolved.
+- **Inject at the root**: the screen composable takes `size: XSize = XSize`. Tests
+  and previews get one seam to control sizing for the whole screen instead of having
+  to fake the device CompositionLocal for the entire tree.
+- **Pipe sub-sizes down**: children receive the resolved data classes
+  (`XSize.FooterSize`) as ordinary parameters. A child that reads `XSize.footer` or
+  `LocalDeviceType.current` itself silently re-couples the tree to global state and
+  breaks the injection seam.
+- **Reusable components** (a keyboard, a card — anything used by multiple screens)
+  may instead expose an `@Immutable data class` Size with a device-derived default
+  (`size: KeyboardSize = KeyboardSize.fromDeviceType()`), so each caller or test can
+  pass a fully custom instance.
+- Layout weights, paddings, and text styles that vary by device all belong in the
+  Size type — if a `when (deviceType)` appears inside a composable body, that value
+  should move into the Size getter instead.
+- Fixed-height blocks that contain dynamic content (error messages, growing lists)
+  should use `heightIn(min = size.x)` rather than `height(size.x)` so content can
+  never be silently clipped on the smallest device class.
+
 ## UI Tips
 
 Auto-sizing text — use `BasicText` with `autoSize` instead of manually mapping `WindowSizeClass` to SP values:

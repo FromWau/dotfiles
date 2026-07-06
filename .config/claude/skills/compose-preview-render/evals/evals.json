@@ -1,0 +1,18 @@
+{
+  "skill_name": "compose-preview-render",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "I want to see how the DebitSelectPaymentTypeScreen composable from the :ui:other module looks on a Samsung XCover5 (338x624dp) and on a Tab Active5Pro (1280x800dp landscape). The project is at /home/fromml/Projects/nifdex.npay.mobile (Gradle build lives in src/). Render actual preview images of it and tell me if anything looks off on either device. Important: do not modify anything inside the repository, and do not use Android Studio (it must work headlessly). Save the rendered images and a short findings summary.",
+      "expected_output": "PNG renders of DebitSelectPaymentTypeScreen for both device specs produced headlessly via Gradle, repo left unmodified, plus a visual assessment",
+      "files": [],
+      "assertions": [
+        "produced-png-renders: at least 2 PNG files were saved to outputs/",
+        "both-devices-covered: one PNG has portrait phone proportions (~338x624dp spec) and another has landscape tablet proportions (~1280x800dp spec)",
+        "images-show-payment-type-screen: the PNGs visibly contain the payment-type selection UI (tiles/buttons), not a blank or error render",
+        "repo-unmodified: git status shows no changes beyond the pre-existing feature-branch modifications (no new files, no build-script edits, no screenshotTest dirs inside the repo)",
+        "findings-summary-present: a findings.md exists with a per-device visual assessment"
+      ]
+    }
+  ]
+}

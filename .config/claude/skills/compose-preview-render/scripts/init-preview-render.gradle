@@ -1,0 +1,93 @@
+// Headless Compose preview rendering via the AGP Compose Preview Screenshot
+// Testing plugin, injected at build time so the target repo needs NO changes.
+// Part of the compose-preview-render skill — see its SKILL.md for usage.
+//
+// Env contract (read at configuration time):
+//   PREVIEW_MODULE         Gradle path of the module to render from (e.g. ":ui:other")
+//   PREVIEW_FIXTURES       dir with fixture .kt files (required)
+//   PREVIEW_OUT            output dir for PNGs (default /tmp/compose-previews)
+//   PREVIEW_PLUGIN_VERSION screenshot plugin version (default 0.0.1-alpha15)
+//   PREVIEW_BOM            optional compose BOM coordinate, e.g. androidx.compose:compose-bom:2025.04.01
+//   PREVIEW_DEPS           optional comma-separated extra screenshotTest deps;
+//                          prefix project deps with "project:", e.g.
+//                          "project::ui:theme,org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5"
+
+def targetModule = System.getenv("PREVIEW_MODULE") ?: ":app"
+def fixturesDir = System.getenv("PREVIEW_FIXTURES")
+def outDir = System.getenv("PREVIEW_OUT") ?: "/tmp/compose-previews"
+def pluginVersion = System.getenv("PREVIEW_PLUGIN_VERSION") ?: "0.0.1-alpha15"
+def bomCoordinate = System.getenv("PREVIEW_BOM")
+def extraDeps = (System.getenv("PREVIEW_DEPS") ?: "").tokenize(',').collect { it.trim() }.findAll { it }
+
+if (fixturesDir == null) {
+	throw new GradleException("compose-preview-render: PREVIEW_FIXTURES must point to the directory containing fixture .kt files")
+}
+
+// The plugin must land on the ROOT project's buildscript classpath: it references
+// AGP classes, so it has to share a classloader with AGP. Putting it on the
+// initscript classpath fails with NoClassDefFoundError (com.android.build.api...).
+projectsLoaded { g ->
+	g.rootProject { root ->
+		root.buildscript {
+			repositories {
+				google()
+				mavenCentral()
+			}
+			dependencies {
+				classpath "com.android.compose.screenshot:screenshot-test-gradle-plugin:${pluginVersion}"
+			}
+		}
+	}
+}
+
+def configureModule = { project ->
+	if (project.ext.has("composePreviewRenderConfigured")) {
+		return
+	}
+	project.ext.set("composePreviewRenderConfigured", true)
+
+	def android = project.extensions.getByName("android")
+	// Both this module-level flag and the -Pandroid.experimental.enableScreenshotTest=true
+	// command-line property are required; missing either fails the build.
+	android.experimentalProperties["android.experimental.enableScreenshotTest"] = true
+
+	project.apply plugin: "com.android.compose.screenshot"
+
+	android.sourceSets.matching { it.name == "screenshotTest" }.all { ss ->
+		ss.java.srcDir(fixturesDir)
+		try {
+			ss.kotlin.srcDir(fixturesDir)
+		} catch (ignored) {
+			// AGP versions where the kotlin block mirrors java srcDirs
+		}
+	}
+
+	project.afterEvaluate {
+		def deps = project.dependencies
+		deps.add("screenshotTestImplementation", "com.android.tools.screenshot:screenshot-validation-api:${pluginVersion}")
+		if (bomCoordinate) {
+			deps.add("screenshotTestImplementation", deps.platform(bomCoordinate))
+			deps.add("screenshotTestImplementation", "androidx.compose.ui:ui-tooling")
+		}
+		extraDeps.each { dep ->
+			if (dep.startsWith("project:")) {
+				deps.add("screenshotTestImplementation", project.project(dep.substring("project:".length())))
+			} else {
+				deps.add("screenshotTestImplementation", dep)
+			}
+		}
+
+		// Redirect the "reference images" (= the rendered PNGs) out of the repo.
+		project.tasks.matching { it.name.startsWith("update") && it.name.endsWith("ScreenshotTest") }.configureEach { t ->
+			t.testEngineInput.referenceImageDir.set(project.file(outDir))
+		}
+	}
+}
+
+allprojects { project ->
+	if (project.path != targetModule) {
+		return
+	}
+	project.plugins.withId("com.android.library") { configureModule(project) }
+	project.plugins.withId("com.android.application") { configureModule(project) }
+}

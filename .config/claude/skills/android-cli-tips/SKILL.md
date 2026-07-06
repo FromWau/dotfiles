@@ -24,6 +24,16 @@ Update: `android update`. Reset/refresh skill files: `android init` (writes `~/.
 - Build / lint / test of an existing project → `./gradlew` (the `android run` command is APK deploy, not a Gradle replacement).
 - Connected device list, logcat, file push/pull, package install/uninstall → `adb` (no `android` equivalent).
 
+## `android studio` — IDE-bridge commands (version-gated)
+
+`android studio` bridges into a *running* Android Studio instance: `check`, `find-declaration`, `find-usages`, `open-file`, `analyze-file`, `render-compose-preview` (renders a `@Preview` composable to PNG, `--print-semantics` for the semantics tree as JSON), `version-lookup`.
+
+- Always run `android studio check` first — it lists PID, Studio version, and open projects with READY state.
+- **The RPC endpoints beyond `check` require Android Studio Quail 2 Canary 1 or newer AND Gemini in Android Studio enabled + signed in** (per developer.android.com/tools/agents/android-cli). Either one missing → every command beyond `check` fails with `Error: <n> not implemented` even when the project shows READY. This is a live gate: disabling Gemini later re-breaks the endpoints immediately. For Gemini-free headless preview rendering, use the Compose Preview Screenshot Testing Gradle plugin instead (renders ALL multipreview configs, works in CI). That error is a server-side gate, not a CLI problem — `android update` won't fix it. The Gemini sign-in is interactive in the IDE; hand it to the user.
+- `render-compose-preview` usage: `android studio render-compose-preview --output-image-file=out.png <file.kt> <PreviewComposableName>`. Private composables are fine; run from inside the project dir to auto-select the project.
+- With multipreview annotations (custom annotations bundling several `@Preview` device specs), the CLI renders only ONE configuration per call — you cannot pick which device spec. Indeterminate progress spinners render at animation-time zero (a tiny stroke-cap dot), not as a full arc.
+- **Stale-classpath trap**: `render-compose-preview` loads module classes from the IDE's own *last-build* snapshot. External `./gradlew` builds (compileDebugKotlin, assembleDebug, even `build`) NEVER refresh it — verified by bytecode-diffing the on-disk jar (fresh) against rendered output (stale). Waiting, window focus, `open-file`, `touch`, and whitespace-editing the preview file don't help either (the last one forces a classloader rebuild, but from the same stale snapshot). Symptoms: renders silently show old code, or `NoClassDefFoundError` for classes added since the IDE's last build. The ONLY fix: an IDE-triggered build (Ctrl+F9 / Build & Refresh hammer) per iteration. Fast Preview does compile the *preview file itself* on the fly, so new/edited preview functions work without a build — it's sibling files that stay stale. For iterative visual tuning without a human clicking Build each round, use the Compose Preview Screenshot Testing Gradle plugin instead.
+
 ## Gotchas
 
 - Shipped `references/interact.md` documents `screen resolve --screen <path>`; the actual flag is `--screenshot <path>`. Use `--screenshot`.
