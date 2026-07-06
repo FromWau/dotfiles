@@ -63,30 +63,17 @@ return {
 
                     local function buf_map(lhs, rhs, desc) vim.keymap.set("n", lhs, rhs, { buffer = args.buf, desc = desc }) end
 
-                    if client:supports_method "textDocument/codeAction" then
-                        buf_map("<leader>ca", function() vim.lsp.buf.code_action() end, "Code action")
-                    end
-                    if client:supports_method "textDocument/rename" then
-                        buf_map("<leader>cr", function() vim.lsp.buf.rename() end, "Code rename")
-                    end
+                    -- LSP actions use Neovim's built-in defaults, set automatically on
+                    -- LspAttach since 0.11: grn rename, grr references, gri implementation,
+                    -- gra code action, grt type definition, gO document symbol, K hover,
+                    -- <C-s> signature help. Only map what core doesn't: gd (definition)
+                    -- and grh (toggle inlay hints, extending the gr* namespace).
                     if client:supports_method "textDocument/definition" then
                         buf_map("gd", function() vim.lsp.buf.definition() end, "Goto definition")
                     end
-                    if client:supports_method "textDocument/typeDefinition" then
-                        buf_map("gD", function() vim.lsp.buf.type_definition() end, "Goto type definition")
-                    end
-                    if client:supports_method "textDocument/references" then
-                        buf_map("gr", function() vim.lsp.buf.references() end, "Goto references")
-                    end
-                    if client:supports_method "textDocument/implementation" then
-                        buf_map("gi", function() vim.lsp.buf.implementation() end, "Goto implementation")
-                    end
-                    if client:supports_method "textDocument/hover" then
-                        buf_map("K", function() vim.lsp.buf.hover() end, "Hover")
-                    end
                     if client:supports_method "textDocument/inlayHint" then
                         buf_map(
-                            "<leader>ch",
+                            "grh",
                             function()
                                 vim.lsp.inlay_hint.enable(
                                     not vim.lsp.inlay_hint.is_enabled { bufnr = args.buf },
