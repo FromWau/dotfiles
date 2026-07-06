@@ -1,25 +1,6 @@
-# Persistence, Platform & Language Features
+# Persistence & Platform (Android/KMP)
 
-## File I/O — Basics
-
-- `java.io.File` is just a **reference/pointer** to a path — no I/O happens on construction. The file/folder may not even exist
-- On Unix, folders are also files — `File` can reference both. Check `isDirectory()` to distinguish
-- `file.mkdirs()` creates **all missing parent directories** before creating a file (use over `mkdir()` for nested paths)
-- Relative paths: `.` = current working directory, `..` = parent directory, `/prefix` = absolute root
-- Recursive file traversal: check `child.isDirectory` to recurse into subdirectories
-
-## File I/O — Buffered Reading and Writing
-
-- Raw byte-by-byte file reading is slow — each `read()` call translates to a low-level OS system call. Reading an 80MB file byte-by-byte = ~80 million system calls (~37 seconds)
-- **Use `BufferedReader` / `BufferedWriter`** — reads large chunks into memory at once, then processes from memory. Same 80MB file: ~0.75s (50x+ faster)
-  ```kotlin
-  FileInputStream(file).bufferedReader().use { reader ->
-      // processes from in-memory buffer — not an OS call per byte
-  }
-  ```
-- High-level Kotlin extension functions like `file.readBytes()`, `file.readText()` already use buffering internally — no need to manually wrap them
-- **Use low-level buffered APIs when** you need to process a file **gradually line by line** without loading the entire contents into memory (large log files, data streams). Only one line is in memory at a time; the previous is GC-able after each iteration
-- **Use `readBytes()` / `readText()`** only when you actually need the entire file content at once (e.g. loading an image for processing)
+Kotlin/JVM language features (`inline`, `@JvmInline value class`) and buffered file I/O moved to the `kotlin` skill — see `kotlin/references/language-features.md`.
 
 ## DataStore Preferences (Android)
 
@@ -60,29 +41,3 @@
 - **Android**: declare `<uses-permission android:name="android.permission.RECORD_AUDIO"/>` in `AndroidManifest.xml`
 - **iOS**: add `NSMicrophoneUsageDescription` key with description text to `Info.plist` in Xcode
 - After permanent denial: show an "Open App Settings" button; after re-grant, check state on next launch
-
-## `inline` Functions
-
-- `inline` copies the function body to every call site — eliminates function call overhead. Most useful for functions that accept lambdas called in tight loops (like `forEach`, `map`)
-- Standard library functions like `forEach`, `map`, `filter` are already `inline` — no need to rewrap them
-- **Additional capabilities unlocked by `inline`**:
-  - **Suspending lambdas**: an inline function's lambda inherits the coroutine context of the call site — you can call `delay()` inside a non-suspend inline lambda
-  - **Non-local returns**: `return` inside an inline lambda returns from the *outer* function, not just the lambda
-  - **`reified` generics**: type parameters retain their type info at runtime (normally erased). Required for generic JSON deserialization, `is T` checks, etc.
-    ```kotlin
-    inline fun <reified T> fromJson(json: String): T = Json.decodeFromString(json)
-    ```
-- **`crossinline`**: use on a lambda parameter that is executed asynchronously (inside a launched coroutine or thread). Disallows non-local returns since the outer function may have already returned
-- **`noinline`**: use on specific lambda parameters in an inline function that you don't want inlined (e.g. large lambda bodies that would bloat bytecode)
-- **When to use `inline`**: functions with lambda parameters called frequently. **Don't** add it to large bodies — bytecode size grows at every call site
-
-## `@JvmInline value class`
-
-Single-field wrapper over a primitive. Compiled to the raw primitive — zero allocation overhead, but gives type safety and the ability to add validation/behavior:
-
-```kotlin
-@JvmInline
-value class Month(val number: Int) {
-    init { require(number in 1..12) }
-}
-```

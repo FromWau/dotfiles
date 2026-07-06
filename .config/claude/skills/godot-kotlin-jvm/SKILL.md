@@ -12,14 +12,26 @@ NOT work for `.gdj` files, and several errors look engine-related but are
 actually Gradle/Kotlin-side issues. The aim of this skill is to short-circuit
 all of that.
 
-**Companion skill — load `godot` alongside this one.** It covers
-engine-general knowledge that applies regardless of scripting language:
-scene-tree composition, signal-wiring conventions, common pitfalls
-(negative-scale physics trap, preload memory chains, Sprite2D offset vs
-position), VisibleOnScreen culling, pixel-art resolution setup, editor
-tips. This skill stays focused on the Kotlin/JVM layer on top — the
-plugin, the registration model, Flow wrappers around signals, and the
-Kotlin-side architecture patterns.
+**Companion skills — load these alongside this one:**
+
+- **`godot`** — engine-general knowledge that applies regardless of scripting
+  language: scene-tree composition, signal-wiring conventions, common pitfalls
+  (negative-scale physics trap, preload memory chains, Sprite2D offset vs
+  position), VisibleOnScreen culling, pixel-art resolution setup, editor tips.
+  The engine-level composition story (four-level spectrum, "Call Down Signal
+  Up") lives in its `references/composition.md`.
+- **`kotlin`** — Kotlin-language idioms and formatting (the `Result<D, E>` type,
+  ranked domain types, `inline`/`value class`). **Caveat:** its coroutines/flows
+  guidance is for general Kotlin — inside a registered Godot Node the rule
+  *inverts* (weak-referenced wrappers + GC'd sharing scopes make Flows unsafe
+  there). See "No coroutines or Flows inside nodes" below before applying it.
+- **`software-design`** — language-agnostic architecture (layering, dependency
+  direction, when to abstract, typed-error philosophy). The Godot-specific
+  application of these lives here and in `godot`.
+
+This skill stays focused on the Kotlin/JVM layer on top — the plugin, the
+registration model, Flow wrappers around signals, and the Kotlin-side
+architecture patterns.
 
 ## Mental model
 
