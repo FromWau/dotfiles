@@ -95,9 +95,11 @@ Two complementary forms with different shapes:
 
 - **Skill** (procedural, "how to do X"): a multi-step workflow, recipe,
   or domain knowledge with concrete steps. Lives as `SKILL.md` under
-  `~/.claude/skills/` and loads when the topic is in scope. Route
-  through the `skill-creator` skill for creation or major edits; patch
-  the file directly for small fixes.
+  `~/.claude/skills/` and loads when the topic is in scope. **Always
+  load the `skill-creator` skill before editing any skill file**
+  (`SKILL.md` or a `references/` doc) — creation, major edit, or small
+  fix alike — so edits follow its conventions (progressive disclosure,
+  description/trigger design, size limits).
 - **Feedback memory** (declarative, "when doing X, prefer/avoid Y"): a
   rule, preference, or constraint. Always loaded via `MEMORY.md`. Use
   the existing auto-memory flow (the `feedback` type rules in the
@@ -141,3 +143,19 @@ creation, renaming, or deletion does.
 trigger phrases (file types, error strings, dependencies, casual user
 phrasings), numbered steps with exact commands, a pitfalls section,
 and verification steps.
+
+# Self-heal: missing or stale skills/plugins
+
+If a skill or plugin the user expects isn't in the available list,
+don't conclude it's unavailable — it's often just stale. The fix is
+usually an update + reload, not "it doesn't exist":
+
+- Prompt the user to open the plugin store with `/plugin` and check the
+  marketplace for an update to the expected plugin.
+- After updating, have them run `/reload-plugins` (and/or
+  `/reload-skills`) so newly added skills surface.
+- These are user-run slash commands — I can't invoke them, so ask the
+  user to run them, then re-check the available-skills list.
+
+Only conclude a skill/plugin is genuinely missing after an
+update + reload still fails to surface it.

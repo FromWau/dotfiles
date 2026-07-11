@@ -1,6 +1,6 @@
 ---
 name: android-kmp
-description: Android and Kotlin Multiplatform framework development — MVI + Compose + ViewModel, Koin DI, ViewModel lifecycle/scoping, DataStore/Room/Moko permissions, Gradle/AGP toolchain. This is the framework tier; load it alongside `kotlin` (language idioms) and `software-design` (architecture). Apply for work touching `build.gradle.kts`, `AndroidManifest.xml`, Compose UI, ViewModels, or KMP source sets (`androidApp/`, `composeApp/`, `shared/`, `commonMain/`, `androidMain/`, `iosMain/`). For plain Kotlin with no Android/KMP framework in play, the `kotlin` skill alone is enough.
+description: Android and Kotlin Multiplatform framework development — MVI + Compose + ViewModel, Koin DI, ViewModel lifecycle/scoping, DataStore/Room/Moko permissions, Gradle/AGP toolchain, and KMP source-set/target structure. This is the framework tier; load it alongside `kotlin` (language idioms) and `software-design` (architecture). Apply for work touching `build.gradle.kts`, `AndroidManifest.xml`, Compose UI, ViewModels, or KMP source sets (`androidApp/`, `composeApp/`, `shared/`, `commonMain/`, `androidMain/`, `iosMain/`, `appleMain/`, `nativeMain/`, `linuxMain/`, `mingwMain/`), and for anything involving KMP targets (adding a `linuxX64`/`mingwX64`/`macos*` target, splitting `nativeMain`, `expect`/`actual` placement, or deciding which source set a platform actual belongs in), even when the user doesn't name the skill. For plain Kotlin with no Android/KMP framework in play, the `kotlin` skill alone is enough.
 ---
 
 # Android / KMP
@@ -16,6 +16,7 @@ Launch applications: first check for `.run/*.xml` configs — these are used by 
 - **`references/compose-deep-dive.md`** — state retention (`remember`/`retain`/`rememberSaveable`), UI state modeling, focus/keyboard, performance, stateful vs stateless, pagination, adaptive sizing (the Size-object pattern for device-adaptive screens), UX best practices. Read when building Compose UIs or making layouts adapt to device classes.
 - **`references/viewmodel-scoping.md`** — composable-scoped ViewModels (lifecycle 2.11 `rememberViewModelStoreOwner`/`LocalViewModelStoreOwner`), one VM per list item/card/sheet, state ownership across multiple VMs, keeping many scoped VMs + per-item flows cheap, KMP/CMP availability. Read when scoping a VM to anything smaller than a screen.
 - **`references/persistence-and-platform.md`** — DataStore Preferences with KeyStore encryption, Room, KMP permissions via Moko. Read when persisting data or handling permissions. (Kotlin/JVM file I/O and `inline`/`value class` live in the `kotlin` skill.)
+- **`references/source-set-hierarchy.md`** — KMP source-set layout (flat dirs, logical hierarchy), the naming-by-target-breadth convention, union-compilation + the one-`actual`-per-path rule, and how to split `nativeMain` when adding a native target. Read when adding a native target, splitting `nativeMain`, or deciding which source set a platform `actual` goes in.
 
 For coroutines/flows and the concurrent-service actor pattern, read the `kotlin` skill's references.
 
