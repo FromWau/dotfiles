@@ -28,4 +28,7 @@ hl.on("hyprland.start", function()
     -- Walker launcher
     hl.exec_cmd "elephant"
     hl.exec_cmd "walker --gapplication-service"
+
+    -- Headless Ghostty -> faster startups
+    hl.exec_cmd "sleep 3 && ghostty --initial-window=false"
 end)
