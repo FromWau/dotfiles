@@ -1,5 +1,8 @@
 # https://ghostty.org/docs/config/reference
 
+## SHELL
+command = /usr/bin/fish
+
 ## FONT
 font-family = "FiraCode Nerd Font"
 font-size = 11
