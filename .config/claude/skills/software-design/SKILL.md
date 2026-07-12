@@ -1,6 +1,6 @@
 ---
 name: software-design
-description: Language-agnostic software design and architecture principles — single source of truth (resolve layered config/env/CLI inputs once into one computed value instead of re-deciding precedence everywhere), clean-architecture layering and dependency direction, when an abstraction earns its keep, use cases vs. repositories, model/mapper boundaries, composition over inheritance, and typed-error handling philosophy. Load this whenever a task involves a structure or architecture decision in ANY language — where a piece of code belongs, how to resolve config/flag/precedence into one source of truth, whether to introduce an interface/base class, how to slice layers or packages, how to model errors, or how to shape data crossing a boundary. Applies during design, code review, refactoring, and "where should this go?" questions, even when no framework is named. For the Kotlin expression of these ideas load `kotlin`; for Android/KMP framework specifics load `android-kmp`.
+description: Language-agnostic software design and architecture principles — single source of truth (resolve layered config/env/CLI inputs once into one computed value instead of re-deciding precedence everywhere), clean-architecture layering and dependency direction, when an abstraction earns its keep, use cases vs. repositories, model/mapper boundaries, composition over inheritance, and typed-error handling philosophy. Load this whenever a task involves a structure or architecture decision in ANY language — where a piece of code belongs, how to resolve config/flag/precedence into one source of truth, whether to introduce an interface/base class, how to slice layers or packages, how to model errors, how to shape data crossing a boundary, or whether to act on vs. suppress a linter/static-analysis finding. Applies during design, code review, refactoring, responding to a lint or complexity warning, and "where should this go?" questions, even when no framework is named. For the Kotlin expression of these ideas load `kotlin`; for Android/KMP framework specifics load `android-kmp`.
 ---
 
 # Software Design
@@ -42,6 +42,16 @@ Prefer this by default. Every piece of state or configuration has exactly one au
 - **Over-abstraction is a real cost**, not a neutral "clean" default. Clicking through five files to understand what a single button does is a failure mode. An interface with one implementation adds indirection and buys nothing.
 - Don't abstract mappers or use cases just because it *feels* tidy. If there will only ever be one implementation, the interface is noise.
 - If you don't write tests and don't plan to, there is almost never a reason for an abstraction beyond a repository interface (which exists to hide the data source from the domain).
+
+## Linters Are Nudges, Not Verdicts
+
+Static-analysis findings (a lint, a complexity/`too-many-methods` checker, a style rule) are heuristics: a signal that something *might* be a smell or *could* read better. They are not correctness rules and not orders — treat each as a question to answer, not a command to obey.
+
+- **The honest test before "fixing" one:** *would I make this change if the tool weren't complaining?* If no, you are silencing the tool, not improving the code — and a silencing change usually costs more than the finding it hides.
+- **Don't let a fix break an invariant.** Flattening, extracting, or reordering to satisfy a rule can violate a single source of truth, cross a typed-error boundary, or split single-owner state that must stay together. A green check never beats correctness.
+- **Don't add a needless abstraction to score points.** A delegate, wrapper, or layer introduced only to drop under a threshold is exactly the over-abstraction the rule above warns against: the reader now hops through indirection that exists to please a tool, not to model anything.
+- **Inconsistency is the tell.** If you change one unit to get it under a threshold but leave its identical sibling alone, the change is threshold-driven, not design-driven. Either it is a real improvement worth doing everywhere the shape occurs, or it is not worth doing at all.
+- **Some findings are false positives for legitimate shapes.** A `too-many-methods` warning on a class whose surface is dictated by a wide interface it must implement (an RPC facade, a driver/adapter over a broad API) flags a count that is externally imposed, not accidental complexity — the class still has one responsibility. Accept it honestly: suppress or baseline it with a one-line rationale, applied consistently across the siblings that share the shape, rather than contorting the code to trick the counter. An honest suppression reads better than a clever dodge.
 
 ## Use Cases — Higher-Level Business Logic Only
 
