@@ -1,6 +1,6 @@
 ---
 name: kotlin
-description: Kotlin language conventions — idioms and formatting for `.kt`/`.kts`. Idioms: Kotlin-first libraries (`kotlinx.*`), the `Result<D, E>` sealed error type, ranked domain types via sealed interface, mappers as extension functions, `inline`/`value class`, coroutines & flows. Formatting: trailing commas, string templates, Compose/lambda/`when` layout — conventions ktlint/detekt defaults don't enforce. Load whenever writing, editing, or reviewing Kotlin. For the language-agnostic architecture principles behind these idioms load `software-design`; for Android/KMP framework specifics (MVI, Compose, ViewModel, Koin) load `android-kmp`.
+description: Kotlin language conventions — idioms and formatting for `.kt`/`.kts`. Idioms: Kotlin-first libraries (`kotlinx.*`), the `Result<D, E>` sealed error type, ranked domain types via sealed interface, mappers as extension functions, `inline`/`value class`, coroutines & flows. Testing: KMP test strategy and TestBalloon (also load for Kotest, kotlin.test, JUnit-in-Kotlin, fixtures, flaky/parameterized/property tests, or "how do I test my KMP library"). Formatting: trailing commas, string templates, Compose/lambda/`when` layout — conventions ktlint/detekt defaults don't enforce. Load whenever writing, editing, reviewing, or testing Kotlin. For the language-agnostic architecture principles behind these idioms load `software-design`; for Android/KMP framework specifics (MVI, Compose, ViewModel, Koin) load `android-kmp`.
 ---
 
 # Kotlin
@@ -15,6 +15,7 @@ This skill is the **Kotlin-language** tier: idioms that apply to any Kotlin (`co
 - **`references/concurrent-service.md`** — an injectable, thread-safe service with an internal state machine, using the single-owner command-channel (actor) pattern: one coroutine owns the state, callers send it commands and get typed `Result` replies via the ask pattern. Read when building a service/manager/controller that holds lifecycle state and is called concurrently.
 - **`references/streaming-server-patterns.md`** — compositional recipes for a server/producer that runs independent work concurrently and streams results: generator, fan-in (`channelFlow`), server- vs client-side ordering (with the cold-flow-in-`async` pitfall), timeouts, request hedging, and back-pressure/`buffer`. Read when building a streaming pipeline or fanning out RPCs into one output stream.
 - **`references/language-features.md`** — `inline`/`reified`/`crossinline`, `@JvmInline value class`, and Kotlin/JVM file I/O (buffered reading). Read when reaching for these language/stdlib features.
+- **`references/testing.md`** — testing Kotlin/KMP: framework-agnostic principles (test every target, concurrent execution to surface hidden global mutable state, distinct tests over loops, property/data-driven, deep parallelism) plus **TestBalloon** (the 3-function DSL `testSuite`/`testFixture`/`TestConfig`, fixtures, custom DSLs, config chain, Gradle/IDE integration) and Kotest-migration notes. Read when writing, structuring, choosing a framework for, or migrating tests.
 
 ## Kotlin-first Libraries
 
