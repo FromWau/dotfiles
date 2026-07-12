@@ -26,6 +26,7 @@ training-data recall.
 - `rrplug-northstar` — Rust native plugins for Northstar
 - `spacetimedb-dev` — SpacetimeDB build, codegen, and SDK testing
 - `python` — Python conventions: `uv` package management and PEP 723 single-file scripts
+- `eval-driven-development` — evaluating agentic/LLM apps (eval pyramid, LLM-as-judge, golden datasets, red teaming; JVM examples with Dokimos)
 
 # Default Preferences
 
