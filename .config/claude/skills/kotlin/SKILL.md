@@ -13,6 +13,7 @@ This skill is the **Kotlin-language** tier: idioms that apply to any Kotlin (`co
 
 - **`references/coroutines-and-flows.md`** — structured concurrency, dispatchers, suspend vs. flows, cold/hot flows, cancellation, anti-patterns. Read when writing coroutine code or debugging flow behavior.
 - **`references/concurrent-service.md`** — an injectable, thread-safe service with an internal state machine, using the single-owner command-channel (actor) pattern: one coroutine owns the state, callers send it commands and get typed `Result` replies via the ask pattern. Read when building a service/manager/controller that holds lifecycle state and is called concurrently.
+- **`references/streaming-server-patterns.md`** — compositional recipes for a server/producer that runs independent work concurrently and streams results: generator, fan-in (`channelFlow`), server- vs client-side ordering (with the cold-flow-in-`async` pitfall), timeouts, request hedging, and back-pressure/`buffer`. Read when building a streaming pipeline or fanning out RPCs into one output stream.
 - **`references/language-features.md`** — `inline`/`reified`/`crossinline`, `@JvmInline value class`, and Kotlin/JVM file I/O (buffered reading). Read when reaching for these language/stdlib features.
 
 ## Kotlin-first Libraries

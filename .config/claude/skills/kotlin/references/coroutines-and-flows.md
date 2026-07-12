@@ -81,6 +81,7 @@
 - **`SharedFlow`**: no caching, all emissions matter. Use for one-to-many broadcast events where multiple subscribers must each react independently (e.g. a global auth expiry signal consumed by both a banner and a session manager)
 - **`StateFlow`**: caches latest value, new collectors immediately receive it. Use for UI state where only current value matters
 - Multiple collectors of a cold flow = multiple independent executions (e.g. double location callbacks). Use `shareIn`/`stateIn` to deduplicate
+- **Cold flow in `async` = accidental sequential execution**: `async { coldFlow }` returns the flow without running it, so concurrency is lost until collection (later, one at a time). Run a terminal op (`toList()`) *inside* the `async`. See the ordering pitfall in `streaming-server-patterns.md`
 
 ## ViewModel Patterns
 
