@@ -1,6 +1,6 @@
 ---
 name: software-design
-description: Language-agnostic software design and architecture principles — single source of truth (resolve layered config/env/CLI inputs once into one computed value instead of re-deciding precedence everywhere), clean-architecture layering and dependency direction, when an abstraction earns its keep, use cases vs. repositories, model/mapper boundaries, composition over inheritance, and typed-error handling philosophy. Load this whenever a task involves a structure or architecture decision in ANY language — where a piece of code belongs, how to resolve config/flag/precedence into one source of truth, whether to introduce an interface/base class, how to slice layers or packages, how to model errors, how to shape data crossing a boundary, or whether to act on vs. suppress a linter/static-analysis finding. Applies during design, code review, refactoring, responding to a lint or complexity warning, and "where should this go?" questions, even when no framework is named. Also covers library/API design (`references/library-design.md`): extension points and escape hatches over feature bloat, small composable interfaces vs. fat classes, observability via typed event hooks not logging, design-for-testability (simulate the clock, inject a fake/faulty filesystem, run I/O in memory), graceful degradation, and free-when-unused structures — load it for any "how should I design this library/API/plugin system", "how do I make this testable", or "how do I add an extension point" question. For the Kotlin expression of these ideas load `kotlin`; for Android/KMP framework specifics load `android-kmp`.
+description: Language-agnostic software design and architecture principles — single source of truth (resolve layered config/env/CLI inputs once into one computed value instead of re-deciding precedence everywhere), clean-architecture layering and dependency direction, when an abstraction earns its keep, use cases vs. repositories, model/mapper boundaries, composition over inheritance, and typed-error handling philosophy. Load this whenever a task involves a structure or architecture decision in ANY language — where a piece of code belongs, how to resolve config/flag/precedence into one source of truth, whether to introduce an interface/base class, how to slice layers or packages, how to model errors, how to shape data crossing a boundary, or whether to act on vs. suppress a linter/static-analysis finding. Applies during design, code review, refactoring, responding to a lint or complexity warning, and "where should this go?" questions, even when no framework is named. Also covers library/API design (`references/library-design.md`): extension points and escape hatches over feature bloat, small composable interfaces vs. fat classes, observability via typed event hooks not logging, design-for-testability (simulate the clock, inject a fake/faulty filesystem, run I/O in memory), graceful degradation, and free-when-unused structures — load it for any "how should I design this library/API/plugin system", "how do I make this testable", or "how do I add an extension point" question. For the Kotlin expression of these ideas load `kotlin`; for Android/KMP framework specifics load the relevant tier — `compose` (UI), `mvi` (MVI/ViewModel/Koin), `android` (Gradle/platform), `kmp` (multiplatform structure).
 ---
 
 # Software Design
@@ -9,7 +9,7 @@ These are altitude-independent principles — they hold in Kotlin, Rust, Python,
 
 Two companion skills sit below this one:
 - **`kotlin`** — the Kotlin-language expression of these ideas (the `Result<D, E>` sealed idiom, mappers as extension functions, ranked domain types, coroutines).
-- **`android-kmp`** — the Android/KMP framework layer (MVI/Compose/ViewModel, Koin, Gradle).
+- **the Android/KMP framework tiers** — `compose` (Compose UI), `mvi` (MVI/ViewModel/Koin), `android` (Gradle/platform APIs), `kmp` (multiplatform structure).
 
 ## When to read references
 
@@ -88,7 +88,7 @@ Give each boundary the data shape that boundary wants, and map between them:
 
 ## Error Handling — Type Your Errors, Decide Strings at the Edge
 
-The philosophy is transferable; the concrete `Result<D, E>` type and string-resource wrapper are `kotlin`/`android-kmp` concerns.
+The philosophy is transferable; the concrete `Result<D, E>` type is a `kotlin` concern and the string-resource (`UiText`) wrapper is a `compose` concern.
 
 - **Don't throw exceptions for expected failures** (no network, validation failed, disk full). Those are ordinary outcomes — model them as data with a typed error, and make the caller handle them explicitly. Reserve exceptions for genuinely exceptional/programmer-error cases.
 - **Never pass human-readable error strings out of the data or domain layer.** Return a **typed error** (an enum/sealed set). Which string — and which language — the user sees is a *presentation* decision; deciding it deep in the stack hard-codes UI policy into your core and makes localization impossible.

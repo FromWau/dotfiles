@@ -50,8 +50,8 @@ fun ComponentViewModelScope(
 - Worth it for **complex screens with subcomponents that have real independent state** — e.g. a
   video-call screen: one VM per participant card, one for the chat sheet, one screen-level VM for
   high-level actions (mute, end call) and cross-card state.
-- **Not** for a plain CRUD list with one or two state fields — keep the single screen VM (see
-  SKILL.md "No Base Classes" / don't force MVI on simple screens).
+- **Not** for a plain CRUD list with one or two state fields — keep the single screen VM (don't
+  force MVI structure on simple screens — see SKILL.md "Architecture — MVI").
 - Bonus: lets you scope a VM *across* multiple screens by wrapping a composable that hosts them.
 
 ## State ownership across multiple VMs

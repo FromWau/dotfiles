@@ -1,13 +1,13 @@
 ---
 name: kotlin
-description: Kotlin language conventions — idioms and formatting for `.kt`/`.kts`. Idioms: Kotlin-first libraries (`kotlinx.*`), the `Result<D, E>` sealed error type, ranked domain types via sealed interface, mappers as extension functions, `inline`/`value class`, coroutines & flows. Testing: KMP test strategy and TestBalloon (also load for Kotest, kotlin.test, JUnit-in-Kotlin, fixtures, flaky/parameterized/property tests, or "how do I test my KMP library"). Formatting: trailing commas, string templates, Compose/lambda/`when` layout — conventions ktlint/detekt defaults don't enforce. Load whenever writing, editing, reviewing, or testing Kotlin. For the language-agnostic architecture principles behind these idioms load `software-design`; for Android/KMP framework specifics (MVI, Compose, ViewModel, Koin) load `android-kmp`.
+description: Kotlin language conventions — idioms and formatting for `.kt`/`.kts`. Idioms: Kotlin-first libraries (`kotlinx.*`), the `Result<D, E>` sealed error type, ranked domain types via sealed interface, mappers as extension functions, `inline`/`value class`, coroutines & flows. Testing: KMP test strategy and TestBalloon (also load for Kotest, kotlin.test, JUnit-in-Kotlin, fixtures, flaky/parameterized/property tests, or "how do I test my KMP library"). Formatting: trailing commas, string templates, Compose/lambda/`when` layout — conventions ktlint/detekt defaults don't enforce. Load whenever writing, editing, reviewing, or testing Kotlin. For the language-agnostic architecture principles behind these idioms load `software-design`; for Android/KMP framework specifics load the relevant tier — `compose` (UI), `mvi` (MVI/ViewModel/Koin), `android` (Gradle/platform), `kmp` (multiplatform structure).
 ---
 
 # Kotlin
 
 This skill is the **Kotlin-language** tier: idioms that apply to any Kotlin (`commonMain`, JVM, a Gradle plugin, a Godot/JVM game) plus formatting conventions. It sits between two companions:
 - **`software-design`** — the language-agnostic *why* behind these idioms (layering, typed errors, composition over inheritance). Load it for architecture/structure decisions.
-- **`android-kmp`** — the Android/KMP framework layer (MVI, Compose, ViewModel, Koin, Gradle). Load it for framework work.
+- **the Android/KMP framework tiers** — load the one that fits the work: `compose` (Compose UI, Styles, UiText), `mvi` (MVI/ViewModel/Koin DI), `android` (Gradle/AGP toolchain + platform APIs), `kmp` (multiplatform source-set/target structure).
 
 ## When to read references
 
@@ -43,7 +43,7 @@ The *philosophy* (type your errors, never leak strings out of data/domain, decid
   ```
 - The sealed root keeps `when` exhaustive: adding a failure is a compile error at every site that must handle it.
 - **Respect cancellation in `catch` blocks**: call `currentCoroutineContext().ensureActive()` before returning an error, so a cancelled scope rethrows instead of being swallowed into a `Result.Error`.
-- **Never catch `CancellationException`** — let it propagate. (Mapping a typed error to a user-facing string via `UiText`/`StringResource` is Android-specific — see `android-kmp`.)
+- **Never catch `CancellationException`** — let it propagate. (Mapping a typed error to a user-facing string via `UiText`/`StringResource` is a presentation concern — see `compose`.)
 
 ## Ranked Domain Types — Don't Compare Enums with `<`/`>`
 

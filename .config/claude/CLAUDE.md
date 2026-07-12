@@ -11,14 +11,19 @@ the Skill tool, before responding.** The trigger is the *topic*, not the
 plain Q&A ("what is X", "how does X work", "when should I use X") all
 qualify. If the conversation touches Kotlin, load `kotlin` (plus
 `software-design` for architecture decisions); for Android/KMP framework work
-also load `android-kmp`. If it touches REST APIs, load `rest-api-design`. And so
+load the relevant tier(s) — `compose` (UI), `mvi` (presentation architecture),
+`android` (build + platform), `kmp` (multiplatform structure). If it touches
+REST APIs, load `rest-api-design`. And so
 on. Do not gate on "am I editing code", gate on "is this skill's domain in
 scope". Skill references are the source of truth and may correct or extend
 training-data recall.
 
 - `software-design` — language-agnostic architecture & design (layering, abstractions, typed errors, composition over inheritance)
 - `kotlin` — Kotlin language idioms + formatting conventions
-- `android-kmp` — Android / Kotlin Multiplatform framework layer (MVI, Compose, Koin)
+- `compose` — Compose UI layer (state, Styles API, UiText, adaptive layout)
+- `mvi` — presentation architecture (MVI, ViewModel scoping, Koin DI, events)
+- `android` — Android platform + build (Gradle/AGP toolchain, DataStore/Room/permissions)
+- `kmp` — Kotlin Multiplatform project structure (source sets, targets, expect/actual)
 - `android-cli-tips` — curated tips for the `android` CLI tool
 - `rest-api-design` — REST API design principles
 - `uiux-design` — UI/UX design principles

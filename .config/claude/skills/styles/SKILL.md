@@ -50,12 +50,12 @@ block to your module's `build.gradle.kts`:
 Refer to the official documentation to complete specific development tasks:
 
 - Basic Style Usage: To set backgrounds, sizes, and alignments on a component, follow the [Compose Styles Fundamentals
-  Guide](references/android/develop/ui/compose/styles/fundamentals.md).
+  Guide](references/fundamentals.md).
 - State and Transitions: To configure property changes for state shifts (like pressed or hovered), follow the [Animations and State-Based Styling
-  Guide](references/android/develop/ui/compose/styles/state-animations.md).
+  Guide](references/state-animations.md).
 - Architecture Trade offs: To decide when to use a Style versus a standard Modifier, follow the [Styles versus Modifiers
-  Comparison](references/android/develop/ui/compose/styles/styles-vs-modifiers.md).
-- Theme Level Integration: To connect style definitions with custom themes, follow [Theming with Styles](references/android/develop/ui/compose/styles/theming.md) and [Custom Themes in Compose](references/android/develop/ui/compose/designsystems/custom.md).
+  Comparison](references/styles-vs-modifiers.md).
+- Theme Level Integration: To connect style definitions with custom themes, follow [Theming with Styles](references/theming.md) and [Custom Themes in Compose](references/custom.md).
 
 ## Step-by-Step Migration Workflow
 
