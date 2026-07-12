@@ -77,7 +77,7 @@ export default function Session() {
                             icon="system-log-out-symbolic"
                             label="Logout"
                             onClick={() => {
-                                execAsync("hyprctl dispatch exit")
+                                execAsync("hyprctl dispatch 'hl.dsp.exit()'")
                                 closePopover()
                             }}
                         />

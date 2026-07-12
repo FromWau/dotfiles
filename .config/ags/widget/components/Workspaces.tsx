@@ -15,7 +15,7 @@ function WorkspaceButton(ws: AstalHyprland.Workspace) {
             cssClasses={isWorkspaceFocused}
             onClicked={() => {
                 if (isWorkspaceFocused.get()[0] !== "focused") {
-                    ws.focus();
+                    execAsync(`hyprctl dispatch 'hl.dsp.focus({ workspace = ${ws.id} })'`)
                 }
             }}>
             <label label={ws.name} />
@@ -48,7 +48,7 @@ export default function Workspaces() {
             <button
                 cssClasses={specialWsHasClients.as(hasClients => [hasClients ? "focused" : "", "specialworkspacebutton"])}
                 onClicked={() => {
-                    execAsync(`hyprctl dispatch togglespecialworkspace ""`)
+                    execAsync(`hyprctl dispatch 'hl.dsp.workspace.toggle_special()'`)
                 }}>
                 <image iconName="workspace" />
             </button>
@@ -59,7 +59,7 @@ export default function Workspaces() {
 
             <With value={workspaces}>
                 {ws => (
-                    <button cssClasses={["addworkspacebutton"]} onClicked={() => execAsync(`hyprctl dispatch workspace ${ws.length}`)}>
+                    <button cssClasses={["addworkspacebutton"]} onClicked={() => execAsync(`hyprctl dispatch 'hl.dsp.focus({ workspace = ${ws.length} })'`)}>
                         <label label="+" />
                     </button>
                 )}
