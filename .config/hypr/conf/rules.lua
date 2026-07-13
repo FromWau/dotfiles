@@ -36,6 +36,12 @@ hl.window_rule {
     float = true,
 }
 
+hl.window_rule {
+    name = "ghostty-opacity",
+    match = { class = "^com\\.mitchellh\\.ghostty(-float)?$" },
+    opacity = "0.85 override 0.85 override",
+}
+
 -- Suppress self-maximize for all apps
 hl.window_rule {
     name = "suppress-maximize",
