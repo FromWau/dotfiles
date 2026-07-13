@@ -4,7 +4,7 @@ local mod = "SUPER"
 
 -- Programs / actions
 hl.bind(mod .. " + RETURN", hl.dsp.exec_cmd "gapplication action com.mitchellh.ghostty new-window || ghostty")
-hl.bind("SUPER + SHIFT + RETURN", hl.dsp.exec_cmd "[float] ghostty")
+hl.bind("SUPER + SHIFT + RETURN", hl.dsp.exec_cmd "ghostty --class=com.mitchellh.ghostty-float")
 hl.bind(mod .. " + Q", hl.dsp.window.close())
 hl.bind("SUPER + SHIFT + L", hl.dsp.exit())
 hl.bind(mod .. " + F", hl.dsp.window.fullscreen { mode = "fullscreen" })

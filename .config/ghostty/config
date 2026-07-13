@@ -3,6 +3,7 @@
 ## SHELL
 command = /usr/bin/fish
 working-directory = home
+window-inherit-working-directory = false
 
 ## FONT
 font-family = "FiraCode Nerd Font"

@@ -29,6 +29,13 @@ hl.window_rule {
     float = true,
 }
 
+-- Floating ghostty (SUPER+SHIFT+RETURN spawns with this dedicated class)
+hl.window_rule {
+    name = "ghostty-float",
+    match = { class = "^com\\.mitchellh\\.ghostty-float$" },
+    float = true,
+}
+
 -- Suppress self-maximize for all apps
 hl.window_rule {
     name = "suppress-maximize",
