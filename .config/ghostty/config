@@ -18,6 +18,12 @@ window-padding-y = 8
 window-padding-balance = true
 window-padding-color = extend
 
+## MOUSE
+# G502 X emits ~8 hi-res events per detent; Ghostty counts each as a full
+# wheel click, so the default discrete:3 scrolls ~24 lines/notch.
+# 0.375 * 8 restores 3 lines/notch. Retune if the mouse changes.
+mouse-scroll-multiplier = discrete:0.375
+
 ## QoL
 copy-on-select = clipboard
 link-url = true
