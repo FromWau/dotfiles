@@ -18,6 +18,11 @@ def walker_binds():
     with open(path, "rb") as f:
         cfg = tomllib.load(f)
 
+    for entry in cfg.get("providers", {}).get("prefixes", []):
+        print(f"walker · prefix\t{entry['prefix']}\t{entry['provider']}")
+    if exact := cfg.get("exact_search_prefix"):
+        print(f"walker · prefix\t{exact}\texact search (no fuzzy)")
+
     for name, binds in cfg.get("keybinds", {}).items():
         if isinstance(binds, list) and binds:
             print(f"walker\t{' / '.join(binds)}\t{name}")
