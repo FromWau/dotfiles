@@ -80,3 +80,36 @@ cursor theme — lives in **`$XDG_STATE_HOME/hypr/state.json`**:
 - **`find-similar-pics`** — pHash-based image similarity. Used by
   hypr-wal for multi-monitor matching.
 
+## Walker + Elephant (launcher)
+
+Walker is the launcher UI, elephant its data backend; both autostart from
+`hypr/conf/startup.lua` (elephant first — restart walker whenever elephant
+restarts, walker aborts if elephant vanishes under it). All config is in-repo:
+
+- `.config/walker/` — config, matugen theme, `keybinds-list` (feeds the
+  Keybinds menu from walker + hyprland bind definitions)
+- `.config/elephant/` — provider config and custom menus:
+  Theme (wallpaper picker w/ thumbnail cache), SSH Keys, System, Tools, Keybinds
+
+Packages: `walker-bin`, `elephant-bin` + `elephant-<provider>-bin` per
+provider (`elephant listproviders` shows what's active), `libvips`
+(wallpaper thumbnails), `fd`.
+
+### Bitwarden per-machine setup
+
+The bitwarden provider (`*` prefix) uses `rbw` (pulled in as a dependency).
+Official servers block plain CLI logins (HTTP 400), so each machine must be
+registered once with the personal API key — web vault → Settings → Security
+→ Keys → View API key:
+
+```
+rbw config set email <bitwarden-email>
+rbw config set base_url https://vault.bitwarden.eu
+rbw register        # prompts for client_id / client_secret
+rbw login           # master password (+ 2FA)
+```
+
+Vault searching works while locked (elephant caches the entry list);
+copying a password pops a pinentry prompt when the agent re-locks
+(`lock_timeout`, default 1h).
+
