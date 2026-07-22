@@ -1,0 +1,47 @@
+name = "system"
+name_pretty = "System"
+description = "Power actions: lock, suspend, reboot, shutdown, logout, gpu"
+keywords = ["power", "lock", "suspend", "reboot", "shutdown", "logout", "gpu"]
+icon = "preferences-system"
+
+[[entries]]
+text = "Lock"
+keywords = ["lock", "screen"]
+icon = "system-lock-screen"
+actions = { lock = "pidof hyprlock || hyprlock" }
+
+[[entries]]
+text = "Suspend"
+keywords = ["suspend", "sleep"]
+icon = "system-suspend"
+actions = { suspend = "systemctl suspend" }
+
+[[entries]]
+text = "Reboot"
+keywords = ["reboot", "restart"]
+icon = "system-reboot"
+actions = { reboot = "systemctl reboot" }
+
+[[entries]]
+text = "Shutdown"
+keywords = ["shutdown", "poweroff"]
+icon = "system-shutdown"
+actions = { shutdown = "systemctl poweroff" }
+
+[[entries]]
+text = "Logout"
+keywords = ["logout", "exit", "hyprland"]
+icon = "system-log-out"
+actions = { logout = "hyprctl dispatch exit" }
+
+[[entries]]
+text = "GPU Enable"
+keywords = ["gpu", "nvidia", "enable"]
+icon = "video-display"
+actions = { gpu_enable = "ghostty -e sh -c 'gpu-enable; printf \"\\ndone - press any key\"; read -rsn1'" }
+
+[[entries]]
+text = "GPU Disable"
+keywords = ["gpu", "nvidia", "disable", "drain"]
+icon = "video-display"
+actions = { gpu_disable = "ghostty -e sh -c 'gpu-disable; printf \"\\ndone - press any key\"; read -rsn1'" }

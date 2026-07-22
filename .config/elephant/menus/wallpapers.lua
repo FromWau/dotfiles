@@ -3,6 +3,7 @@ NamePretty = "Theme"
 Description = "Pick a wallpaper and re-theme via hypr-wal"
 Icon = "preferences-desktop-wallpaper"
 SearchName = true
+Keywords = { "theme", "wallpaper", "hypr-wal" }
 Action = "hypr-wal '%VALUE%'"
 
 function GetEntries()

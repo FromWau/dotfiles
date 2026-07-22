@@ -1,0 +1,35 @@
+name = "tools"
+name_pretty = "Tools"
+description = "Color picker, screenshot, zoom, qr scanner"
+keywords = ["color", "picker", "screenshot", "zoom", "qr"]
+icon = "applications-utilities"
+
+[[entries]]
+text = "Color Picker"
+keywords = ["color", "picker", "hyprpicker"]
+icon = "color-picker"
+actions = { pick = "hyprpicker | tail -1 | tr -d '\\n' | sed 's/##/0xFF/' | wl-copy" }
+
+[[entries]]
+text = "Zoom Toggle"
+keywords = ["zoom", "magnify"]
+icon = "zoom-in"
+actions = { zoom = "hyprctl -q keyword cursor:zoom_factor $(hyprctl getoption cursor:zoom_factor -j | jq '(.float) | if . > 1 then 1 else 1.5 end')" }
+
+[[entries]]
+text = "Screenshot Region"
+keywords = ["screenshot", "region", "grim", "slurp"]
+icon = "camera-photo"
+actions = { region = 'mkdir -p ~/Pictures/screenshots && IMG=~/Pictures/screenshots/$(date +%Y-%m-%d_%H-%M-%S).png && grim -g "$(slurp)" $IMG && wl-copy < $IMG && notify-send "Screenshot" "$IMG"' }
+
+[[entries]]
+text = "Screenshot Screen"
+keywords = ["screenshot", "screen", "monitor", "grim"]
+icon = "camera-photo"
+actions = { screen = 'mkdir -p ~/Pictures/screenshots && IMG=~/Pictures/screenshots/$(date +%Y-%m-%d_%H-%M-%S).png && grim $IMG && wl-copy < $IMG && notify-send "Screenshot" "$IMG"' }
+
+[[entries]]
+text = "Scan QR"
+keywords = ["qr", "barcode", "scan"]
+icon = "view-barcode"
+actions = { qr = "qr" }
