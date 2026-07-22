@@ -41,6 +41,47 @@ only linux — a linux target gets **both** its `linuxMain` and the shared `nati
 path. Split per-platform (`File` → `appleMain` + `linuxMain`, disjoint ✅) **or** share it
 (`Env` → `nativeMain` ✅) — never both, or a target sees two actuals → "expect has multiple actuals".
 
+## Adding a custom intermediate source set (jvm + android, etc.)
+
+The default template only creates the **standard** groups (`nativeMain`, `appleMain`, `iosMain`, …). A
+pair like **jvm + android** has no template group, so to share one `actual` between just those two
+(their JDK-backed `File` / `SystemEnv` / `PathStatus` are often identical) you create the intermediate
+yourself:
+
+```kotlin
+kotlin {
+    // declare targets first (jvm(), your android target, linuxX64(), …)
+
+    applyDefaultHierarchyTemplate()   // REQUIRED once you add any manual dependsOn (see below)
+
+    sourceSets {
+        val jvmAndroidMain by creating { dependsOn(commonMain.get()) }
+        jvmMain.get().dependsOn(jvmAndroidMain)
+        androidMain.get().dependsOn(jvmAndroidMain)
+    }
+}
+```
+
+**The trap:** the moment you write **any** manual `dependsOn()`, KGP stops auto-applying the default
+template. It is all-or-nothing (one manual edge and KGP assumes you have taken over the whole hierarchy,
+so it backs off entirely), which silently un-wires `nativeMain` / `appleMain` / `linuxMain` from
+`commonMain`. The native targets then fail with `Expected <x> has no actual declaration for Native` on
+**every** commonMain `expect`, including ones you never touched, plus a `Default Kotlin Hierarchy
+Template was not applied` warning. The error lands far from the cause (a jvm+android edit breaks the
+linux compile), which is what makes it baffling.
+
+**Fix:** call `applyDefaultHierarchyTemplate()` explicitly, then add your manual edges. The template
+rebuilds the standard groups and your custom edge layers on top (a source set may `dependsOn` several
+parents, so the `commonMain` and `jvmAndroidMain` edges coexist).
+
+Custom sets are not reserved names, so pick a clear one and keep the file suffix in step
+(`jvmAndroidMain` → `*.jvmAndroid.kt`). A test source set is only compiled by a target that owns that
+test compilation, so a shared `jvmAndroidTest` needs android host tests enabled (`withHostTest {}`) or
+android feeds it nothing. The declarative alternative (define your own group so KGP auto-creates and
+wires it, no manual edges) needs the custom-hierarchy-template API (`applyHierarchyTemplate {}`), which
+JetBrains still labels in-development and subject to change: until it stabilises, the explicit-call +
+manual-edges pattern above is the stable way.
+
 ## Adding a native target to an apple-only module
 
 Its `nativeMain` must now compile for the new target too, so Foundation/Darwin code there breaks.

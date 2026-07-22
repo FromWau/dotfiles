@@ -12,7 +12,7 @@ The **project-structure tier**: how a KMP module's source sets and targets are o
 
 ## When to read references
 
-- **`references/source-set-hierarchy.md`** — KMP source-set layout (flat dirs, logical hierarchy), the naming-by-target-breadth convention, union-compilation + the one-`actual`-per-path rule, and how to split `nativeMain` when adding a native target. Read when adding a native target, splitting `nativeMain`, or deciding which source set a platform `actual` goes in.
+- **`references/source-set-hierarchy.md`** — KMP source-set layout (flat dirs, logical hierarchy), the naming-by-target-breadth convention, union-compilation + the one-`actual`-per-path rule, how to split `nativeMain` when adding a native target, and how to add a custom intermediate source set (e.g. a `jvmAndroidMain` sharing an `actual` across jvm+android) without the manual-`dependsOn` trap that disables the default hierarchy template. Read when adding a native target, splitting `nativeMain`, creating a custom intermediate/shared source set, or deciding which source set a platform `actual` goes in.
 
 ## Source sets & targets
 
