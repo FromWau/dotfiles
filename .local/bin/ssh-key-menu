@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Backend for the walker "SSH Keys" menu.
+#   list        print "<key>\t<loaded>" for every private key in ~/.ssh
+#   load <key>  restart the agent and add the key (interactive passphrase)
+
+export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR"/ssh-agent.socket
+
+list_keys() {
+    local current fp
+    current=$(ssh-add -l 2>/dev/null || true)
+
+    while IFS= read -r -d '' file; do
+        fp=$(ssh-keygen -l -f "$HOME/.ssh/$file" 2>/dev/null) || continue
+        if [ -n "$current" ] && [ "$fp" = "$current" ]; then
+            printf '%s\tloaded\n' "$file"
+        else
+            printf '%s\t\n' "$file"
+        fi
+    done < <(fd . --base-directory "$HOME/.ssh/" --strip-cwd-prefix \
+        -E '*.pub' -E '*hosts*' -E 'config' -0 | sort -z)
+}
+
+load_key() {
+    local key=$1
+    if [ ! -f "$HOME/.ssh/$key" ]; then
+        echo "No such key: $key" >&2
+        exit 1
+    fi
+
+    systemctl --user restart ssh-agent.service
+
+    while [ ! -S "$SSH_AUTH_SOCK" ]; do
+        sleep 0.1
+    done
+
+    ssh-add "$HOME/.ssh/$key"
+}
+
+case "${1:-}" in
+list) list_keys ;;
+load) load_key "${2:?usage: ssh-key-menu load <key>}" ;;
+*) echo "usage: ssh-key-menu list|load <key>" >&2; exit 1 ;;
+esac
