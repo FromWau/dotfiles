@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Sync a thumbnail cache for the walker wallpaper picker and print
+# "<thumb>\t<original>" per image so the menu can use cheap icons.
+wallpaper_dir="${1:-$HOME/Pictures/wallpapers}"
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/wallpaper-thumbs"
+mkdir -p "$cache_dir"
+
+[ -d "$wallpaper_dir" ] || exit 0
+
+while IFS= read -r -d '' pic; do
+    hash=$(printf '%s' "$pic" | md5sum | cut -d' ' -f1)
+    thumb="$cache_dir/$hash.jpg"
+    if [ ! -f "$thumb" ] || [ "$pic" -nt "$thumb" ]; then
+        vipsthumbnail "$pic" -s 256 -o "$thumb[Q=85]" 2>/dev/null || continue
+    fi
+    printf '%s\t%s\n' "$thumb" "$pic"
+done < <(fd -e png -e jpg -e jpeg . "$wallpaper_dir" -0 | sort -z)

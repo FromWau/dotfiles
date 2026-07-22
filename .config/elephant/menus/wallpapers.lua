@@ -15,17 +15,18 @@ function GetEntries()
         Actions = { shuffle = "hypr-wal" },
     })
 
-    local dir = os.getenv("HOME") .. "/Pictures/wallpapers"
-    local handle = io.popen("fd -e png -e jpg -e jpeg . '" .. dir .. "' | sort")
+    -- wallpaper-thumbs prints "<thumb>\t<original>"; full-res images are too
+    -- slow to decode as list icons, so icons use the cached thumbnails.
+    local handle = io.popen("wallpaper-thumbs")
     if handle then
         for line in handle:lines() do
-            local filename = line:match("([^/]+)$")
-            if filename then
+            local thumb, orig = line:match("^(.-)\t(.+)$")
+            if thumb and orig then
                 table.insert(entries, {
-                    Text = filename,
-                    Value = line,
-                    Icon = line,
-                    Preview = line,
+                    Text = orig:match("([^/]+)$"),
+                    Value = orig,
+                    Icon = thumb,
+                    Preview = orig,
                     PreviewType = "file",
                 })
             end

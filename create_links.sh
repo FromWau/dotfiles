@@ -113,7 +113,7 @@ function link_local_bin() {
     items=(
         battery-notify download-spot find-similar-pics fix-bitwarden
         fzf-previewer git-reset-to-parent gvfs-mtp-automount hypr-wal hyprstate qr
-        reddit-images ssh-key-fzf gpu-enable gpu-disable
+        reddit-images ssh-key-fzf gpu-enable gpu-disable wallpaper-thumbs
     )
 
     link_and_backup "$source_dir" "$target_dir" "${items[@]}"
