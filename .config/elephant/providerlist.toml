@@ -1,0 +1,9 @@
+# Global provider config
+icon = "applications-other"
+min_score = 0
+
+# List of providers to hide (empty = show all)
+hidden = []
+
+# Example: you could hide some providers like this:
+# hidden = ["runner", "desktopapplications"]

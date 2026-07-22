@@ -1,0 +1,8 @@
+# Delimiter for arguments
+argument_delimiter = "#"
+
+# Automatically detect uwsm, app2unit, or systemd-run prefixes
+auto_detect_launch_prefix = true
+
+# Overload local environment variables from Elephant
+overload_local_env = false
