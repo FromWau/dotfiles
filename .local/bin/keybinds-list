@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""Print "<source>\t<combo>\t<description>" lines for the walker Keybinds menu.
+
+Sources: walker global + provider action binds (config.toml), hyprland
+binds (bindings.lua — hyprctl only reports opaque __lua dispatchers).
+"""
+
+import re
+import sys
+import tomllib
+from pathlib import Path
+
+HOME = Path.home()
+
+
+def walker_binds():
+    path = HOME / ".config/walker/config.toml"
+    with open(path, "rb") as f:
+        cfg = tomllib.load(f)
+
+    for name, binds in cfg.get("keybinds", {}).items():
+        if isinstance(binds, list) and binds:
+            print(f"walker\t{' / '.join(binds)}\t{name}")
+
+    for provider, actions in cfg.get("providers", {}).get("actions", {}).items():
+        for action in actions:
+            bind = action.get("bind")
+            if not bind:
+                continue
+            label = action.get("label") or action.get("action", "")
+            print(f"walker · {provider}\t{bind}\t{label}")
+
+
+def hypr_binds():
+    path = HOME / ".config/hypr/conf/bindings.lua"
+    src = path.read_text()
+
+    m = re.search(r'local mod = "(\w+)"', src)
+    mod = m.group(1) if m else "SUPER"
+
+    for m in re.finditer(r'hl\.bind\(\s*((?:mod \.\. )?"[^"]+")\s*,\s*(.+)', src):
+        combo_expr, rest = m.groups()
+        combo = combo_expr.replace('mod .. ', "").strip('"')
+        if combo.startswith(" +"):
+            combo = mod + combo
+
+        if cmd := re.match(r'hl\.dsp\.exec_cmd\s+"((?:[^"\\]|\\.)*)"', rest):
+            desc = cmd.group(1)
+        elif rest.startswith("function"):
+            desc = "custom function (see bindings.lua)"
+        else:
+            desc = re.sub(r",\s*\{[^}]*\}\s*\)?\s*$", "", rest)
+            desc = re.sub(r"\)?\s*$", "", desc)
+            desc = desc.removeprefix("hl.dsp.")
+
+        print(f"hypr\t{combo}\t{desc}")
+
+    # Workspace binds come from a loop the line regex above can't see.
+    if "workspace = i" in src:
+        print(f"hypr\t{mod} + 1..0\tfocus workspace 1-10")
+        print(f"hypr\t{mod} + SHIFT + 1..0\tmove window to workspace 1-10")
+
+
+try:
+    walker_binds()
+    hypr_binds()
+except FileNotFoundError as e:
+    print(f"keybinds-list: {e}", file=sys.stderr)
+    sys.exit(1)
