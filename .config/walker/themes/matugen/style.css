@@ -1,4 +1,6 @@
-import url("./colors.css") {
+@import url("colors.css");
+
+* {
     all: unset;
 }
 
