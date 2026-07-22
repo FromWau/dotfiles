@@ -15,6 +15,8 @@ log_info() { echo -e "${GREEN}[INFO]${NC} $*"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
 
 pics_for_monitors() {
+    local chosen_pic=${1:-}
+
     # Get monitor list
     if ! monitors_json=$(hyprctl monitors -j 2>/dev/null); then
         log_error "Failed to get monitor list from Hyprland"
@@ -43,10 +45,14 @@ pics_for_monitors() {
     fi
 
     # Select wallpapers
-    rand_pic=$(fd -e png -e jpg -e jpeg . "$wallpaper_dir" | shuf -n 1)
-    if [ -z "$rand_pic" ]; then
-        log_error "No wallpapers found in $wallpaper_dir"
-        return 1
+    if [ -n "$chosen_pic" ]; then
+        rand_pic=$chosen_pic
+    else
+        rand_pic=$(fd -e png -e jpg -e jpeg . "$wallpaper_dir" | shuf -n 1)
+        if [ -z "$rand_pic" ]; then
+            log_error "No wallpapers found in $wallpaper_dir"
+            return 1
+        fi
     fi
 
     pics[0]=$rand_pic
@@ -120,7 +126,13 @@ change_wallpaper() {
 }
 
 main() {
-    if ! pics_for_monitors; then
+    local chosen_pic=${1:-}
+    if [ -n "$chosen_pic" ] && [ ! -f "$chosen_pic" ]; then
+        log_error "Not a file: $chosen_pic"
+        exit 1
+    fi
+
+    if ! pics_for_monitors "$chosen_pic"; then
         log_error "Failed to prepare wallpapers"
         exit 1
     fi
