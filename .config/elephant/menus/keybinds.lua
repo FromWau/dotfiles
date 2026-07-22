@@ -9,7 +9,7 @@ FixedOrder = true
 function GetEntries()
     local entries = {}
 
-    local handle = io.popen("keybinds-list")
+    local handle = io.popen(os.getenv("HOME") .. "/.config/walker/keybinds-list")
     if handle then
         for line in handle:lines() do
             local source, combo, desc = line:match("^(.-)\t(.-)\t(.*)$")
