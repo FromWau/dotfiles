@@ -83,6 +83,10 @@ provider = "clipboard"
 prefix = "$"
 provider = "windows"
 
+[[providers.prefixes]]
+prefix = "*"
+provider = "bitwarden"
+
 [providers.clipboard]
 time_format = "%d.%m. - %H:%M" # format for the clipboard item date
 
@@ -164,9 +168,35 @@ unicode = [
   { action = "run_cmd", label = "select", default = true, bind = "Return" },
 ]
 
-nirisessions = [
-  { action = "start", label = "start", default = true, bind = "Return" },
-  { action = "start_new", label = "start blank", bind = "ctrl Return" },
+bitwarden = [
+  { action = "copypassword", label = "copy password", default = true, bind = "Return" },
+  { action = "typepassword", label = "type password", default = true, bind = "ctrl p" },
+  { action = "copyusername", label = "copy username", bind = "shift Return" },
+  { action = "typeusername", label = "type username", bind = "ctrl u" },
+  { action = "copytotp", label = "copy 2fa", bind = "ctrl Return" },
+  { action = "typetotp", label = "type 2fa", bind = "ctrl t" },
+  { action = "syncvault", label = "sync", bind = "ctrl s" },
+]
+
+wireplumber = [
+  { action = "increase_volume", label = "+volume", bind = "ctrl y", after = "Nothing" },
+  { action = "decrease_volume", label = "-volume", bind = "ctrl n", after = "Nothing" },
+  { action = "mute", bind = "ctrl m", after = "Nothing" },
+  { action = "unmute", bind = "ctrl m", after = "Nothing" },
+  { action = "set_default_device", label = "set default", bind = "ctrl d", after = "Nothing" },
+]
+
+playerctl = [
+  { action = "pause", label = "pause", bind = "Return", after = "Nothing", default = true },
+  { action = "play", label = "play", bind = "Return", after = "Nothing", default = true },
+  { action = "prev", label = "prev", bind = "ctrl p", after = "Nothing" },
+  { action = "next", label = "next", bind = "ctrl n", after = "Nothing" },
+  { action = "vol_up", label = "vol+", bind = "ctrl y", after = "Nothing" },
+  { action = "vol_down", label = "vol-", bind = "ctrl h", after = "Nothing" },
+  { action = "mute", label = "mute", bind = "ctrl m", after = "Nothing" },
+  { action = "unmute", label = "unmute", bind = "ctrl m", after = "Nothing" },
+  { action = "seek_back", label = "backward", bind = "ctrl b", after = "Nothing" },
+  { action = "seek_forward", label = "forward", bind = "ctrl f", after = "Nothing" },
 ]
 
 clipboard = [
