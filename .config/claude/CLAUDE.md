@@ -24,6 +24,7 @@ training-data recall.
 - `mvi` — presentation architecture (MVI, ViewModel scoping, Koin DI, events)
 - `android` — Android platform + build (Gradle/AGP toolchain, DataStore/Room/permissions)
 - `kmp` — Kotlin Multiplatform project structure (source sets, targets, expect/actual)
+- `gradle` — Gradle build best practices (Kotlin DSL, version catalogs, convention plugins, config/build cache, wrapper validation)
 - `android-cli-tips` — curated tips for the `android` CLI tool
 - `rest-api-design` — REST API design principles
 - `uiux-design` — UI/UX design principles
