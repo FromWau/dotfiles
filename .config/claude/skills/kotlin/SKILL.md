@@ -78,6 +78,15 @@ The *philosophy* (type your errors, never leak strings out of data/domain, decid
 
 - Write mappers as **extension functions in a separate `mappers` file/package** — never inside the model class (no `toX()` on a companion object). Extensions keep the model a plain data holder and let each layer own its own mappers. (*Which* layer a mapper lives in follows the dependency arrow — see `software-design`.)
 
+## Factory Naming — Signal Fallibility in the Name
+
+A parse/construct helper's name must tell the caller, at the call site, whether it can miss:
+
+- **Nullable/lenient parse → `fromOrNull(raw): T?`** — returns null on bad input, mirroring stdlib `toIntOrNull`/`getOrNull`/`firstOrNull`. The `OrNull` suffix is the caller's cue to handle a miss.
+- **Total factory → `from`/`of`/`valueOf`** — returns `T`, throws on bad input (like `enumValueOf`). Reserve the bare name for the total form; calling a nullable parse `of` misleads, since the caller can't tell from the name whether to expect null or a throw.
+- **For user input, prefer `fromOrNull` and map the null to a typed error at the boundary** — a typo is an *expected* failure, so a throwing `of` turns it into a crash instead of a clean error (see the `Result<D, E>` idiom above).
+- Put it on the type's **companion**, not a free `parseShell()` helper: the type owns parsing itself, so `Shell.fromOrNull(raw)` is more discoverable than a function floating in a file.
+
 ## Formatting & Linting
 
 Conventions ktlint/detekt defaults don't enforce.
@@ -197,13 +206,24 @@ _state.update { old ->
 - Separators should be plain characters: `" - "` not `"—"`
 
 ### Chained Calls
-- Break after each `.` when the chain is long:
+- **More than 2 calls in a chain: break after each `.`, one call per line.** 2 or fewer stays inline
+  (`path.lowercase().replace(" ", "-")`). Also break a short chain when its single-line form runs long.
+- Put the receiver on the first line, each `.call()` on its own line beneath it. Calls *inside* a lambda
+  argument do not count toward the chain length; only the outer `.` calls do. So
+  `author?.takeUnless { it.isBlank() }?.let { … }` is 2 (stays inline), while
+  `description.lineSequence().joinToString(" ") { it.trim() }.trim()` is 3 (breaks).
 ```kotlin
+// 2 calls: inline
+private fun mdAnchor(path: String): String = path.lowercase().replace(" ", "-")
+
+// 3+ calls: one per line
+private fun mdCell(text: String): String = text
+    .replace("\\", "\\\\")
+    .replace("|", "\\|")
+    .replace("`", "\\`")
+
+// short chain, but long/nested: break on the length trigger anyway
 triageRepository
     .getCandidatesByReason(CandidateReason.NEW)
-    .collect { result ->
-        result.onSuccess { candidates ->
-            // ...
-        }
-    }
+    .collect { result -> /* ... */ }
 ```

@@ -41,6 +41,34 @@ only linux — a linux target gets **both** its `linuxMain` and the shared `nati
 path. Split per-platform (`File` → `appleMain` + `linuxMain`, disjoint ✅) **or** share it
 (`Env` → `nativeMain` ✅) — never both, or a target sees two actuals → "expect has multiple actuals".
 
+## `@JvmName` in `commonMain` beats an expect/actual split for JVM overload clashes
+
+A tempting-but-wrong reason to reach for `expect`/`actual`: overloaded top-level functions that differ
+only in generic type arguments (receiver/parameter nullability, or `List<Int>` vs `List<Long>`) collide
+on the JVM after type erasure (the "platform declaration clash"). `@JvmName` gives them distinct JVM
+names and fixes it. Assuming `@JvmName` is JVM-source-set-only, you might declare each overload `expect`
+in `commonMain` with an `actual` in every platform set (the JVM one carrying `@JvmName`, the rest plain):
+one expect plus N actuals plus extra files, per overload. That whole split is unnecessary.
+
+`@JvmName` is resolvable in `commonMain`. Annotate the plain common function directly: it takes effect on
+the JVM and is inert on other backends, so a single function replaces the split.
+
+```kotlin
+// commonMain, no expect/actual
+import kotlin.jvm.JvmName
+
+fun <T : Any> Opt<T?>.default(value: T): Opt<T> { … }        // JVM name: default
+
+@JvmName("defaultNullable")
+fun <T : Any> Opt<T?>.default(value: T?): Opt<T?> { … }      // same JVM descriptor after erasure; @JvmName disambiguates
+```
+
+**Availability is per-annotation, so check before assuming.** `@JvmName` is in the common stdlib
+(verified on Kotlin 2.x). `@JvmInline`, by contrast, is **not** available in common and needs a
+per-platform no-op stub (kotlinx.coroutines #4671). Rule of thumb: reserve `expect`/`actual` for
+genuinely divergent *implementations*; for a JVM-only name or metadata annotation, try it in `commonMain`
+first and split only if the compiler actually rejects it.
+
 ## Adding a custom intermediate source set (jvm + android, etc.)
 
 The default template only creates the **standard** groups (`nativeMain`, `appleMain`, `iosMain`, …). A
