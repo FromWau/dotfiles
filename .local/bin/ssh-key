@@ -1,0 +1,238 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Load and unload ssh keys in the agent. Bare invocation opens the fzf picker;
+# subcommands are the non-interactive surface used by elephant menus/ssh.lua.
+#
+# Keys are added and removed individually; the agent is never restarted, so
+# loading one key leaves every other loaded key untouched.
+
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is unset}/ssh-agent.socket"
+
+readonly SSH_DIR="$HOME/.ssh"
+
+declare -A loaded_fingerprints
+
+usage() {
+	cat >&2 <<-'EOF'
+		usage: ssh-key [command] [key]
+
+		  (none)          open the fzf picker
+		  list            print "<key><TAB><loaded|>" for every private key in ~/.ssh
+		  add <key>       add key to the agent
+		  remove <key>    remove key from the agent
+		  toggle <key>    remove if loaded, otherwise add
+		  clear           remove every key from the agent
+		  generate        create a new ed25519 key pair
+	EOF
+	exit 1
+}
+
+# Fill loaded_fingerprints with the SHA256 hashes the agent currently holds.
+# ssh-add exits 1 for "agent up but empty" and 2 for "agent unreachable"; the
+# two must not collapse, or a dead agent reads as "no keys loaded".
+read_agent() {
+	local output rc fingerprint
+	loaded_fingerprints=()
+
+	output=$(ssh-add -l 2>&1) && rc=0 || rc=$?
+
+	if [[ $rc -gt 1 ]]; then
+		echo "ssh-agent unreachable at $SSH_AUTH_SOCK: $output" >&2
+		echo "try: systemctl --user start ssh-agent.service" >&2
+		return 1
+	fi
+
+	if [[ $rc -eq 1 ]]; then
+		return 0
+	fi
+
+	while read -r _ fingerprint _; do
+		if [[ -n $fingerprint ]]; then
+			loaded_fingerprints[$fingerprint]=1
+		fi
+	done <<<"$output"
+}
+
+# Identify keys by their PEM header instead of excluding known_hosts/config/*.pub
+# by name: a filename blacklist misses anything unanticipated in ~/.ssh.
+is_private_key() {
+	local first_line
+	IFS= read -r first_line <"$1" 2>/dev/null || return 1
+	[[ $first_line == "-----BEGIN "*"PRIVATE KEY-----" ]]
+}
+
+private_keys() {
+	local path
+	for path in "$SSH_DIR"/*; do
+		if [[ -f $path ]] && is_private_key "$path"; then
+			printf '%s\n' "${path##*/}"
+		fi
+	done
+}
+
+# Empty when the key has no .pub and is passphrase-protected, since ssh-keygen
+# cannot then read the fingerprint without unlocking it.
+fingerprint_of() {
+	local output
+	output=$(ssh-keygen -lf "$SSH_DIR/$1" 2>/dev/null) || return 0
+	awk '{print $2; exit}' <<<"$output"
+}
+
+is_loaded() {
+	[[ -n $1 && -v loaded_fingerprints[$1] ]]
+}
+
+require_key() {
+	if [[ ! -f $SSH_DIR/$1 ]]; then
+		echo "No such key: $SSH_DIR/$1" >&2
+		return 1
+	fi
+}
+
+cmd_list() {
+	read_agent || return 1
+
+	local key
+	while IFS= read -r key; do
+		if is_loaded "$(fingerprint_of "$key")"; then
+			printf '%s\tloaded\n' "$key"
+		else
+			printf '%s\t\n' "$key"
+		fi
+	done < <(private_keys)
+}
+
+cmd_add() {
+	require_key "$1" || return 1
+	ssh-add "$SSH_DIR/$1"
+}
+
+cmd_remove() {
+	require_key "$1" || return 1
+	ssh-add -d "$SSH_DIR/$1"
+}
+
+cmd_toggle() {
+	require_key "$1" || return 1
+	read_agent || return 1
+
+	if is_loaded "$(fingerprint_of "$1")"; then
+		cmd_remove "$1"
+	else
+		cmd_add "$1"
+	fi
+}
+
+cmd_clear() {
+	ssh-add -D
+}
+
+cmd_generate() {
+	local name comment path
+
+	read -rp "Key name (e.g. id_github): " name
+	if [[ -z $name ]]; then
+		echo "Aborted." >&2
+		return 1
+	fi
+
+	path="$SSH_DIR/$name"
+	if [[ -e $path ]]; then
+		echo "Key already exists: $path" >&2
+		return 1
+	fi
+
+	read -rp "Comment (e.g. your email): " comment
+
+	mkdir -p "$SSH_DIR"
+	chmod 700 "$SSH_DIR"
+	ssh-keygen -t ed25519 -C "$comment" -f "$path"
+	chmod 600 "$path"
+	chmod 644 "$path.pub"
+
+	if command -v wl-copy >/dev/null; then
+		wl-copy <"$path.pub"
+		echo "Public key copied to clipboard."
+	fi
+
+	echo
+	cat "$path.pub"
+	echo
+	echo "Add it at https://github.com/settings/keys (type: Authentication key),"
+	echo "or append it to ~/.ssh/authorized_keys on the target host."
+}
+
+markers() {
+	local key state
+	while IFS=$'\t' read -r key state; do
+		if [[ $state == loaded ]]; then
+			printf '● %s\n' "$key"
+		else
+			printf '○ %s\n' "$key"
+		fi
+	done
+}
+
+# Enter toggles every marked key and reopens the picker, so swapping one key
+# for another is a single pass.
+cmd_pick() {
+	if ! command -v fzf >/dev/null; then
+		echo "fzf not found on PATH" >&2
+		return 1
+	fi
+
+	local listing selection line failed
+	local -a selected
+
+	while true; do
+		listing=$(cmd_list) || return 1
+
+		if [[ -z $listing ]]; then
+			echo "No SSH keys found in $SSH_DIR"
+			cmd_generate || return 1
+			continue
+		fi
+
+		selection=$(
+			markers <<<"$listing" |
+				fzf --multi --cycle --reverse --no-sort \
+					--prompt="ssh keys > " \
+					--header-first \
+					--header="enter: toggle   tab: mark   esc: quit"
+		) || break
+
+		if [[ -z $selection ]]; then
+			break
+		fi
+
+		# Collect the whole selection before acting on any of it. Toggling from
+		# inside a `read` loop would leave stdin on the herestring, and ssh-add
+		# diverts to SSH_ASKPASS whenever stdin is not a tty, so the passphrase
+		# prompt would never reach the terminal.
+		mapfile -t selected <<<"$selection"
+
+		failed=0
+		for line in "${selected[@]}"; do
+			# Strip the ● / ○ marker; key names may themselves contain spaces.
+			cmd_toggle "${line#* }" || failed=1
+		done
+
+		# fzf's next redraw would scroll the failure off the screen unread.
+		if [[ $failed -eq 1 ]]; then
+			read -rsn1 -p "Press any key to continue... "
+			echo
+		fi
+	done
+}
+
+case "${1:-}" in
+"") cmd_pick ;;
+list) cmd_list ;;
+add) cmd_add "${2:?usage: ssh-key add <key>}" ;;
+remove) cmd_remove "${2:?usage: ssh-key remove <key>}" ;;
+toggle) cmd_toggle "${2:?usage: ssh-key toggle <key>}" ;;
+clear) cmd_clear ;;
+generate) cmd_generate ;;
+*) usage ;;
+esac
