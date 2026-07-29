@@ -7,15 +7,18 @@ set -x XDG_DATA_HOME "$HOME/.local/share"
 set -x XDG_STATE_HOME "$HOME/.local/state"
 set -x XDG_CACHE_HOME "$HOME/.cache"
 
+set -x ANSIBLE_HOME "$XDG_DATA_HOME"/ansible
 set -x PASSWORD_STORE_DIR "$XDG_DATA_HOME"/password-store
 set -x GOPATH "$XDG_DATA_HOME"/go
 set -x GNUPGHOME "$XDG_DATA_HOME"/gnupg
 set -x CARGO_HOME "$XDG_DATA_HOME"/cargo
 set -x RUSTUP_HOME "$XDG_DATA_HOME"/rustup
+set -x KONAN_DATA_DIR "$XDG_DATA_HOME"/konan
 set -x WINEPREFIX "$XDG_DATA_HOME"/wineprefixes/default
 set -x TERMINFO "$XDG_DATA_HOME"/terminfo
 set -x TERMINFO_DIRS "$XDG_DATA_HOME"/terminfo:/usr/share/terminfo
 
+set -x DOCKER_CONFIG "$XDG_CONFIG_HOME"/docker
 set -x NPM_CONFIG_USERCONFIG "$XDG_CONFIG_HOME"/npm/npmrc
 set -x XINITRC "$XDG_CONFIG_HOME"/X11/xinitrc
 set -x WGETRC "$XDG_CONFIG_HOME"/wget/wgetrc
@@ -24,6 +27,7 @@ set -x GTK2_RC_FILES "$XDG_CONFIG_HOME"/gtk-2.0/gtkrc
 set -x _JAVA_OPTIONS -Djava.util.prefs.userRoot="$XDG_CONFIG_HOME"/java
 
 set -x HISTFILE "$XDG_STATE_HOME"/bash/history
+set -x PYTHON_HISTORY "$XDG_STATE_HOME"/python_history
 
 set -x XAUTHORITY "$XDG_RUNTIME_DIR"/Xauthority
 set -x SSH_AUTH_SOCK "$XDG_RUNTIME_DIR"/ssh-agent.socket
@@ -65,7 +69,6 @@ mise activate fish | source
 
 # abbr
 abbr adb 'HOME="$XDG_DATA_HOME"/android adb'
-abbr wget 'wget --hsts-file="$XDG_DATA_HOME"/wget-hsts'
 abbr nvidia-settings 'nvidia-settings --config="$XDG_CONFIG_HOME"/nvidia/settings'
 abbr icat 'kitty +kitten icat'
 abbr mirror 'sudo reflector --country AT --latest 50 --sort rate --save /etc/pacman.d/mirrorlist'
@@ -74,13 +77,11 @@ abbr ll 'eza --icons --all --group-directories-first --color always --long --sor
 abbr llh 'eza --icons --all --group-directories-first --color always --long --sort newest | head -10'
 abbr tree 'eza --icons --all --group-directories-first --color always --tree --ignore-glob ".git*" --git-ignore'
 abbr ps procs
-abbr grep rg
 abbr fzf 'fzf -d "|" --cycle -i --reverse'
-abbr cd z
 abbr zz 'z -'
 abbr vim nvim
 abbr v nvim
-abbr cat 'bat -p --color always'
+abbr bat 'bat -p --color always'
 abbr yeet 'yay -Rns'
 abbr reload 'source ~/.config/fish/config.fish'
 abbr lg lazygit
@@ -90,7 +91,6 @@ abbr ... 'cd ../..'
 abbr .... 'cd ../../..'
 abbr skf 'ssh-key'
 abbr kit 'kitty --detach'
-abbr ccat 'cat'
 abbr cld 'rm -rf ./*'
 abbr rmdirs 'fd -t d -0 | sort -z -r | xargs -0 rmdir --ignore-fail-on-non-empty'
 
