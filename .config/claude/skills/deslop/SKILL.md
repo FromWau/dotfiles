@@ -5,7 +5,10 @@ description: >-
   Use it whenever the user points at a file or a specific construct and pokes at it critically: "deslop
   this", "next Foo.kt", "is this a smell?", "can we do X better?", "this feels hacky", "is X dead / still
   needed?", "can we fold/simplify Y?", "why is it done this way?", "clean up this file", or is walking a
-  codebase concern-by-concern tidying it. The loop's job is to separate genuine improvements from surface
+  codebase concern-by-concern tidying it. Reach for it just as readily when the target is a whole change
+  set rather than one file — "deslop this branch", "deslop the diff before I merge", "clean up my PR",
+  or any finish-the-branch pass — where the docs and build files in that diff get reviewed alongside the
+  code. The loop's job is to separate genuine improvements from surface
   churn: it opens with a cheap scan of the file's shape (length, nesting depth, oversized comments) to aim
   the read, then grounds every dead/unused/needed claim in grep + tests + compile before asserting it,
   applies doc/code fixes while flagging design changes, keeps only earned why-comments, verifies green
@@ -57,6 +60,32 @@ is aimed, not spread evenly over code that's fine.
 The output is a short **"here's where to look" map** — the two or three spots the shape flags. It names
 suspects; it does not convict them. A long file or a deep nest is a *prompt to look*, not a defect on its
 own — plenty are perfectly fine, and Phase 2 is what decides. Don't let the scan become the review.
+
+### The scan is blind to everything that isn't code
+
+Every signal above measures *code*: nesting, chains, parameter lists. Point it at a change set and the
+docs, build files, and config in that change set do not rank low — they never enter the ranking at all,
+and the map you produce reads complete while silently covering a fraction of the diff. This matters most
+in the case you are most often asked for: deslopping a whole branch before merge, where the prose and the
+build script were written in the same session as the code and are the *least* reviewed things in it.
+
+So when the session is scoped to a diff rather than one file, list the changed files first and give the
+non-code ones their own pass. Their signals are different:
+
+- **Docs and prose** (`.md`, comments-as-documentation, READMEs). Every factual claim is checkable, so
+  check it — this is *Ground every claim in evidence*, applied to sentences rather than to code. Watch
+  especially for a claim *invented during the same pass that fixed the code*: you verified the code's
+  behaviour, so the prose feels verified too, and it isn't. Also look for a section that contradicts
+  another because only one was updated, and for now-stale framing in text you left alone because you were
+  only reading what you added.
+- **Build and config** (`.kts`, `.toml`, CI, packaging). A literal repeated across places that must agree
+  is the defect here, and the dangerous kind is where one copy is *published* — a version, floor, or
+  coordinate that a consumer reads — because drift there is silent. Also flag path or index arithmetic
+  with no note of why: build glue is where a "simplification" looks obviously right and quietly relocates
+  an output.
+
+A file with no code in it can still be the worst thing in the diff. Prose that confidently states
+something false does more damage than an ugly function, because a reader has no compiler to catch it.
 
 ## Phase 2 — The critical pass (per file or concern)
 
@@ -175,4 +204,7 @@ When the right fix is structural (splitting a file, deleting a pattern, changing
   then, not when someone points at one. (These live in the language skill, e.g. `kotlin`; deslop's job is
   to make you re-check after every rewrite.)
 - Your report lists what you changed but not what you left — the reader can't tell judgment from churn.
+- You were asked to deslop a change set and reported on its code files only. Check the file list against
+  what you actually opened: the docs and build glue in that diff were part of the ask, and skipping them
+  is easy to miss precisely because the scan never listed them as candidates to skip.
 - You said "done" without running the tests.
