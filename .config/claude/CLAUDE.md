@@ -19,6 +19,8 @@ scope". Skill references are the source of truth and may correct or extend
 training-data recall.
 
 - `software-design` — language-agnostic architecture & design (layering, abstractions, typed errors, composition over inheritance)
+- `deslop` — file-by-file review-and-cleanup loop for hardening existing code without churn
+- `code-comments` — self-documenting code; what actually earns a comment
 - `kotlin` — Kotlin language idioms + formatting conventions
 - `compose` — Compose UI layer (state, Styles API, UiText, adaptive layout)
 - `mvi` — presentation architecture (MVI, ViewModel scoping, Koin DI, events)
@@ -94,6 +96,41 @@ may not want. Wasted implementation work is worse than one clarifying
 question. This applies to: ambiguous requirements, multiple viable design
 choices, missing context about why a change is being made, and any case
 where "I'll just guess and go" feels tempting.
+
+# Finishing a branch / feature / task
+
+"It compiles and the tests pass" is not done. Before calling a feature,
+task, branch, or fix finished, run the cleanup pass:
+
+1. Load the `deslop` and `code-comments` skills.
+2. Run a deslop session **over the changes** — the diff against the parent
+   branch, file by file — not over the whole repo. Same discipline as
+   always: ground every dead/unused claim in grep + tests + compile, keep
+   only earned why-comments, verify green after each change, and report
+   what was deliberately left alone and why.
+
+Do this before offering to merge, open a PR, or hand the branch back. It
+is part of the task, not a follow-up I need to be asked for.
+
+# Wide agent fan-out — warn before launching
+
+A workflow or parallel dispatch that can spawn **10+ subagents** (debug
+sweeps, code review, multi-agent QA, "audit the whole codebase") drains the
+session and weekly usage limits fast — often faster than the run can finish
+and report anything back. Burning the budget and getting nothing usable is
+the normal failure mode, not the edge case.
+
+So before launching one — whether I proposed it or the user asked for it:
+
+- State the expected agent count and that it may exhaust the limit
+  mid-run, then get an explicit go-ahead.
+- Offer the cheaper shape first: narrow the scope (changed files only),
+  fewer agents with wider briefs, or a sequential pass.
+- If it must be wide, prefer a design that returns partial results as it
+  goes over one that only reports at the end.
+
+The user reaffirming after the warning is the decision — say so once and
+proceed with the full fan-out.
 
 # Capturing skills and feedback from session work
 
