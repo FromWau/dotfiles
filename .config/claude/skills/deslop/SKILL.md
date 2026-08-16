@@ -105,6 +105,26 @@ the parser, or a sibling that already exists. Shape signals (length, nesting, co
 it, because each function reads fine on its own; it only surfaces here, on the semantic read. So when you
 touch a helper, ask "does this already exist?" before polishing it in place.
 
+The version that does real damage is a **rule implemented more than once** — not a repeated shape, a
+repeated *decision*: what counts as a usage error, how a version is derived, which of two occurrences came
+later, what a valid name is. Each copy reads fine alone, so nothing flags it, and because they are separate
+code they drift. A drift in a rule is a behaviour bug rather than a style one, and a silent one: no test
+asserts that two implementations of the same rule still agree, so the copies diverge unobserved.
+
+It arrives in two shapes, and both end as one definition:
+- **The rule already has a home you didn't use** — a purpose-built type, constant, or converter exists and
+  the code rebuilds it inline. Ask "does this already exist?" of the *rule*, not only of the helper; the
+  existing one is usually better named and already handles a case the reimplementation forgot.
+- **The rule has two homes and neither is canonical**, usually because two callers grew up apart. Fold onto
+  the more precise one: the fold has to keep every caller's guarantees, so folding onto the weaker copy
+  quietly downgrades the other. Where they already disagree, that disagreement is the bug — find which
+  behaviour is right before folding, or you will preserve the wrong one.
+
+The test that separates this from repetition worth keeping: **would a change to one copy be a bug if it did
+not land in the other?** If yes, it is one rule wearing two costumes, and the copies are a liability however
+tidy each looks. If no, it is two similar-looking pieces of code that answer different questions, and honest
+repetition beats a shared abstraction with a flag argument — see the anti-churn rule below.
+
 Equally important: **decide what to leave alone, and say so.** Resisting a tempting-but-harmful change is
 a first-class result, not a non-action. Things worth stating out loud:
 - A repeated 3-line shape you did NOT extract, because the generic helper needs variance/callback
@@ -254,6 +274,9 @@ When the right fix is structural (splitting a file, deleting a pattern, changing
   is that someone once observed it. "Silently", a mechanism-only comment, and a test named after what
   breaks are all a defect wearing a contract's clothes.
 - You extracted a helper used once, or DRY'd two things into a coupling they shouldn't share.
+- You left two implementations of one *rule* standing because each read fine on its own. That is the same
+  judgment as the bullet above, failing in the other direction — and the more expensive direction, since
+  duplicated rules drift into disagreeing behaviour while a needless helper only reads badly.
 - You restructured a block but didn't re-read the result against the language's formatting conventions
   (no semicolons, blank-line grouping into logical phases, line length, trailing commas, call chains past
   two calls broken one-per-line). A fresh rewrite
