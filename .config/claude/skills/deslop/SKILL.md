@@ -120,6 +120,59 @@ Recall about your own codebase is unreliable and confidently wrong. Check first:
 - **"Does this symbol do what I think?"** → read it or use the LSP; don't recall its behavior.
 - **"Is this change behavior-preserving?"** → find the tests that pin it; if none exist, say so.
 - **"Will this compile?"** → for anything non-trivial, compile before claiming it works.
+- **"Is this sentence I am about to write true?"** → prose claims need the same grounding, and the test
+  suite is the cheapest place to get it. A behaviour worth documenting is usually already pinned by a
+  test whose name and comment state the contract in words someone maintains. Search for that test
+  *before* writing the sentence: reading it beats deriving the claim from the implementation, and beats
+  running a throwaway experiment whose result you then have to interpret. When no test names the
+  behaviour, that absence is itself worth reporting. But a test pins *whatever was true when it was
+  written*, which is not always what anyone intended — see the next section before treating one as proof.
+
+### The project's own docs and test names are not independent evidence
+
+The step above sends you to the docs and the test suite for grounding. Both have a failure mode that will
+fool you precisely when you are being careful: **they may have been written to describe the bug.**
+
+Nobody does this dishonestly. A defect turns up, someone traces the mechanism, writes it down so the next
+person is not ambushed, and adds a test so it does not change under them. Every one of those steps is good
+practice. The result is a defect wearing a contract's clothes — and because you were taught to trust docs
+and tests over your own recall, it is the one claim you will not re-derive.
+
+**The tells**, in rough order of how loudly they ring:
+
+- **The rule names a bad outcome and offers no reason for it.** "the global silently keeps its default",
+  "the value is dropped", "the second one is ignored". Losing user input is never a design goal, so prose
+  stating it as a rule is reporting, not specifying. The word *silently* is almost always a missing error.
+- **The comment explains the mechanism instead of the reason.** "that split never runs once options have
+  ended" tells you *how* it happens. A contract says *why* it should. Mechanism-only is the giveaway that
+  the author was tracing, not deciding.
+- **The test name states the failure**: `...dropsTheGlobal`, `...isIgnored`, `...returnsNullHere`. Read it
+  as a headline. If it would read as a bug report in a changelog, it is one.
+- **It arrives as an apology.** "It has one edge to know about…", "note that in this case…". Real contracts
+  are stated, not conceded.
+- **The rule breaks a symmetry the codebase otherwise keeps** — the same input meaning different things
+  depending on something unrelated to it.
+
+**The test that settles it:** *would anyone have written this rule while designing, before the code
+existed?* A rule that only makes sense as a consequence of how the code happens to work is a description.
+Descriptions do not get to authorize the thing they describe.
+
+**Why this matters more than it looks.** A doc is read by people who cannot see the code, and they will
+faithfully reproduce what it says as their expectation — in their own tests, their own docs, their bug
+reports arguing the behaviour is correct. One accident becomes house style. By the time you arrive, the
+defect has three independent-looking sources agreeing with each other, all descended from one.
+
+**So get evidence the code cannot contaminate.** What does a comparable tool do? What does *this* codebase
+do in the nearest analogous case that is not broken? That sibling is the cheapest oracle you have: when one
+input works and its near-twin does not, the asymmetry is a defect signal no prose can overrule.
+
+**And when you fix it, delete the paragraph rather than rewording it.** Text that exists only to explain a
+defect has nothing left to say once the defect is gone. Rewording it preserves the frame that made the bug
+sound intentional. Same for the test: rename it for the contract you are now pinning, not the behaviour you
+just removed.
+
+Report these as findings in their own right. "The doc and the test both encode this defect" is more useful
+to the user than the code fix alone, because it tells them their own written record cannot be trusted here.
 
 This is where you earn trust: pushing back with evidence ("it's live in these two spots, here's exactly
 what breaks if it's removed") is far more valuable than agreeing. Being wrong about "dead code" is
@@ -196,6 +249,10 @@ When the right fix is structural (splitting a file, deleting a pattern, changing
 - You changed one unit to satisfy a threshold but left its identical sibling untouched — the change is
   tool-driven, not design-driven, so it's either worth doing everywhere or not at all.
 - You asserted "this is dead / unused / equivalent" without grepping or compiling.
+- You wrote a behavioural claim into a doc without first checking whether a test already states it.
+- You accepted a doc or a test name as proof that a behaviour was intended, when the only thing it proved
+  is that someone once observed it. "Silently", a mechanism-only comment, and a test named after what
+  breaks are all a defect wearing a contract's clothes.
 - You extracted a helper used once, or DRY'd two things into a coupling they shouldn't share.
 - You restructured a block but didn't re-read the result against the language's formatting conventions
   (no semicolons, blank-line grouping into logical phases, line length, trailing commas, call chains past
