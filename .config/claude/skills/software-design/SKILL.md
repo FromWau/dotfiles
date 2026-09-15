@@ -1,6 +1,6 @@
 ---
 name: software-design
-description: Language-agnostic software design and architecture principles — single source of truth (resolve layered config/env/CLI inputs once into one computed value instead of re-deciding precedence everywhere), clean-architecture layering and dependency direction, when an abstraction earns its keep, use cases vs. repositories, model/mapper boundaries, composition over inheritance, and typed-error handling philosophy. Load this whenever a task involves a structure or architecture decision in ANY language — where a piece of code belongs, how to resolve config/flag/precedence into one source of truth, whether to introduce an interface/base class, how to slice layers or packages, how to model errors, how to shape data crossing a boundary, or whether to act on vs. suppress a linter/static-analysis finding. Applies during design, code review, refactoring, responding to a lint or complexity warning, and "where should this go?" questions, even when no framework is named. Also covers library/API design (`references/library-design.md`): extension points and escape hatches over feature bloat, small composable interfaces vs. fat classes, observability via typed event hooks not logging, design-for-testability (simulate the clock, inject a fake/faulty filesystem, run I/O in memory), graceful degradation, and free-when-unused structures — load it for any "how should I design this library/API/plugin system", "how do I make this testable", or "how do I add an extension point" question. For the Kotlin expression of these ideas load `kotlin`; for Android/KMP framework specifics load the relevant tier — `compose` (UI), `mvi` (MVI/ViewModel/Koin), `android` (Gradle/platform), `kmp` (multiplatform structure).
+description: Language-agnostic software design and architecture principles — single source of truth (resolve layered config/env/CLI inputs once into one computed value instead of re-deciding precedence everywhere), clean-architecture layering and dependency direction, when an abstraction earns its keep, use cases vs. repositories, model/mapper boundaries, composition over inheritance, and typed-error handling philosophy. Load this whenever a task involves a structure or architecture decision in ANY language — where a piece of code belongs, how to resolve config/flag/precedence into one source of truth, whether to introduce an interface/base class, how to slice layers or packages, how to model errors, how to shape data crossing a boundary, or whether to act on vs. suppress a linter/static-analysis finding. Applies during design, code review, refactoring, responding to a lint or complexity warning, and "where should this go?" questions, even when no framework is named. Also covers library/API design (`references/library-design.md`): extension points and escape hatches over feature bloat, small composable interfaces vs. fat classes, observability via typed event hooks not logging, design-for-testability (simulate the clock, inject a fake/faulty filesystem, run I/O in memory), graceful degradation, and free-when-unused structures — load it for any "how should I design this library/API/plugin system", "how do I make this testable", or "how do I add an extension point" question. Also covers the simple-and-predictable rule for tools and libraries: do exactly what was asked, add no guard rails, heuristics or special cases for odd inputs or unusual setups (the way `rm` keeps no list of protected files), still report every failure as a typed error, and document sharp edges instead of padding them; load it whenever deciding how a CLI, library or API should react to misuse, a weird environment, or a risky-looking input. For the Kotlin expression of these ideas load `kotlin`; for Android/KMP framework specifics load the relevant tier — `compose` (UI), `mvi` (MVI/ViewModel/Koin), `android` (Gradle/platform), `kmp` (multiplatform structure).
 ---
 
 # Software Design
@@ -94,3 +94,27 @@ The philosophy is transferable; the concrete `Result<D, E>` type is a `kotlin` c
 - **Never pass human-readable error strings out of the data or domain layer.** Return a **typed error** (an enum/sealed set). Which string — and which language — the user sees is a *presentation* decision; deciding it deep in the stack hard-codes UI policy into your core and makes localization impossible.
 - **Map failures to typed errors at the boundary where they occur** (e.g. HTTP status → error enum in the data layer). Then map typed error → display string in the presentation layer, at the last moment.
 - A root error type with per-domain refinements keeps `when` handling exhaustive: adding a new failure becomes a compile error at every call site that must react to it, instead of a silent fall-through.
+
+## Simple, Predictable Tools: No Guard Rails Against Misuse
+
+A tool should do exactly what it says, the same way every time. `rm` deletes what you name; it keeps no list of
+"important" files to protect you from yourself, and that predictability is why people trust it. Build CLIs,
+libraries and APIs the same way.
+
+- **Apply the same rule to every input.** When a caller passes something odd or runs on a strange setup (a
+  symlink loop, a directory another user pre-created, an unusual path), let the tool's ordinary rule decide the
+  outcome. Don't add special cases, heuristics, confirmation gates or defensive policies for it. Each guard is
+  one more rule callers have to learn, and behaviour that depends on hidden judgement stops being predictable.
+  A caller who built a weird setup owns its consequences.
+- **Still report what happened.** No guard rails does not mean silent: when the OS or the input makes an
+  operation fail, return the typed error as usual (see Error Handling above). The line runs between reporting a
+  failure, which a tool always does, and second-guessing a request, which it doesn't.
+- **Document sharp edges instead of padding them.** When a plain rule has a surprising consequence on an unusual
+  setup (writes follow symlinks; a shared `/tmp` is shared), say so in the docs or a Known limits section and
+  leave the behaviour alone. The caller can then decide, for example by passing a different root.
+- **Keep the tool's own promises.** Invariants the tool needs to stay correct in ordinary use are not guard
+  rails: a write that stays atomic, or a `mkdir -p` that still succeeds when another process creates the folder
+  first, protects the tool's contract. Handling a setup the caller built is a guard and stays out, such as
+  detecting a symlink loop in a walk: the walk follows links, and the loop is the caller's. The test for any
+  proposed check: does it keep a promise the tool makes in normal use, or does it second-guess what the caller
+  asked for? Only the first belongs.
