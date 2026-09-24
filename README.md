@@ -59,9 +59,11 @@ cursor theme — lives in **`$XDG_STATE_HOME/hypr/state.json`**:
 - **Sole writer**: `hyprstate` CLI (atomic temp+rename). Every writer
   (matugen `cursor-theme.sh`, `hypr-wal`, AGS) calls
   `hyprstate set KEY VALUE [--reload] [--notify ...]`.
-- **Hyprland reads** state in `~/.config/hypr/conf/display_mode.lua` via
-  `jq` on every `hyprctl reload`, then applies `hl.monitor(...)` and
-  `hyprctl setcursor` for the active mode.
+- **Hyprland reads** state in `~/.config/hypr/conf/monitors.lua` via
+  `jq` on every `hyprctl reload`. That file merges the nwg-displays
+  geometry from `monitors.lua` with the active mode's resolution
+  override into one `hl.monitor(...)` call per output, then applies
+  `hyprctl setcursor`.
 - **AGS reads** state via a Gio directory monitor in `utils/state.ts`;
   the reactive `currentState` mirrors disk and re-renders the bar +
   widgets automatically when state.json changes — regardless of which
