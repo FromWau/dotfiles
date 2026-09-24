@@ -73,6 +73,16 @@ nothing, rewrite the claim with explicit grounding ("the stack trace
 shows…", "I could not verify…", "likely, but unconfirmed"). Never invent
 tracker IDs, URLs, or version numbers to lend false authority.
 
+# Reading a repo that isn't checked out — clone it
+
+`git clone --depth 1 <url> /tmp/<name>`, then explore on the filesystem. Don't page
+through it with WebFetch or the GitHub web UI: `grep`/`find`/`rg` over a local
+checkout is far faster, shows the whole tree at once instead of one page at a time,
+and lets you read call sites next to their definitions.
+
+Check the licence before reusing anything — reading for structure is fine, copying
+into a differently-licensed project is not.
+
 # Date and time — check the clock first
 
 Before any date/time reasoning, scheduling, or deferral, run `date`

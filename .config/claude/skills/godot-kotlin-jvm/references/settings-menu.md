@@ -1,6 +1,6 @@
 # Settings menu
 
-A complete design for a AAA-style in-game settings menu in godot-kotlin-jvm.
+A complete design for a AAA-style in-game settings menu in Godot-JVM.
 Covers data model, service layer, persistence, engine apply, and the four
 typical tabs (Graphics, Audio, Gameplay, Keybinds). Read this when starting
 a settings system from scratch or when reviewing one — the decisions
@@ -11,7 +11,7 @@ captured here are non-obvious and have already been argued through.
 - Single JVM source set (no expect/actual). Godot's own APIs (`FileAccess`,
   `AudioServer`, `DisplayServer`, `InputMap`, `Environment`, `Viewport`,
   `TranslationServer`) already abstract the platform across all five
-  godot-kotlin-jvm targets (Windows / Linux / macOS / Android / iOS).
+  Godot-JVM targets (Windows / Linux / macOS / Android / iOS).
 - JSON persistence via `kotlinx.serialization`. No ktoml, no `ConfigFile`
   (Godot's INI thing) — we want round-trip of `@Serializable` data classes.
 - Live-apply UX (no Apply/Cancel buttons). Every UI mutation flows through
@@ -224,7 +224,7 @@ matches Apex / Valorant / Overwatch. If you ever want stage+commit
 emit+engine-push without the debounced save, and gate `update` behind an
 Apply button.
 
-**Why `inline reified`.** Avoids reflection (which the godot-kotlin-jvm
+**Why `inline reified`.** Avoids reflection (which the Godot-JVM
 KSP processor would have to consider) and gives clean call sites. Each
 variant compiles to its own copy at the call site; for 4 variants the
 code bloat is negligible.
@@ -418,29 +418,29 @@ calling `service.update<Settings.X> { it.copy(...) }` on user input.
 Driver pattern:
 
 ```kotlin
-@RegisterClass
+@Script
 class AudioTab : Control() {
-    private val scope = NodeScope()
     private lateinit var service: SettingsService
     private lateinit var masterSlider: HSlider
 
-    @RegisterFunction
     override fun _ready() {
-        masterSlider = getNode("MasterSlider") as HSlider
-        masterSlider.valueChanged.connect { v ->
+        masterSlider = getNodeAs("MasterSlider")!!
+        masterSlider.valueChanged.connectLambda { v ->
             service.update<Settings.Audio> { it.copy(master = v.toFloat()) }
         }
-        scope.launch {
+        launch {
             service.state.map { it.audio.master }.distinctUntilChanged().collect {
                 if (masterSlider.value != it.toDouble()) masterSlider.value = it.toDouble()
             }
         }
     }
-
-    @RegisterFunction
-    override fun _exitTree() { scope.cancel() }
 }
 ```
+
+`launch` here is `Node.launch`, so the collection belongs to the tab node and
+the binding cancels it when the tab leaves the tree. There is no scope to build
+and no `_exitTree` cleanup to remember. `SettingsService` is not a node, so its
+own scope comes from `godotCoroutine()` at construction.
 
 The `masterSlider.value != it.toDouble()` guard prevents a feedback loop
 when the flow update is what *caused* the slider value to change.
@@ -461,9 +461,8 @@ clicks a binding slot. A node with `_input` captures the next input
 event, builds an `InputBinding`, and emits the update. Esc cancels.
 
 ```kotlin
-@RegisterClass
+@Script
 class KeybindRow : HBoxContainer() {
-    private val scope = NodeScope()
     lateinit var service: SettingsService
     lateinit var actionName: String
     var slot: Slot = Slot.PRIMARY
@@ -472,7 +471,6 @@ class KeybindRow : HBoxContainer() {
 
     fun startListen(s: Slot) { slot = s; listening = true; setProcessInput(true) }
 
-    @RegisterFunction
     override fun _input(event: InputEvent) {
         if (!listening) return
         val binding = when (event) {
@@ -572,7 +570,7 @@ when/if it lands.
 
 The template's `Logger` and `ConfigManager` are designed for KMP
 (`expect`/`actual`, `SystemAppDirectories`, `kotlinx.io`, ktoml). Strip
-all of that — godot-kotlin-jvm is JVM-only and Godot's APIs handle the
+all of that — Godot-JVM is JVM-only and Godot's APIs handle the
 platform abstraction.
 
 | Template piece | Keep / drop in Godot |
@@ -626,7 +624,7 @@ src/main/kotlin/com/yourgame/
     SettingsService.kt       state + update<T> + debounced save
     SettingsApplier.kt       diff-and-push to AudioServer / DisplayServer / ...
     ui/
-      SettingsMenu.kt        @RegisterClass Control, tab switching
+      SettingsMenu.kt        @Script Control, tab switching
       tabs/
         AudioTab.kt
         GraphicsTab.kt

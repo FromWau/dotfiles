@@ -1,4 +1,5 @@
 {
+  "model": "opus[1m]",
   "enabledPlugins": {
     "code-review@claude-plugins-official": true,
     "kotlin-lsp@claude-plugins-official": true,
@@ -12,5 +13,6 @@
   "skipWorkflowUsageWarning": true,
   "editorMode": "vim",
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "feedbackDrafts": "off"
 }

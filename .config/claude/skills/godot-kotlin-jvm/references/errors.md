@@ -1,295 +1,200 @@
-# godot-kotlin-jvm error catalog
+# Error catalog
 
-Every error in this catalog was seen during a real setup. The "cause" line
-explains *why* it happens so you can recognize variants; the "fix" line is
-the minimal change.
+Symptom, cause, fix. The cause line is the useful part: it lets you recognize
+variants of the same problem that word themselves differently.
 
----
+## Editor and runtime
 
-## Runtime (in Godot editor)
+### `No loader found for resource: res://…/Player.kt (expected type: Script)`
 
-### `Version mismatch! C++ module is : X / Jar is : Y`
+Followed by `Parse Error: [ext_resource] referenced non-existent resource`.
 
-**Where:** Godot Output panel after running the scene or building from the
-"Run gradle" button.
+**Cause.** The GDExtension has never been loaded in this project, so nothing
+provides a script loader for `.kt`. Common when running the game in a checkout
+that has not been opened in the editor yet, and after adding the addon.
 
-**Cause:** The plugin tag in `build.gradle.kts` doesn't match the Godot
-editor binary's fork version. The JAR produced by Gradle and the engine's
-native module use different ABI versions.
+**Fix.** Open the project in the editor once, or
+`godot --headless --editor --quit`. Then `.godot/extension_list.cfg` names
+`res://addons/jvm/jvm.gdextension`. If the file is still missing, the addon is
+not at `addons/jvm/jvm.gdextension` or Godot is older than the manifest's
+`compatibility_minimum`.
 
-**Fix:** Change the plugin version string in `build.gradle.kts` so its
-Godot-fork-version half matches the editor:
+### The script is attached, but nothing happens and nothing is logged
 
-- `0.14.3-4.5.1` for Godot fork 4.5.x
-- `0.16.1-4.6.3` for Godot fork 4.6.x
+**Cause.** The file declares more than one `@Script` class. Godot associates
+the file with the **first** one, so the node silently gets a class that has no
+`_ready` of its own. No error is printed, which is what makes this expensive.
 
-Then `./gradlew clean build` and restart the editor.
+**Fix.** One attachable `@Script` class per file. Move payload classes, helper
+`RefCounted` types and sealed leaves into their own files.
 
----
+### `NullPointerException` at a `connectLambda` line in `_ready`
+
+**Cause.** The signal's declared payload type has no Variant converter.
+`connectLambda` resolves converters eagerly at connect time, so the crash
+lands on the connect line rather than on an emit. The usual culprit is a bare
+interface, including a `sealed interface` whose leaves are all registered: the
+build check accepts it, the runtime cannot convert it.
+
+**Fix.** Type the signal on a registered `@Script` class, an engine class such
+as `RefCounted`, or a primitive, and cast when you receive it. Or connect with
+`connectMethod(target, Class::handler)`, which converts at call time instead.
+
+### Godot uses a different JDK than the shell does
+
+**Cause.** Resolution order is `--jvm-path`, then an embedded
+`jvm/jre-<arch>-<os>`, then `JAVA_HOME`, then `java` on `PATH`. A stale
+`JAVA_HOME` or a leftover embedded JRE beats the `java` you just installed.
+
+**Fix.** Update `JAVA_HOME` rather than `PATH`, delete the embedded JRE if it
+is stale, or force one run with `--jvm-path=/usr/lib/jvm/temurin-17`.
+
+### The JVM does not start when the game is launched from the macOS Dock
+
+**Cause.** GUI-launched macOS apps do not inherit environment variables set in
+`.bashrc` or `.zshrc`, so a `JAVA_HOME` set there is invisible to them.
+
+**Fix.** `launchctl setenv JAVA_HOME <path-to-jdk>`.
 
 ### `You really should embed a JRE in your project with jlink!`
 
-**Where:** Warning on every Godot launch.
+**Cause.** No `jvm/jre-<arch>-<os>` directory. A warning, not an error: the
+game runs, but an exported build would need a JDK on the player's machine.
 
-**Cause:** No `jvm/jre-<arch>-<os>/` folder at the project root.
+**Fix.** `./gradlew generateEmbeddedJre`.
 
-**Fix:** Run `./gradlew generateEmbeddedJre`. If that fails with
-`property 'javaHome' doesn't have a configured value`, see the next entry.
+### Memory grows without bound, `RefCounted` instances never freed
 
-This is a warning, not an error — the game runs without it. The embedded JRE
-matters for exporting to end users, so they don't need a JDK installed.
+**Cause.** `disable_gc` in `godot_jvm_configuration.json`, or
+`--jvm-disable-gc`. With the binding's collector off, `RefCounted` and native
+types are never collected. This is documented behavior, not a leak.
 
----
+**Fix.** Re-enable it.
 
-## Gradle (configuration / build)
+### Code runs but nothing appears in the editor's Output panel
 
-### `property 'javaHome' doesn't have a configured value` on `:generateEmbeddedJre`
+**Cause.** `println` and `System.out.println` write only to the terminal that
+launched Godot.
 
-**Cause:** The `GenerateEmbeddedJreTask` doesn't auto-detect a JDK.
+**Fix.** `godot.global.GD.print` (and `GD.printErr`, `GD.pushWarning`,
+`GD.pushError`) write to both.
 
-**Fix:** Configure the task in `build.gradle.kts`. `javaHome` is a `String`
-field (not a Gradle `Property<T>`), so use `=` not `.set(...)`:
+## Build and registration
 
-```kotlin
-val javaToolchains = extensions.getByType<JavaToolchainService>()
-val jdk17 = javaToolchains.launcherFor {
-    languageVersion.set(JavaLanguageVersion.of(17))
-}
-tasks.named<godot.gradle.tasks.GenerateEmbeddedJreTask>("generateEmbeddedJre") {
-    javaHome = jdk17.get().metadata.installationPath.asFile.absolutePath
-}
-```
+### `Registered signal parameter cannot use unrelated JVM class X`
 
-### `Unresolved reference 'set'` on `javaHome.set(...)`
+Failing task: `:registrarGenerationGenerateFiles`, wrapped in
+`ChecksFailedException: Some checks failed`.
 
-Same root cause as above — `javaHome` is a plain `String` field, not a
-`Property<T>`. Replace `.set(...)` with `=`.
+**Cause.** A signal parameter type Godot cannot carry, typically a `data
+class` or another plain JVM type.
 
----
+**Fix.** Use a primitive, a core type, an engine class, or one of your
+registered `@Script` classes as the parameter type. The real message is
+printed *above* the `ChecksFailedException`, so read the log rather than the
+exception line.
 
-### `Inconsistent JVM-target compatibility detected for tasks 'compileJava' (N) and 'kspKotlin' (M)`
+### `ChecksFailedException` with no obvious message
 
-**Cause:** The JDK running Gradle is newer than what the plugin's pinned
-Kotlin compiler supports. KSP falls back to its max supported target (e.g.
-JVM 23 for Kotlin 2.3), while `compileJava` defaults to the running JDK's
-target (e.g. JVM 26). They disagree.
+**Cause.** Any registration check failed. The individual failures are logged
+before the exception.
 
-**Fix:** Pin a JVM toolchain in `build.gradle.kts`:
+**Fix.** Scroll up to the lines above `> Task :registrarGenerationGenerateFiles
+FAILED`, or rerun with `--info`.
 
-```kotlin
-kotlin {
-    jvmToolchain(17)
-}
-```
+### The build fails on duplicate registered class names
 
-And ensure `settings.gradle.kts` has the foojay resolver so Gradle can
-auto-fetch JDK 17 if it's not installed:
+**Cause.** Two classes register under the same Godot name. Godot has no
+namespaces for scripts, so package differences do not help.
 
-```kotlin
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-}
-```
+**Fix.** Rename one, give one `@Script("UniqueName")`, or switch
+`registration.nameMode` to `FQ_NAME` or `PROJECT_PREFIX`.
 
-This is the **portable** fix — works on any machine, not just one with a
-specific JDK installed. Do not use `org.gradle.java.home=/abs/path/to/jdk`
-in `gradle.properties` — that's machine-specific.
+### A class, property, function or signal is missing after a successful build
 
----
+**Cause.** It was not selected by the current registration mode. Check the
+generated registrar to see what the build actually produced:
+`build/generated/registrar-generation/main/kotlin/godot/registrar/<Class>Registrar.kt`.
 
-### `Kotlin does not yet support N JDK target, falling back to Kotlin JVM_M JVM target`
+Then walk the relevant list:
 
-**Cause:** Warning preceding the `Inconsistent JVM-target` error above. The
-running JDK is newer than the Kotlin compiler version.
+- **Class**: does it extend a Godot API class, is the file extension `.kt`,
+  `.java` or `.scala`, is `@Script` present (Inferred and Explicit modes need
+  it), does its name collide?
+- **Property**: is the field or accessor public, is the type mappable to
+  Godot, do field and accessors line up as one logical property, was it
+  registered as a function instead because of `@Register`?
+- **Function**: is it public and declared on the class rather than only
+  inherited, are all parameter and return types mappable, is it non-generic,
+  does it exceed 16 parameters, is it accessor-shaped and therefore treated as
+  a property?
+- **Signal**: is it a `SignalN` member, does it have a direct `@Emit` in
+  Explicit mode, is its class registered at all?
 
-**Fix:** Same as above — pin a toolchain.
+### The IDE and the build disagree about what is registered
 
----
+**Cause.** IntelliJ's **Settings | Godot-JVM | Annotation processing mode**
+differs from `registration.annotationProcessingMode` in `build.gradle.kts`.
 
-### `RegisteredClass does not have a public default constructor`
+**Fix.** Make them match. Gradle is the authority; the IDE setting only drives
+inspections.
 
-**Cause:** A class annotated `@RegisterClass` lacks a public no-arg
-constructor. Godot instantiates registered classes via reflection at
-runtime, so this is required.
+### A change does not take effect after `fastBuild`
 
-**Fix:** Write an explicit empty primary constructor (or no params), plus a
-secondary for convenience.
+**Cause.** `fastBuild` reuses the previous registration scan and only rebuilds
+`main.jar`. Structural changes are invisible to it.
 
-**Defaults do NOT satisfy the check on 0.14.3:** both
-`class X(var n: Int = 0)` and `@JvmOverloads constructor(var n: Int = 0)` fail —
-KSP inspects the Kotlin constructor (which has a parameter), not the synthetic
-JVM no-arg overload. **On 0.16.x this is fixed:** the processor is ClassGraph-
-based (reads bytecode), so an all-defaults primary ctor (`class X(val n: Int =
-0)`) is accepted — Kotlin synthesizes a public no-arg ctor when every primary
-param has a default. A param *without* a default still fails. So the reliable
-options are:
+**Fix.** Run `./gradlew build` after adding, removing, renaming or otherwise
+changing a registered class, property, signal or Godot-callable function.
 
-1. Write a secondary no-arg constructor:
-   ```kotlin
-   class MyNode : Node2D() {
-       constructor() : super()
-       constructor(x: Int) : this()
-   }
-   ```
+### `Could not create child process: …/gradlew`
 
-3. If the class isn't actually attached to a Godot node, remove
-   `@RegisterClass` — plain Kotlin classes used from other Kotlin code don't
-   need registration.
+**Cause.** `gradlew` lost its executable bit, which happens with projects
+created from the IntelliJ template. Hits editor-triggered builds and the
+`buildAndroid`, `buildIOS` and `buildGraalNativeImage` tasks.
 
-**0.16.x variant — `You should provide a default constructor for class X`:**
-same root cause, different message and processor. The common 0.16.x trigger is a
-`sealed class : RefCounted()` used as a signal-payload parent — a sealed class
-compiles to an abstract class, abstract classes inheriting a Godot Object are
-auto-registered, and a `sealed class` ctor is `protected` (can't be made
-public). Fix by making the parent a `sealed interface` with
-`@RegisterClass ... : RefCounted()` leaves (see the signals section in SKILL.md).
+**Fix.** `chmod +x gradlew`.
 
----
+### The Godot editor cannot find the Gradle wrapper
 
-### `NullPointerException` at a `connectLambda` call in `_ready()` (0.16.x)
+**Cause.** The editor only looks inside the Godot project directory, and the
+wrapper lives in a parent directory of a larger repository.
 
-**Cause:** The signal's declared payload type isn't a registered Variant.
-`connectLambda` builds its `Callable` eagerly via `getVariantConverter<P0>()!!`
-= `variantMapper[P0::class]!!`; if `P0` is unregistered (a `sealed interface`,
-an `enum`, a plain class), the lookup is null and `!!` throws. It compiles fine;
-the NPE fires at the connect call when `_ready` runs. Because `connectLambda` is
-`inline`, the trace line is the inlined body (often a misleading line number).
+**Fix.** Set the wrapper path in Godot's project settings, and point the
+plugin at the Godot root with `godotProjectDirectory.set(file(".."))`.
 
-**Fix:** Type the signal on a registered Variant — a primitive, or a registered
-Godot Object / engine type such as `RefCounted` — and cast back to your sealed
-type on the receiving side:
-```kotlin
-@RegisterSignal val toolUsed by signal1<RefCounted>()
-source.toolUsed.connectLambda { ref -> onToolUsed(ref as Tool) }
-```
-Or connect with `connectMethod(target, ::handler)`, which routes through a named
-`MethodCallable` and skips the `variantMapper` lookup at connect time.
+## Export
 
----
+### An exported desktop build does not start
 
-### KSP: `java.util.NoSuchElementException: Collection contains no element matching the predicate`
+**Cause.** The embedded JRE does not match the target: exports copy the JRE
+generated on the exporting host, and a macOS or amd64 JRE will not run
+elsewhere.
 
-**Cause:** A class is annotated `@RegisterClass` but doesn't extend a Godot
-type from `godot.api.*`. The KSP processor can't find the class's Godot
-supertype.
+**Fix.** Export each desktop platform from a host running it, after generating
+a JRE there. A universal macOS build needs both an amd64 and an arm64 JRE.
 
-**Fix:** Either:
-- Make the class extend a Godot type (`Node`, `Node2D`, `Resource`, etc.)
-- Or remove `@RegisterClass` — only classes that Godot needs to instantiate
-  as scripts should be registered.
+### Android export fails on a missing AAR
 
----
+**Cause.** `addons/jvm/libs/android/{debug,release}/godot-jvm-*.aar` is
+missing; Godot pulls it from the addon during export.
 
-### `Unresolved reference 'Instant'` / `'Clock'` from `kotlin.time.*`
+**Fix.** Reinstall a complete addon release.
 
-**Cause:** `kotlin.time.Instant` and `kotlin.time.Clock` were stabilized in
-Kotlin **2.1.0**. The 0.13.x / 0.14.x plugins pin Kotlin 2.0.x, which doesn't
-have them yet.
+### The game breaks on the second launch after clearing save data
 
-**Fix:** Add `kotlinx-datetime` as a dependency and use its `Instant` /
-`Clock`:
+**Cause.** The exported game copies `godot-bootstrap.jar` and `main.jar` from
+`res://` into `user://` on first launch (on Android, into `files/` as
+`godot-bootstrap-dex.jar` and `main-dex.jar`). Code that wipes `user://`
+wholesale deletes the runtime.
 
-```kotlin
-// build.gradle.kts
-dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
-}
-```
+**Fix.** Delete only files your game created, and exclude the runtime jars
+from any bulk clear, including in an uninstaller.
 
-```kotlin
-// in your source
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-```
+### A GraalVM native-image build ignores code changes
 
-The API is nearly identical — `Instant.parse(...)`, `Clock.System.now()`,
-`Instant.minus(Instant)` returns `kotlin.time.Duration` which has
-`.inWholeDays` etc.
+**Cause.** Native image is compiled ahead of time; reloading would mean
+restarting the JVM. Documented limitation.
 
----
-
-### `Plugin requires Gradle X` or `NoSuchMethodError: org.gradle.*`
-
-**Cause:** Gradle wrapper version is incompatible with the plugin version.
-Older plugins (0.13.x / 0.14.x) were built against Gradle 8.x; Gradle 9
-removed/changed some APIs.
-
-**Fix:** Edit `gradle/wrapper/gradle-wrapper.properties` and set
-`distributionUrl` to a Gradle 8.10.x build:
-```
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.10.2-bin.zip
-```
-Then run `./gradlew --version` to confirm.
-
----
-
-## Build script syntax (build.gradle.kts)
-
-### `Unresolved reference 'entrygenerator'` / `'GodotLanguage'` / `'languages'` / `'registrationFilesDirectory'` / `'registrationFilesLayoutMode'`
-
-**Cause:** Using `0.16.x` DSL with `0.14.x` plugin version (or vice versa).
-The property names were renamed between major DSL versions.
-
-**Fix:** Match the DSL to the plugin version — see
-`references/dsl-by-version.md`. Quick map:
-
-- `registrationFilesDirectory` (0.16.x) ↔ `registrationFileBaseDir` (0.14.x)
-- `registrationFilesLayoutMode` (0.16.x) ↔ `isRegistrationFileHierarchyEnabled` (0.14.x)
-- `languages.set(setOf(GodotLanguage.KOTLIN))` (0.16.x) — doesn't exist in 0.14.x (Kotlin-only).
-
----
-
-## Editor UI
-
-### "Attach Script" dialog only has a `Create` button, no `Load`
-
-**Cause:** That dialog is for creating *new* scripts (and works for GDScript,
-not really for Kotlin). You cannot use it to attach an existing `.gdj`.
-
-**Fix:** Use the **Inspector** instead:
-1. Select the node in the scene tree.
-2. Inspector (right panel) → scroll to the `Script` property (near the
-   bottom, value is `[empty]`).
-3. Click the dropdown arrow on that field → **Load** → browse to
-   `res://scripts/<Pkg>/<Class>.gdj`.
-
-Or drag the `.gdj` from the FileSystem panel onto the node.
-
----
-
-### "Please don't use reserved keywords as file name" in the New Script dialog
-
-The error is misleading. This whole dialog is the wrong path for
-godot-kotlin-jvm — close it and use the Inspector → Script → Load flow
-described above.
-
----
-
-## Output not appearing
-
-### `_ready()` runs but no output appears in the Godot Output panel
-
-**Cause:** Using `println(...)` instead of `GD.print(...)`. Plain Kotlin
-`println` goes to JVM stdout (the terminal where Godot was launched from),
-not the editor's Output panel.
-
-**Fix:** Use `godot.global.GD.print(...)`:
-
-```kotlin
-import godot.global.GD
-GD.print("message here")
-```
-
-If still no output: confirm the script is actually attached to the scene's
-root node. Check the `.tscn` file for a `script = ExtResource(...)` line —
-without it, no Kotlin code runs.
-
----
-
-### No output AND `.tscn` has no `script = ExtResource(...)` line
-
-**Cause:** Script never got attached, or the attach happened in a different
-scene file.
-
-**Fix:** Reload project (so editor sees current `.gdj`), select the node,
-Inspector → Script → Load → pick the `.gdj`, save scene (Ctrl+S).
+**Fix.** Iterate on the normal JVM and use native image only for release
+builds.

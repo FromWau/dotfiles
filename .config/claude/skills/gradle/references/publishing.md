@@ -34,9 +34,15 @@ val uncommitted = providers.exec {
 }.standardOutput.asText
 
 tasks.withType<PublishToMavenRepository>().configureEach {
+    // Copied into the task: a doFirst reading these from the script holds a script reference, which the
+    // configuration cache cannot serialize.
+    val tag = releaseTag
+    val tags = headTags
+    val dirty = uncommitted
+
     doFirst {
-        require(releaseTag in headTags.get().lines()) { "Publishing $releaseTag needs HEAD tagged $releaseTag." }
-        require(uncommitted.get().isBlank()) { "Publishing needs a clean checkout. Commit or stash everything first." }
+        require(tag in tags.get().lines()) { "Publishing $tag needs HEAD tagged $tag." }
+        require(dirty.get().isBlank()) { "Publishing needs a clean checkout. Commit or stash everything first." }
     }
 }
 ```
@@ -57,8 +63,17 @@ repository cannot even compile during development, since `core` 0.3.0 does not e
 Coordinates, POM, license, publishing repository, credentials and the tag guard live in one convention plugin in
 `build-logic`, say `<project>-publish`. Every published module applies it, directly or through a platform
 convention such as `<project>-module` (the KMP targets plus `<project>-publish`). A module then declares only its
-`description`. When a build mixes kinds of modules, wire what differs with `pluginManager.withPlugin`, so the
-convention does not depend on plugin order:
+`description`.
+
+**Group names.** A project that publishes one artifact takes the flat group: `com.example:mytool`. A project that
+publishes a family of modules takes a group of its own, `com.example.mylib:core`, because module names inside a
+family are generic. `com.example:core` reads wrong and collides with the next project that needs a core. Both
+shapes share one repository, so a content filter over them has to include subgroups, and so does the plugin
+marker's group (see the plugin section below). Coordinates are permanent once published, so this is worth settling
+before the first release rather than stranding versions under an abandoned group later.
+
+When a build mixes kinds of modules, wire what differs with `pluginManager.withPlugin`, so the convention does not
+depend on plugin order:
 
 ```kotlin
 pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
@@ -77,6 +92,11 @@ configuration cache, reported as `Explicit credentials are unsupported with the 
 lookup, `credentials(PasswordCredentials::class)`, keeps the cache, but it reads only the Gradle properties
 `<repo>Username` and `<repo>Password`, never a `.env`. Keeping credentials in `.env` therefore costs one uncached
 configuration per release, while every other build keeps the cache.
+
+That blocker also hides every other configuration-cache problem in those tasks, since Gradle stops at the first
+one. Check them separately, by removing the `credentials` block in a clone and running the publish task with
+`--dry-run`: whatever it reports then is what a later switch to Gradle's credential lookup would have to fix
+first, because Gradle 9 fails the build on configuration-cache problems rather than warning.
 
 ## A Gradle plugin that builds use lives in its own repo
 

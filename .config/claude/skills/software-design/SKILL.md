@@ -118,3 +118,18 @@ libraries and APIs the same way.
   detecting a symlink loop in a walk: the walk follows links, and the loop is the caller's. The test for any
   proposed check: does it keep a promise the tool makes in normal use, or does it second-guess what the caller
   asked for? Only the first belongs.
+- **A ceiling the caller cannot raise is a guard rail wearing implementation clothes.** The obvious guards are
+  dynamic: a confirmation, a heuristic, a special case for odd input. The easy one to miss is a constant. A
+  4 MiB read cap or a fixed nesting depth is a number you chose, and a caller with a legitimately larger file
+  has nowhere to go and no way to ask. Defaults are fine and usually kind; a ceiling with no override is policy
+  the caller never agreed to, and it hides as implementation detail rather than reading as interface. Ask of
+  every refusal: *can the caller override this?* Make the answer yes unless the next bullet applies.
+- **The one refusal a caller may not override is where the failure would not be a value.** Text nested deeper
+  than the parser's stack does not produce an error you can hand back: on a native target it is a SIGSEGV, no
+  output, nothing to catch. A limit there exists so the failure *can* be a typed error at all, which is keeping
+  the tool's promise rather than second-guessing the request. Keep that set small, name each member, and say at
+  the point of refusal why it is not a dial.
+- **Watch for the same instinct in how you report.** Listing a caller's deliberate, explicitly named
+  destructive option, a `force` flag doing exactly what `force` says, as a "sharp edge" or a "remaining
+  concern" is second-guessing in prose instead of in code. If they had to name the door to open it, the door
+  working is not a finding.

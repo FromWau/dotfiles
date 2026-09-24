@@ -1,51 +1,55 @@
 # Steam publishing
 
-How to ship a godot-kotlin-jvm game on Steam and use the Steamworks API.
-Read this when starting Steam integration — the path is non-obvious
-because godot-kotlin-jvm is a custom Godot fork and so is the de-facto
-Godot+Steam integration (GodotSteam), so the standard advice doesn't
-apply.
+How to ship a Godot-JVM game on Steam and talk to the Steamworks API.
 
-## The forks-collide problem
+## Two paths, and why the old blocker is gone
 
-godot-kotlin-jvm requires Utopia Rise's custom Godot binary (the
-official binaries don't load Kotlin). GodotSteam ships as either:
+Before the 1.0.0 GDExtension rewrite, the binding required Utopia Rise's
+custom Godot binary, and GodotSteam's module form required its own custom
+binary. Only one custom engine build can exist at a time, so they could not
+be combined and the only route was to call Steamworks from JVM code directly.
 
-- a **module form** that requires its own custom Godot binary (built
-  with the Steam module compiled in), or
-- a **GDExtension form** targeting *stock* Godot 4.4+ (its maintainer
-  states module and GDExtension versions are not compatible with each
-  other).
+That structural conflict no longer exists. Godot-JVM 1.0.0 is a GDExtension
+addon on the **official** Godot binaries, and GodotSteam ships a GDExtension
+form that supports Godot 4.7.x (GodotSteam 4.22 / 4.11, released alongside
+Godot 4.7.2 in August 2026). Two GDExtensions coexist in one project the way
+Godot intends, so both paths are now open:
 
-You can only run one custom Godot binary at a time. Neither GodotSteam
-path stacks with the utopia-rise fork. As of this writing, zero
-community work exists on a merged fork (verified via GitHub issue
-search of both repos for "steam"/"steamworks"/"kotlin").
+**Path A: GodotSteam GDExtension.** Install it next to `addons/jvm/`. It
+registers Godot-side classes and singletons, which means GDScript gets a typed
+API and your JVM code does not: the generated `godot.api.*` surface only covers
+engine classes, so reaching GodotSteam from Kotlin goes through the untyped
+call path (`Engine.getSingleton(...)` plus `callUnsafe`), or through a thin
+GDScript shim you call from Kotlin. Worth it when you want GodotSteam's
+coverage of the Steamworks surface and are happy for the boundary to be
+dynamically typed. **This combination has not been verified here**, so budget
+time for a spike before committing to it.
 
-**Realistic integration path: bypass GodotSteam entirely and call
-Steamworks directly from Kotlin via steamworks4j (JNI).**
+**Path B: steamworks4j on the JVM.** A plain JAR dependency, a typed Kotlin
+API, no second GDExtension, and the Steam code lives in the same language as
+the rest of your game. This is what the rest of this document describes, and
+it remains the path with fewer moving parts for a JVM-first project.
+
+Pick A when GodotSteam's breadth matters more than type safety at the
+boundary, B when you want Steam calls to look like the rest of your Kotlin.
 
 ## Why steamworks4j
 
-It's a thin JVM wrapper around the Steamworks C++ SDK, published as a
-plain JAR on Maven Central. Since godot-kotlin-jvm runs on a JVM, you
-add it as a Gradle dependency and call it from your Kotlin code — no
-plugins, no fork merging, no GDExtension. Trade-offs:
+It is a thin JVM wrapper around the Steamworks C++ SDK, published as a plain
+JAR on Maven Central. Since Godot-JVM runs on a JVM, you add it as a Gradle
+dependency and call it from Kotlin: one language, one typed API, no second
+GDExtension to install and version. Trade-offs:
 
-- Doesn't wrap every Steamworks interface — older or niche additions
-  (Timeline, recent Workshop bits) may be missing. PRs welcome upstream.
-- 541 stars, maintained but not hyperactive.
-- No maintained alternative exists. References across JVM gaming
-  communities all point back to steamworks4j.
-- Watch [Kanama](https://forum.godotengine.org/t/kanama-experimental-kotlin-scripting-for-godot-through-gdextension-jvm/138955)
-  as a future-proof alternative — it's experimental Kotlin-on-Godot via
-  GDExtension against *stock* Godot, which would (in principle) unlock
-  GodotSteam without any fork-merging. 0.1.0 preview today; not
-  production-ready.
+- It does not wrap every Steamworks interface. Older or niche additions
+  (Timeline, recent Workshop bits) may be missing, where GodotSteam's coverage
+  is broader. PRs welcome upstream.
+- Maintained, but not hyperactive.
+- No maintained JVM alternative exists; references across JVM gaming
+  communities all point back to it.
 
 ## JVM-only Kotlin — no KMP
 
-godot-kotlin-jvm targets Windows / Linux / macOS / Android / iOS, all
+Godot-JVM targets Windows / Linux / macOS / Android / iOS, all
 from a **single JVM source set**. steamworks4j is also JVM-only. So
 your Kotlin code stays in one `src/main/kotlin/` — no `expect`/`actual`,
 no commonMain/jvmMain split, no platform-specific source sets.
@@ -178,27 +182,24 @@ incoming events to your listeners. The natural place is a Godot
 autoload (singleton node) whose `_process` pumps the service.
 
 ```kotlin
-@RegisterClass
+@Script
 class SteamAutoload : Node() {
     private val service: SteamService = SteamServiceFactory.create()
 
-    @RegisterFunction
     override fun _enterTree() { /* init already happened in factory */ }
 
-    @RegisterFunction
     override fun _process(delta: Double) {
         (service as? SteamworksService)?.pump()
     }
 
-    @RegisterFunction
     override fun _exitTree() {
         (service as? SteamworksService)?.shutdown()
     }
 }
 ```
 
-Register as autoload in `Project Settings → AutoLoad`, name e.g.
-`Steam`, scene path your generated `.gdj`. Now accessible globally and
+Register as autoload in `Project Settings > AutoLoad`, name it e.g.
+`Steam`, and point the path at the `.kt` source file itself. Now accessible globally and
 guaranteed to live for the whole game session.
 
 ## Gradle dependency
@@ -226,7 +227,7 @@ Godot's Export Presets include the right one per target.
 ## Custom SteamLibraryLoader
 
 steamworks4j ships with `gdx` and `lwjgl3` library loaders out of the
-box (it expects the natives in libGDX or LWJGL3 layout). godot-kotlin-jvm
+box (it expects the natives in libGDX or LWJGL3 layout). Godot-JVM
 has a different working dir at runtime — the JAR + JRE + Godot
 executable layout is its own thing. Write a tiny custom loader to find
 the natives next to your executable:
@@ -321,14 +322,14 @@ Official categories ([partner.steamgames.com/doc/steamdeck/compat](https://partn
 
 The docs make **no mention of Java/JRE restrictions**. Java runtime is invisible to verification — what matters is whether the binary launches and behaves under Steam Linux Runtime or Proton.
 
-Practical for godot-kotlin-jvm:
+Practical for Godot-JVM:
 - Prefer native Linux export over Proton — fewer layers, simpler debugging.
 - Embedded JRE is fine if it doesn't show a Java console or audible startup warning.
-- No public precedent for a godot-kotlin-jvm title going through Verified. First-mover territory.
+- No public precedent for a Godot-JVM title going through Verified. First-mover territory.
 
 ## Pitfalls
 
-- **Overlay rendering with utopia-rise fork** — the in-game Steam overlay (Shift+Tab) hooks the rendering pipeline. Works with stock Godot. Untested in public with godot-kotlin-jvm's fork. Be ready to file an issue with Utopia Rise if overlays glitch.
+- **Overlay rendering** — the in-game Steam overlay (Shift+Tab) hooks the rendering pipeline. It works with stock Godot, which is what you now run, so the old fork-specific worry is gone. Still smoke-test it: the JVM addon and an embedded JRE are not what the overlay is usually exercised against.
 - **`steam_appid.txt` lingering in production builds** — harmless but unprofessional. Add a build-step exclusion or only place it in dev builds.
 - **Forgetting to pump `runCallbacks`** — listeners never fire. Symptom: `setAchievement()` returns but `onAchievementStored` callback never arrives. Confirm the autoload's `_process` is running.
 - **`SteamAPI.init()` race with Steam client startup** — if you launch the game before Steam has finished starting, `init()` returns false. Retry with backoff, or assume "Steam not available" and continue.
@@ -346,6 +347,6 @@ Practical for godot-kotlin-jvm:
 - [steamworks4j repo](https://github.com/code-disaster/steamworks4j)
 - [steamworks4j getting started](https://code-disaster.github.io/steamworks4j/getting-started.html)
 - [steamworks4j on Maven Central](https://mvnrepository.com/artifact/com.code-disaster.steamworks4j)
-- [GodotSteam](https://godotsteam.com/) (incompatible — for reference)
-- [godot-kotlin-jvm exporting docs](https://github.com/utopia-rise/godot-kotlin-jvm/blob/master/docs/src/doc/user-guide/exporting.md)
-- [Kanama forum announcement](https://forum.godotengine.org/t/kanama-experimental-kotlin-scripting-for-godot-through-gdextension-jvm/138955) (potential future alternative)
+- [GodotSteam](https://godotsteam.com/) — GDExtension form, Godot 4.4+ including 4.7.x
+- [Godot-JVM export docs](https://godot-jvm.dev/en/stable/build/export/)
+

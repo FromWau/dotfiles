@@ -1,1 +1,0 @@
--- Managed by AGS at runtime. Current mode: normal. No overrides; monitors.lua wins.
