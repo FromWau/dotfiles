@@ -209,6 +209,35 @@ Never use stateful for:
 
 If you do use local `remember`: use `rememberSaveable` for anything that should survive config changes (rotation, theme switch)
 
+## Previews — generate variants with `@PreviewParameter`
+
+A stateless screen is previewed by handing it states. When there are several (the leaves of a sealed `Loaded`, long vs short text, `null` vs set fields), generate them instead of writing one near-identical function each:
+
+```kotlin
+private fun loadedStates(showDetails: Boolean): List<ScreenState.Loaded> = listOf(
+    ScreenState.Loaded.Debit(/* … */ showDetails = showDetails),
+    ScreenState.Loaded.Refund(/* … */ showDetails = showDetails),
+)
+
+internal class LoadedStateProvider : PreviewParameterProvider<ScreenState.Loaded> {
+    override val values = loadedStates(showDetails = false).asSequence()
+}
+
+@HandheldPreviews   // multipreview annotations multiply with the provider:
+@TabletPreview      // every value renders on every device
+@Composable
+private fun ScreenPreview_Loaded(@PreviewParameter(LoadedStateProvider::class) state: ScreenState.Loaded) {
+    PreviewContainer { Screen(state = state, onAction = {}) }
+}
+```
+
+- `values` is a plain `Sequence<T>`, so build it in code: combinations (`listOf(false, true).flatMap(::loadedStates)`), edge cases (a very long message to check wrapping), each nullable field set and unset.
+- The preview tooling creates the provider itself (it needs a no-arg constructor); keep it `internal`, as existing providers in the codebase do, rather than `private`.
+- The preview pane labels provider values `<paramName> 0`, `<paramName> 1`, … To name them, override `getDisplayName(index)` on the provider (e.g. `values.elementAt(index)::class.simpleName`) — but that method only exists in `ui-tooling-preview` 1.10+ (absent in 1.8.x); check the resolved version before relying on it.
+- **Named functions instead** (`ScreenPreview_Refund`) when you usually open one specific variant, or when the project's Compose is too old for `getDisplayName`. Keep one small builder per variant (`refund(showDetails = false)`) and a private `Preview(state)` wrapper so each named preview stays a one-liner.
+- Neither form makes the compiler check that every sealed leaf has a preview — when adding a leaf, add it to the list.
+- Don't wrap sample states in `remember { … }`: a static preview composes once, and an interactive recomposition just rebuilds an equal `data class` value. Pass the builder result directly (`Preview(refund())`).
+
 ## Adaptive Sizing — the Size-object Pattern
 
 For screens that adapt to device classes (phone/tablet/desktop, or project-specific
