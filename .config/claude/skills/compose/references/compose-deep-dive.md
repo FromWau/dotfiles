@@ -16,8 +16,13 @@ Choosing the right state API:
 ## UI State Modeling
 
 Immutability:
-- All `data class` types used in Compose UI state must be annotated `@Immutable`
+- All `data class` types used in Compose UI state must be `@Immutable`, directly or through a supertype (see below)
 - All `List` types in UI state must be `ImmutableList` (from `kotlinx.collections.immutable`)
+
+`@Immutable`/`@Stable` is inherited through supertypes, so annotate the sealed root once, not every leaf:
+- The compiler's `stabilityOf` checks `hasStableMarkedDescendant()` (walks `superTypes`) *before* its "interface → Unknown" fallback. So a nested sealed sub-interface and every leaf under an annotated root count as stable — including a composable parameter typed as the sub-interface (`state: ScreenState.Loaded`) or a single leaf.
+- Annotating a nested sub-interface or leaf too is redundant but harmless; do it only if it reads better at a parameter's declaration site.
+- The marker is an unchecked promise: it skips field analysis, so a leaf holding a mutable type (a `List` that is really a `MutableList`, a `var`) is still reported stable and recomposition silently breaks. Keep every leaf to `val`s of immutable types.
 
 Sealed Interface for Sub-States / Pages:
 ```kotlin
@@ -267,6 +272,125 @@ The rules and why they matter:
 - Fixed-height blocks that contain dynamic content (error messages, growing lists)
   should use `heightIn(min = size.x)` rather than `height(size.x)` so content can
   never be silently clipped on the smallest device class.
+
+## Theming & Color Inheritance — `Surface` vs a nested `MaterialTheme`
+
+`Surface` publishes exactly two things to its children:
+
+```kotlin
+CompositionLocalProvider(
+    LocalContentColor provides contentColor,
+    LocalAbsoluteTonalElevation provides absoluteElevation,
+) { ... }
+```
+
+It does **not** publish its own background color, and Material has no
+`LocalSurfaceColor` / `LocalBackgroundColor`. That asymmetry is deliberate: content
+color is *inherited* (text and icons drawn on top must know what they sit on), while
+background is *declared* by each container. Three consequences bite in practice:
+
+- **A child cannot ask "what color is behind me".** If you find yourself wanting
+  `LocalSurfaceColor.current`, inventing that CompositionLocal or threading a `color`
+  parameter down the tree, stop: you are working around the theme instead of setting it.
+- **Children inherit content color only if they read it.** `Text` and `Icon` default to
+  `LocalContentColor.current`, which is why inheritance *feels* automatic.
+  `CircularProgressIndicator` does not (its default is
+  `ProgressIndicatorDefaults.circularColor`, i.e. `colorScheme.primary`). A custom
+  component meant to blend in should default its color parameter to
+  `LocalContentColor.current`, not to a theme role.
+- **`contentColorFor(color)` is an identity lookup against the scheme roles**
+  (`primary -> onPrimary`, `surface -> onSurface`, …). A raw `Color(0xFFDADADA)` matches
+  no role, returns `Color.Unspecified`, and falls back to `LocalContentColor.current`.
+  That is why hardcoding a hex on one `Surface` forces you to hand-write `contentColor`
+  there and then again at every nested surface: the pairing information never existed.
+
+### Which tool for which scope
+
+| Scope | Use |
+|---|---|
+| One container needs its own background | `Surface(color = <a scheme role>)`; `contentColor` then resolves on its own |
+| A screen or subtree needs a different palette | Override the scheme: `MaterialTheme(colorScheme = MaterialTheme.colorScheme.copy(...))` |
+| A named palette reused across screens | A real theme composable beside the app's other themes, wired into its theme selector |
+
+A nested `MaterialTheme` is cheap and safe for the middle case, because its `shapes` and
+`typography` parameters default to `MaterialTheme.shapes` / `MaterialTheme.typography`,
+i.e. the enclosing theme's values. Only the colors change; custom typography survives.
+
+```kotlin
+MaterialTheme(
+    colorScheme = MaterialTheme.colorScheme.copy(
+        surface = Color(0xFFDADADA),
+        onSurface = Color.Black,
+    ),
+) {
+    Surface(Modifier.fillMaxSize()) { /* every descendant now resolves these roles */ }
+}
+```
+
+Once the roles are right, screens carry no color code at all: `Surface()`, `Card()`,
+`Text`, `Icon` and `Scaffold`'s `containerColor` all read them from the scheme.
+
+### Building a full alternate palette
+
+Set **every** role explicitly. Anything left to `lightColorScheme()` /
+`darkColorScheme()` defaults pulls in the tinted M3 baseline tokens, which surfaces later
+as stray purple in a palette that was supposed to be hueless or brand-specific. When the
+palette derives from only a few source colors, write one mapper rather than two
+near-identical 37-line blocks:
+
+```kotlin
+private fun Palette.toColorScheme() = ColorScheme(
+    background = ground, onBackground = content,
+    surface = ground, onSurface = content,
+    surfaceContainerLowest = raised, ...
+)
+private val LightColors = Palette.Light.toColorScheme()
+private val DarkColors = Palette.Dark.toColorScheme()
+```
+
+Check the roles a restricted palette flattens before shipping it: collapsing `error` into
+the normal content color makes error states invisible, and `outlineVariant` doubles as the
+default `HorizontalDivider` color.
+
+### Tonal elevation repaints the color you declared
+
+`Surface(color = …)` does not always paint that color. Before drawing, it runs
+`applyTonalElevation`, which swaps in `surfaceTint` composited over `surface` whenever two
+things hold: the color **equals** `colorScheme.surface`, and the accumulated
+`LocalAbsoluteTonalElevation` is non-zero.
+
+```kotlin
+if (backgroundColor == surface && LocalTonalElevationEnabled.current)
+    surfaceTint.copy(alpha = ((4.5f * ln(elevation.value + 1)) + 2f) / 100f).compositeOver(surface)
+```
+
+Two traps follow from the comparison being on *value*, not role. A flattened palette where
+`background`, `surface` and `surfaceContainerHigh` all hold the same gray puts every one of
+them on this path. And elevation accumulates down the tree, so a Surface that declares no
+elevation still inherits whatever a dialog, sheet, menu, FAB or snackbar ancestor added —
+Level 3 is 6dp, which over `#DADADA` with a black `surfaceTint` lands on exactly `#C3C3C3`.
+A palette that is supposed to be flat therefore needs the tint switched off explicitly:
+
+```kotlin
+surfaceTint = ground,   // a tint equal to the surface makes the overlay a no-op
+...
+CompositionLocalProvider(LocalTonalElevationEnabled provides false) { MaterialTheme(...) }
+```
+
+`surfaceTint = Color.Transparent` does **not** disable it — the overlay calls
+`surfaceTint.copy(alpha = …)`, which turns transparent black back into black at that alpha.
+Set the tint to the surface color, or turn the local off, or both (the local doesn't cover
+direct `colorScheme.surfaceColorAtElevation(…)` calls).
+
+When a rendered color disagrees with the one in the source, sample the pixels rather than
+re-reading the call site: a probe strip of the same role painted by `Modifier.background`,
+by a plain `Surface`, and by a `Surface(tonalElevation = 6.dp)` separates a theme bug from
+an anti-aliased pixel in one render.
+
+### The smell
+
+A literal `Color(0xFF…)` in a screen body. It means the value is not in the `ColorScheme`,
+so nothing can resolve it automatically and every descendant has to be told by hand.
 
 ## UI Tips
 

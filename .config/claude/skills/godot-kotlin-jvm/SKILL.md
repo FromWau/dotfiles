@@ -1,9 +1,76 @@
 ---
 name: godot-kotlin-jvm
-description: Godot Kotlin/JVM — @RegisterClass, version mismatches, embedded JRE, signal-to-Flow, component composition. Use for com.utopia-rise.godot-kotlin-jvm projects, .gdj files, or .kt next to project.godot.
+description: Godot Kotlin/JVM — @RegisterClass, version mismatches, embedded JRE, signal-to-Flow, component composition. Use for com.utopia-rise.godot-kotlin-jvm projects, .gdj files, or .kt next to project.godot. NOTE: body covers the module era (plugin 0.13.x–0.16.x, custom engine fork, .gdj); it is NOT updated for 0.17+ (renamed @Script/@Register/@Visible/@Emit annotations) or 1.0 (godot-jvm GDExtension addon) — the skill opens with a warning explaining what changed.
 ---
 
 # Godot Kotlin/JVM
+
+> # ⛔ STALE FOR PLUGIN 0.17+ / 1.0 — READ THIS FIRST
+>
+> **Everything below describes the *module era*: plugin `0.13.x`–`0.16.x`, custom
+> Godot engine fork, `.gdj` script files, `@RegisterClass` & friends.** Upstream
+> moved on twice in August 2026. Verified against the GitHub releases API on
+> **2026-09-07**.
+>
+> **Step 1 — check which era the project is in** (`gradle/libs.versions.toml`
+> or `build.gradle.kts`):
+>
+> | Plugin tag | Era | Is this skill valid? |
+> |---|---|---|
+> | `0.13.x` – `0.16.3-4.6.3` | Module + `.gdj` | ✅ Yes, as written |
+> | `0.17.0-4.7.2` / `0.17.1-4.7.2` | Module, **new registration layer** | ⚠️ Architecture yes, API no |
+> | `1.0.0-dev*` (id `com.utopia-rise.godot-jvm`) | **GDExtension** | ❌ Treat body as history |
+>
+> **What changed in `0.17.0-4.7.2` (2026-08-08) — registration layer remade:**
+>
+> - Annotations renamed: `@Script`, `@Register`, `@Visible`, `@Emit` replace
+>   `@RegisterClass`, `@RegisterFunction`, `@RegisterProperty`, `@RegisterSignal`.
+> - **`.gdj` is no longer the script identity** — `.kt` / `.java` / `.scala` are
+>   attached to nodes directly. The whole "Inspector → Script → Load the .gdj"
+>   dance below is obsolete.
+> - **The public no-arg constructor requirement is optional now.** Every
+>   explicit-empty-primary-ctor + secondary contortion below exists only to
+>   satisfy a check that no longer applies.
+> - **Enums, enum collections and `BitField<Enum>` are auto-recognized.** This
+>   removes the reason the "sealed hierarchy over `RefCounted`" signal-payload
+>   standard below exists. On 0.17+ do not reach for it reflexively.
+> - Delegated properties and `Any`-typed properties are registerable; abstract
+>   script classes can declare exposed members; `@Notification` on a plain method
+>   replaces overriding `_notification`; `@HintString` for custom hints.
+> - Three registration modes (inferred / explicit / automatic), validated by the
+>   IntelliJ plugin.
+> - Fixes for JVM binding memory leaks and crashes calling freed objects.
+>
+> **What changed in `1.0.0-dev1..dev3` (2026-08-16 … 08-25) — GDExtension:**
+>
+> - Repo renamed **`utopia-rise/godot-jvm`**, docs at **godot-jvm.dev**, Gradle
+>   plugin id **`com.utopia-rise.godot-jvm`**.
+> - **No custom engine fork.** Install = extract the addon zip into the project,
+>   enable the GDExtension in settings. Official Godot binaries work.
+> - `0.17.1-4.7.2` (2026-08-21) is explicitly *the last module release*.
+> - dev3: Android functional, iOS present but untested. Web still unsupported.
+> - Still **prerelease** — dev3's own notes say "many other minor bugs".
+>
+> **Sections below that are outright wrong on 0.17+:** the ⚠️ never-touch-`.gdj`
+> rule, "Editor workflow", "Plugin version selection", every `@Register*`
+> annotation name, "Constructors, no-arg, and `@Export` field init", the whole
+> "Signal payloads" sealed-class standard, and the `connect { }` vs
+> `connectLambda` version split.
+>
+> **Still believed to hold** (engine-level, not API-level): the architecture
+> guidance (plain Kotlin classes by default, `getNode` over `@Export`, when to
+> escalate to a Node-backed component), "No coroutines or Flows inside nodes"
+> (the weak-referenced wrapper + GC'd sharing scope reasoning is a binding
+> property, not a registration-API one), `GD.print` over `println`, and the
+> companion-skill split.
+>
+> **Not verified either way on 0.17+/1.0:** whether the `connectLambda` →
+> `variantMapper[T]!!` NPE on an unregistered payload type still bites, and
+> whether GDExtension changed marshalling cost. Check upstream before asserting
+> anything about those.
+>
+> **Upstream to check before answering a 0.17+/1.0 question:**
+> <https://github.com/utopia-rise/godot-jvm/releases> and <https://godot-jvm.dev/>.
 
 This skill captures the practical workflow for godot-kotlin-jvm projects — the
 JVM-backed Kotlin scripting layer for the Godot game engine (custom fork). The
