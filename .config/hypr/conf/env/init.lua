@@ -6,6 +6,8 @@ hl.env("GDK_BACKEND", "wayland,x11,*")
 hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 hl.env("SDL_VIDEODRIVER", "wayland")
 hl.env("CLUTTER_BACKEND", "wayland")
+-- AWT assumes a reparenting WM, so without this a Java window ignores Hyprland's resizes.
+hl.env("_JAVA_AWT_WM_NONREPARENTING", "1")
 
 -- XDG Specifications
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
