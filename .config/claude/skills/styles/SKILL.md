@@ -8,7 +8,7 @@ description: Use this skill to integrate the Jetpack Compose Styles API into an 
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-07-07'
+  last-updated: '2026-09-08'
   keywords:
   - Jetpack Compose
   - Styles
@@ -50,12 +50,12 @@ block to your module's `build.gradle.kts`:
 Refer to the official documentation to complete specific development tasks:
 
 - Basic Style Usage: To set backgrounds, sizes, and alignments on a component, follow the [Compose Styles Fundamentals
-  Guide](references/fundamentals.md).
+  Guide](references/android/develop/ui/compose/styles/fundamentals.md).
 - State and Transitions: To configure property changes for state shifts (like pressed or hovered), follow the [Animations and State-Based Styling
-  Guide](references/state-animations.md).
+  Guide](references/android/develop/ui/compose/styles/state-animations.md).
 - Architecture Trade offs: To decide when to use a Style versus a standard Modifier, follow the [Styles versus Modifiers
-  Comparison](references/styles-vs-modifiers.md).
-- Theme Level Integration: To connect style definitions with custom themes, follow [Theming with Styles](references/theming.md) and [Custom Themes in Compose](references/custom.md).
+  Comparison](references/android/develop/ui/compose/styles/styles-vs-modifiers.md).
+- Theme Level Integration: To connect style definitions with custom themes, follow [Theming with Styles](references/android/develop/ui/compose/styles/theming.md) and [Custom Themes in Compose](references/android/develop/ui/compose/designsystems/custom.md).
 
 ## Step-by-Step Migration Workflow
 

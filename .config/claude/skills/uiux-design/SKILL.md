@@ -1,6 +1,6 @@
 ---
 name: uiux-design
-description: UI/UX design principles — visual fundamentals (affordances, hierarchy, layout, typography, color, dark mode, states, micro-interactions) and product UX patterns (consistency, navigation, search, filters, forms, onboarding/first-run/activation flows, platform conventions, gamification/engagement/retention mechanics, anti-dark-patterns). Apply for any frontend work (Compose, React/HTML, Figma, CSS), including casual "make this look better" requests, for onboarding/signup/activation flow design, and for engagement/retention design questions like points, badges, leaderboards, streaks, rewards, or completion mechanics.
+description: UI/UX design principles — visual fundamentals (affordances, hierarchy, layout, edges/alignment, information density, typography, color, dark mode, states, micro-interactions) and product UX patterns (consistency, navigation, search, filters, forms, onboarding/first-run/activation flows, platform conventions, gamification/engagement/retention mechanics, anti-dark-patterns). Apply for any frontend work (Compose, React/HTML, Figma, CSS), including casual "make this look better" requests, for onboarding/signup/activation flow design, and for engagement/retention design questions like points, badges, leaderboards, streaks, rewards, or completion mechanics.
 ---
 
 # UI/UX Design Principles
@@ -15,12 +15,15 @@ Visual fundamentals come first — they set the look. Product UX patterns come s
 - UI elements must communicate their function without instructions
 - Containers signal grouping/relatedness; active states signal selection; grayed-out signals disabled
 - Every interactive element needs: press state, hover state, active/highlight state
-- Use tooltips for non-obvious affordances
+- Use tooltips for non-obvious affordances, but as a last resort: a tooltip means the icon failed at first sight. Prefer an instantly recognizable visual or a placement that explains itself (a select-all checkbox sitting above a column of checkboxes)
+- When something is unclear, resist explaining harder (extra labels, comparisons, helper text). Each addition is technically more information but makes the screen harder to read in order to make it easier to understand; replace text with a diagram, icon, avatar, or chip instead. E.g. an expense card listing "Software $9,812 / AI Credits $6,124 / Servers $2,340" reads slower than the same figures as bars against the weekly average, even though the list carries more raw information
 
 ### Visual Hierarchy
 - Control importance with **size**, **position**, and **color**
 - Most important content: large, bold, top-positioned. Secondary: smaller, below, subdued
 - Hierarchy comes from **contrast** — the difference between elements (small vs big, colorful vs muted)
+- **Emphasis is relative, not a property of the element.** To make one item stand out, change its surroundings rather than piling more color or weight onto it. If every settings chip is accent-colored, none is emphasized
+- **Default values render muted; non-defaults earn color.** Like a checkbox (thin border when off, fill + check when on), the color should signal "this was changed". An accent-colored default is a checkbox that's blue when off
 - Price/key metrics: top-aligned, accent-colored, visually distinct from surrounding text
 - Use icons + visual connectors instead of text labels where meaning is clear (e.g., route lines instead of "from/to")
 - Use images whenever possible — they add color pop and make scanning easy
@@ -28,9 +31,18 @@ Visual fundamentals come first — they set the look. Product UX patterns come s
 ### Grids, Layouts & Spacing
 - Grids are **guidelines**, not strict rules — custom layouts don't need to snap to columns
 - Grids are most useful for structured/repeating content (galleries, blogs, dashboards) and responsive breakpoints (12 → 8 → 4 columns)
-- **White space matters more than grids** — let elements breathe
+- **White space matters more than grids** — let elements breathe. But white space is not the cure for density (see Edges, Alignment & Density below)
 - Use a **4-point grid** for spacing (multiples of 4): enables consistent halving and creates design coherence
 - Group related elements with tighter spacing; separate unrelated groups with more space (another form of hierarchy)
+
+### Edges, Alignment & Density
+Polished compact UIs feel "locked in" because every element is anchored to edges, not because of spacing or decoration. A receipt has no dividers and almost no white space, yet reads cleanly: text hard left, prices hard right, two edges holding everything together.
+- **Every element in a compact UI (card, chat input, kanban card, sidebar row) should border on at least two edges**: the container's sides, or an edge created by a neighbor (the bottom of an avatar, the previous row)
+- **Stacked rows create edges for each other.** That's why a plain checklist looks built: each line is the edge the next one stacks onto. Swap small checkboxes for tall icons and the row loses its bottom edge; restore it with a subline
+- **An empty-looking card needs edges, not filler.** Don't add content to fill the space, and don't hide actions in a ⋮ menu just to tidy up. Either move content onto existing edges, or **manufacture a new edge** (a cover banner that pushes the top edge down so avatar and action buttons line up on one line)
+- **Bound line length.** Letting rows run the full screen width keeps every edge in place but loses the tight feel
+- **Dense content needs differentiation, not white space.** Extra spacing only makes a wall of text longer. Break it up by varying the content: avatars where people are named, chips for categories and times, links in blue, grouping by a meaningful key (due date: "Tomorrow" / "Next week"). Grouped + varied content lets a user find any item in about a second regardless of text volume
+- Users never read a screen; they scan it for the answer to a question they arrived with. Edges, differentiation, and visuals-over-text all serve scan speed, not prettiness. None of them tells the eye where to *start*, though: that's the job of emphasis (see Visual Hierarchy: emphasis is relative, defaults muted)
 
 ### Typography
 - **One font is enough** for any design — pick a clean sans-serif and stick with it
@@ -100,6 +112,7 @@ Visual fundamentals come first — they set the look. Product UX patterns come s
 - Always show the primary action (play/install/add to cart) without requiring a click-through
 - **Distinct visual states** for saved/favorited/wishlisted: outline → filled, color change. Don't reuse the same icon for added and not-added
 - Show inline progress on the item itself (e.g., download bar on the card)
+- **Don't build structure out of nested containers.** On an open canvas, cards inside cards end up as borders on borders with several corner radii stacked. Dissolve them into the layout instead: a single column divider does the card edge's job, rows stack on each other, section headers do the grouping
 
 ---
 

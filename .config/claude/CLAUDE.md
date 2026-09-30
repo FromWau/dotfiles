@@ -30,6 +30,7 @@ training-data recall.
 - `android-cli-tips` — curated tips for the `android` CLI tool
 - `rest-api-design` — REST API design principles
 - `uiux-design` — UI/UX design principles
+- `video-analysis` — analyze a (YouTube) video from a timestamped transcript + frames sampled at key moments
 - `titanfall-northstar` — Titanfall 2 / Northstar mod development
 - `rrplug-northstar` — Rust native plugins for Northstar
 - `spacetimedb-dev` — SpacetimeDB build, codegen, and SDK testing

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Extract frames at given timestamps and tile them into labelled 2x2 grids.
+# Usage: frame-grids <video> <out-dir> <timestamp>...
+#   timestamps: anything ffmpeg -ss accepts (1:23, 0:01:23, 83, 83.5)
+# Output: <out-dir>/frames/NN.png and <out-dir>/grids/gN.png (4 frames per grid).
+set -euo pipefail
+
+if [[ $# -lt 3 ]]; then
+    echo "usage: frame-grids <video> <out-dir> <timestamp>..." >&2
+    exit 2
+fi
+
+video=$1
+out=$2
+shift 2
+[[ -f $video ]] || { echo "no such video: $video" >&2; exit 1; }
+
+font=$(fc-match -f '%{file}' 'sans:bold')
+mkdir -p "$out/frames" "$out/grids"
+rm -f "$out"/frames/*.png "$out"/grids/*.png
+
+i=0
+for t in "$@"; do
+    label=${t//:/\\:}
+    ffmpeg -loglevel error -y -ss "$t" -i "$video" -frames:v 1 \
+        -vf "scale=800:450:force_original_aspect_ratio=decrease,pad=800:450:(ow-iw)/2:(oh-ih)/2,drawtext=fontfile=$font:text='$label':x=10:y=10:fontsize=36:fontcolor=yellow:box=1:boxcolor=black@0.7" \
+        "$out/frames/$(printf '%02d' "$i").png"
+    i=$((i + 1))
+done
+
+# tile pads the final partial grid with blank tiles instead of repeating frames
+ffmpeg -loglevel error -y -framerate 1 -i "$out/frames/%02d.png" \
+    -vf "tile=2x2:padding=0:color=black" -fps_mode passthrough "$out/grids/g%d.png"
+
+find "$out/grids" -name '*.png' -print0 | sort -z | xargs -0 -n1 echo
