@@ -33,6 +33,8 @@ export async function setDisplayMode(mode: DisplayMode) {
         "--notify-title", "Display Mode",
         "--notify-icon", icon,
     ])
+    // awww keeps the old resolution's buffer; re-render it at the new size.
+    await execAsync(["awww", "restore"]).catch(console.error)
     if (mode === "game" && (await getActiveGpuCount()) > 1) {
         (globalThis as any).showSettings?.(2)
     }

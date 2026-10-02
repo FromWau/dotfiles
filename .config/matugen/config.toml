@@ -12,8 +12,9 @@ post_hook = 'dunstctl reload'
 
 [templates.hyprland]
 input_path = '~/.config/matugen/templates/hyprland-colors.lua'
-output_path = '~/.config/hypr/conf/colors.lua'
-post_hook = 'hyprctl reload'
+# Staged, not written into conf/: that write autoreloads Hyprland, which stutters
+# the awww transition. hypr-wal installs it once the transition has finished.
+output_path = '~/.cache/matugen/hyprland-colors.lua'
 
 [templates.ags]
 input_path = '~/.config/matugen/templates/colors.scss'

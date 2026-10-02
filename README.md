@@ -74,7 +74,8 @@ cursor theme — lives in **`$XDG_STATE_HOME/hypr/state.json`**:
 - **`hyprstate get|set|cycle|path`** — see `hyprstate --help`. Used by
   keybindings, matugen, AGS, hypr-wal.
 - **`hypr-wal`** — picks one (or N, similarity-matched) wallpapers,
-  invokes matugen, applies via awww, writes WALLPAPER to state.
+  applies via awww, writes WALLPAPER to state, runs matugen during the
+  transition, then installs the Hyprland colors once it has finished.
 - **`gpu-disable`/`gpu-enable`** — drain a Nvidia GPU before Hyprland
   exit (so the next session boots with the chosen GPU only).
 - **`fix-bitwarden`** — Hyprland socket listener that auto-floats the

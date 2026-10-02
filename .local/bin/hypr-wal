@@ -4,6 +4,8 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 pics=()
 monitors=()
 
+TRANSITION_SECONDS=3
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -97,6 +99,14 @@ generate_theme() {
     log_info "Theme generated successfully"
 }
 
+# Installing the colors autoreloads Hyprland, and a reload stutters a running
+# awww transition, so this waits for the transition to finish first.
+apply_hyprland_theme() {
+    local transition_pid=$1
+    wait "$transition_pid"
+    cp "$HOME/.cache/matugen/hyprland-colors.lua" "$HOME/.config/hypr/conf/colors.lua"
+}
+
 change_wallpaper() {
     if ! command -v awww &>/dev/null; then
         log_error "awww not found"
@@ -116,6 +126,7 @@ change_wallpaper() {
             --transition-fps 90 \
             --transition-type=any \
             --transition-bezier .4,.04,.2,1 \
+            --transition-duration "$TRANSITION_SECONDS" \
             2>&1 | grep -v "^$" || true  # Suppress empty lines
     done
 
@@ -137,17 +148,19 @@ main() {
         exit 1
     fi
 
-    pic=${pics[0]}
-
-    if ! generate_theme "$pic"; then
-        log_error "Theme generation failed"
-        exit 1
-    fi
-
     if ! change_wallpaper; then
         log_error "Failed to change wallpaper"
         exit 1
     fi
+    sleep "$TRANSITION_SECONDS" &
+    local transition_pid=$!
+
+    if ! generate_theme "${pics[0]}"; then
+        log_error "Theme generation failed"
+        exit 1
+    fi
+
+    apply_hyprland_theme "$transition_pid"
 
     log_info "Theme change complete!"
 }

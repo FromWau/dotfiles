@@ -65,5 +65,3 @@ local cursor_theme = read_state "CURSOR_THEME" or gsettings_cursor_theme()
 if cursor_theme then
     hl.exec_cmd("hyprctl setcursor " .. cursor_theme .. " " .. mode.cursor)
 end
-
-hl.exec_cmd "awww restore"
