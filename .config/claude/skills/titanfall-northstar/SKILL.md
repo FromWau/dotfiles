@@ -243,7 +243,11 @@ Always set author as **FromWau** in mod.json
 - `references/boot-hang.md` — **game won't launch** (Proton/EA-app boot-hang):
   how to confirm it's the EA handshake and NOT a mod (no fresh nslog), the healthy
   boot process sequence, and a least-destructive-first fix ladder (kill orphaned
-  `gameoverlayui` → no-args bootstrap → clear EA caches → nuke prefix).
+  `gameoverlayui` → no-args bootstrap → clear EA caches → nuke prefix). Restart Steam
+  first. Also covers post-wipe failures: EA install `INST-14-1603` (missing Wine Mono on
+  GE-Proton11-7), a half-applied EA self-update, and `Proxied launch timed out`
+  (`waitingForFirstPartyLoader`: restart Steam; if it persists, EA's UI thread is hung
+  on a stale cache → rung 3).
 - `references/launch-args.md` — **`+`commands / trailing `-flags` don't apply on
   launch** (FPS counter off, `custom.cfg`/binds not loaded). The EA-app handoff
   **truncates the arg string**; fix is `ns_startup_args.txt` (Northstar appends it

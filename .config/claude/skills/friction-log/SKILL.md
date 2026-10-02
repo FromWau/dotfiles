@@ -1,6 +1,6 @@
 ---
 name: friction-log
-description: Keep a FRICTION_LOG.md at the repo root capturing implementation and usage feedback AS IT HAPPENS — bad or wrong docs, dead paths walked, misleading errors, missing API surface, build/dep footguns, confusing names, "wait why is this here" moments — then replay it into upstream feedback or local cleanup. Use this continuously (even unasked) whenever adopting or migrating onto a library/framework/tool, porting code between APIs, evaluating a dependency, or implementing/debugging anything non-trivial, and whenever the user says "friction log", "log that", "append to the log", "clean up", "make it PR ready", "prep for review", or "we're done with the feature".
+description: Keep a FRICTION_LOG.md at the repo root capturing implementation and usage feedback AS IT HAPPENS — bad or wrong docs, dead paths walked, misleading errors, missing API surface, build/dep footguns, confusing names, "wait why is this here" moments — then replay it into upstream feedback or local cleanup. Use this continuously (even unasked) whenever adopting or migrating onto a library/framework/tool, porting code between APIs, evaluating a dependency, or implementing/debugging anything non-trivial, and whenever the user says "friction log", "log that", "append to the log", "clean up", "make it PR ready", "prep for review", or "we're done with the feature". Also covers the standing record a routed finding goes into: a tracked todo.md of open items closed with verdicts, a QA ledger of settled rulings, and per-round fix trackers. Use it whenever the user asks to track open bugs, issues, decisions or shortcomings so they are not lost, says "todo.md", "ledger", "tracker", "what is still open", or "write that down before we forget", or whenever a session ends holding open items that only exist in the conversation.
 ---
 
 # Friction Log
@@ -184,12 +184,42 @@ silent rewrite.
 ### Step 4: Close out
 
 The log is disposable by design. Once its findings are acted on or filed upstream, it
-can simply be deleted — that is the signal the work landed. If the work continues,
-carry the still-open items forward into a fresh file. Never commit it on the way out.
+can simply be deleted — that is the signal the work landed. Deleting it is only safe
+once what outlives it has a home: still-open items go to the repo's `todo.md` and
+settled rulings to its ledger, per **The standing record** below. Never commit it on
+the way out.
 
 Deleting it is the step that gets skipped, which is why the file stays untracked: the
 `?? FRICTION_LOG.md` in every `git status` is the reminder. Treat a log still sitting
 there after its findings shipped as the leftover it is.
+
+## The standing record: where a routed finding lives
+
+Step 2 routes every confirmed finding "somewhere". When a repo gets more than one pass
+over the same surface, that somewhere needs to be a file, or the next pass re-files what
+the last one settled and you type the already-known list by hand again.
+
+Three files, each read at a different moment:
+
+- **`todo.md` at the repo root, tracked.** Open items as numbered tick boxes. Closing one
+  means a `**Verdict:**` line saying what was decided or done, how it was proved, and the
+  date, kept in the file rather than deleted. This is the one that stops an item found at
+  the end of a session from dying in a chat message.
+- **A ledger**, `docs/friction/LEDGER.md`, tracked. What is **settled**: rulings not to
+  re-file, past fixes whose recurrence is a regression, and where the next pass should aim.
+- **Per-round fix trackers**, tracked. One row per defect, status being the truth of the
+  working tree rather than an intention, including the rows that were rejected or decided
+  against.
+
+Read `references/standing-record.md` before setting one up or adding to one. It has the
+anatomy of each file, the `todo.md` item and verdict format, and the three ways these
+records were observed to drift from the code, which is where this system's real defects
+turned out to live.
+
+Offer it when a second pass arrives over the same surface, when a release boundary or an
+outside consumer makes "what is settled" worth writing down, or when the user asks to
+track something so it is not lost. For a single branch, `deslop`'s one clause is enough:
+open design items go in a `todo.md` for the user's review.
 
 ## Operating principles
 

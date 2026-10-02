@@ -204,6 +204,10 @@ changed public/binary surface, anything reshaping structure — get written to a
 review, or presented as a plan first. Don't reshape architecture unprompted. (If the user has their own
 standing rule for this split, follow theirs.)
 
+Where that `todo.md` is a standing file rather than a one-off, `friction-log`'s
+`references/standing-record.md` has its item and verdict format, so an escalated item is later closed with
+a verdict instead of quietly disappearing.
+
 ### 5. Comments: earn or delete
 Apply `code-comments`. In short: keep or write a comment only for a *why* the code cannot carry — a
 hazard, an ordering constraint, a workaround for an external quirk, a non-local contract. Delete

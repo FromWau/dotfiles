@@ -59,6 +59,12 @@ April-2026 Xalia 0.4.9 fix for the EA-app lockup, BUT **Northstar requires GE-Pr
 — forcing the game onto Experimental/stock Proton to dodge the lockup breaks Northstar.
 Keep GE-Proton selected and fix at the prefix/cache layer. (User confirmed 2026-06-13.)
 
+**Cheapest rung, try first and after any manual prefix work: fully quit and restart
+Steam.** On 2026-09-24 it was the final fix after hours of prefix surgery (see
+"After a prefix wipe" below). Also check whether EA has a half-applied self-update
+(two version dirs under `Program Files/Electronic Arts/EA Desktop/`): the first
+failure that day started right after one.
+
 ### "EA Desktop UI wedge" symptom (2026-06-13)
 A nastier shape than a pure handshake stall: `EADesktop.exe` + CEF
 (`CrBrowserMain`/`CrGpuMain`/`CrUtilityMain`) spawn and persist, but **no EA window
@@ -138,6 +144,92 @@ Recovery flow (verified 2026-06-13, ~12 min end-to-end):
 4. Game boots **vanilla first** (no `-northstar` → **no nslog**, so success =
    the main menu, not a log) → confirm → re-add `-northstar` → fresh nslog = Northstar
    live. Delete `1237970.broken.bak` once confirmed good.
+
+## After a prefix wipe: what else breaks (2026-09-24, GE-Proton11-7, EA 13.791 → 13.796)
+A wipe is not a clean reset. On 2026-09-24 three separate problems stacked up after it;
+fix them in this order and test **vanilla** (no `-northstar`) until the game stays up.
+
+EA logs to read (the Steam-driven launch leaves nslog empty, these are the evidence):
+`pfx/drive_c/ProgramData/EA Desktop/Logs/` → `EADesktop.log`, `EASteamLauncher.log`,
+`EABackgroundService.log` (+ `*Verbose.log`). Installer logs: `pfx/drive_c/users/steamuser/AppData/Local/Temp/EA_app_*.log`.
+Steam now launches via `steam2ea://` → `EASteamLauncher.exe` ("Razor" mode), not `link2ea`.
+
+### 1. EA install fails: `INST-14-1603` (log: `0x80070643`, `JunoInitializeSession returned 1603`)
+Cause: the fresh prefix has **no Wine Mono**. GE-Proton11-7's `appwiz.cpl` looks for
+wine-mono **10.4.1** but the package ships **11.3.0**, so prefix creation silently skips
+it; EA's MSI custom action `JunoInitializeSession` is .NET (WiX DTF) and aborts on
+`mscoree: error reading registry key for installroot`. Confirm: no
+`[Software\\Microsoft\\.NETFramework]` key in `pfx/system.reg`. Fix (prefix-only):
+```bash
+PFX=~/.local/share/Steam/steamapps/compatdata/1237970/pfx
+G=/usr/share/steam/compatibilitytools.d/proton-ge-custom/files
+WINEPREFIX="$PFX" "$G/bin/wine" msiexec /i 'Z:\usr\share\steam\compatibilitytools.d\proton-ge-custom\files\share\wine\mono\wine-mono-11.3.0\support\winemono-support.msi' /qn
+```
+Then relaunch from Steam; EA installs. (Old prefixes are unaffected: Mono came from an
+earlier GE build. Re-check the version mismatch after the next GE-Proton bump.)
+
+**Was it EA or Steam that updated?** EA updates itself silently inside the prefix, so
+check that first when TF2 breaks "after an update". A Steam "update" for TF2 is almost
+always shader pre-caching (`Shader update` lines in `~/.local/share/Steam/logs/content_log.txt`)
+or an install-script rerun that rewrites `__Installer/.../EAappInstaller.exe`; the game
+build (`buildid` in `steamapps/appmanifest_1237970.acf`) hadn't changed since 2024.
+Signs that EA has a pending self-update:
+```bash
+ls "$PFX/drive_c/Program Files/Electronic Arts/EA Desktop/"   # 2 version dirs and/or a 13.x....zip
+grep -a 'Found staged update\|UpdatePaused' "$PFX/drive_c/ProgramData/EA Desktop/Logs/EABackgroundService.log" | tail -2
+```
+
+### 2. EA self-update never finishes ("Applying update..." splash, two version dirs)
+Symptom: `Program Files/Electronic Arts/EA Desktop/` holds both `13.791...` and
+`13.796...-<n>` + a `.zip`, processes still run from the old one. Two Wine-side reasons:
+- Via Steam, EA logs `Ignoring paused update during Razor game launch`: it never destages
+  during a game launch.
+- Standalone, EA quits its UI with `Suite shutdown requested, reason[ClientUpdateDestaging]`,
+  and **Wine then kills `EABackgroundService` mid-destage** (its log stops mid-line) because
+  no normal process is left in the prefix.
+
+Fix: keep a dummy Wine process alive, then start EA directly from the version dir
+(`EA Desktop\EA Desktop` is a Wine reparse point shown on Linux as `EA Desktop?`, so
+protontricks' path check fails on it):
+```bash
+sleep 900 | WINEPREFIX="$PFX" "$G/bin/wine" cmd &      # keepalive
+cd "$PFX/drive_c/Program Files/Electronic Arts/EA Desktop/13.791.0.6304/EA Desktop"
+WINEPREFIX="$PFX" "$G/bin/wine" EADesktop.exe &
+getfattr --only-values -n user.WINEREPARSE "$PFX/drive_c/Program Files/Electronic Arts/EA Desktop/EA Desktop?" | tr -d '\0'   # → new version = done
+```
+`EADestager.exe` runs, the link flips, the old dir is removed, EA reopens with its UI.
+
+### 3. Game killed after 15 s: `Proxied launch timed out ... waitingForFirstPartyLoader [true]`
+EA starts `Titanfall2.exe` suspended, waits for `FirstPartyLoaderReady`, never gets it,
+terminates the game (`ExternalError`). Neither the EA update nor disabling the overlay
+(`user.igoEnabled=false` in `AppData/Local/Electronic Arts/EA Desktop/user_<id>.ini`)
+fixed it. **Restarting Steam did.** Steam's launch state goes stale after Wine
+sessions were started/killed in its prefix from outside its container. Also: any Wine
+session started outside Steam (like the keepalive above) blocks the next Steam launch at
+`proton ... wineserver -w`; `wineserver -k` it (`WINEPREFIX="$PFX" "$G/bin/wineserver" -k`)
+before pressing Play.
+
+**When restarting Steam does NOT fix it (2026-10-01): EA's UI thread is hung → rung 3.**
+This symptom also shows up with no prefix work at all. On a fresh boot, it failed 3× in a row,
+including after a full Steam restart, and the EA splash showed "launching game" each time. Find
+where it stops. `FirstPartyLoaderReady` is sent by EA's **UI thread**
+(`UiComponent::UiImpl::handleGameRunStateRunning`). In a good launch that line appears the
+same millisecond as `GameStartedSuspendedNotification`. In the bad one, the UI thread logs
+`UiImpl::setupSpa  Razor mode ON - No SPA main window` and then goes silent.
+Other threads keep posting `forwardMessageToUi` messages that are never processed.
+```bash
+L="$PFX/drive_c/ProgramData/EA Desktop/Logs"
+grep -a 'Launch step' "$L/EADesktopVerbose.log" | tail -15     # last step = "Waiting for FirstPartyLoaderReady"?
+grep -a 'UiImpl::' "$L/EADesktopVerbose.log" | tail -5         # UI thread's last sign of life
+```
+**Rung 3 (clear EA caches) fixed it on the first relaunch.** The likely culprit is the stale
+`AppData/Local/EADesktop/cache/qmlcache`, compiled before EA's self-update (13.791 → 13.796).
+The QML UI hangs on it and never reaches the notify step. The login is kept.
+The `Skipping CEF start because CEF initialization did not complete` line is normal in Razor
+mode (it's in the good launches too), so don't chase it.
+Rule of thumb: if a restarted Steam still gives `ProxiedLaunchTimedOut`, go straight to rung 3.
+One more data point: on 2026-09-25 the first launch after boot timed out, and a plain retry
+10 min later worked. Retry once before digging.
 
 ## Launching from the CLI (instead of clicking Play)
 `/usr/bin/steam` can drive it: `steam steam://rungameid/1237970` (respects the

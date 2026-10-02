@@ -61,6 +61,10 @@ Split the work into focused, balanced domains, one per reviewer. Two partitionin
 the error idiom, the targets) but NOT your expectations, your suspicions, or what you just changed. Tell
 them which already-known items to skip, so their effort goes to new ground.
 
+That skip list is the thing that dies with the prompt. On a surface you will review more than once, keep it
+in a tracked ledger instead and point reviewers at it: `friction-log`'s `references/standing-record.md` has
+the anatomy, along with the fix-tracker and `todo.md` shapes that hold a round's fixes and its open items.
+
 ### 2. Dispatch reviewers in parallel (read-only)
 Send all reviewers in one batch so they run concurrently. Non-negotiables in each prompt:
 - **Read-only, and NO builds.** Parallel build daemons contend on one project (lock errors, thrash).
