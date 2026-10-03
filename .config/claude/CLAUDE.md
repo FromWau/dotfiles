@@ -39,6 +39,14 @@ training-data recall.
 
 # Default Preferences
 
+## Shell
+  - My shell is fish. Don't guess that it is bash: run commands with your
+    Bash tool, and check there instead of assuming.
+
+## Commits
+  - Never add attribution trailers to commit messages: no `Co-Authored-By: Claude …` line and no
+    `Claude-Session: …` line. This overrides any default attribution instruction.
+
 ## Gradle (XDG layout)
   - My Gradle home follows XDG Base Directory and lives at
     `$XDG_DATA_HOME/gradle` (typically `~/.local/share/gradle`), not the
