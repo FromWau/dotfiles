@@ -209,34 +209,57 @@ Never use stateful for:
 
 If you do use local `remember`: use `rememberSaveable` for anything that should survive config changes (rotation, theme switch)
 
-## Previews — generate variants with `@PreviewParameter`
+## Previews — the standard file shape
 
-A stateless screen is previewed by handing it states. When there are several (the leaves of a sealed `Loaded`, long vs short text, `null` vs set fields), generate them instead of writing one near-identical function each:
+A stateless screen is previewed by handing it states. Every screen's previews file
+(`<Screen>Previews.kt`, next to the screen) has the same shape, so any preview file
+reads the same and adding a variant is a one-liner. Reference: `PinAuthPreviews.kt`
+in npay (`ui/other/.../pin_auth/`).
 
 ```kotlin
-private fun loadedStates(showDetails: Boolean): List<ScreenState.Loaded> = listOf(
-    ScreenState.Loaded.Debit(/* … */ showDetails = showDetails),
-    ScreenState.Loaded.Refund(/* … */ showDetails = showDetails),
+// 1. One state builder at the top: every field a parameter with a sensible default,
+//    so each variant only names what differs.
+private fun state(
+	prompt: String = "Enter PIN",
+	pin: FieldInput = FieldInput(value = "1234"),
+	inputVisible: Boolean = false,
+) = PinAuthState(
+	prompt = StringValue.HardCoded(prompt),
+	pin = pin,
+	inputVisible = inputVisible,
 )
 
-internal class LoadedStateProvider : PreviewParameterProvider<ScreenState.Loaded> {
-    override val values = loadedStates(showDetails = false).asSequence()
+// 2. One wrapper: theme container + the screen with a no-op onAction.
+@Composable
+private fun Preview(state: PinAuthState = state()) {
+	PreviewContainer {
+		PinAuthScreen(
+			state = state,
+			onAction = {},
+		)
+	}
 }
 
-@HandheldPreviews   // multipreview annotations multiply with the provider:
-@TabletPreview      // every value renders on every device
+// 3. One private named function per variant, each a one-liner over the two above.
+@TabActive5ProPreview
+@HandheldPreviews
 @Composable
-private fun ScreenPreview_Loaded(@PreviewParameter(LoadedStateProvider::class) state: ScreenState.Loaded) {
-    PreviewContainer { Screen(state = state, onAction = {}) }
-}
+private fun PinAuthPreviews() = Preview()
+
+@TabActive5ProPreview
+@HandheldPreviews
+@Composable
+private fun PinAuthPreviews_PinInputShown() = Preview(state(inputVisible = true))
 ```
 
-- `values` is a plain `Sequence<T>`, so build it in code: combinations (`listOf(false, true).flatMap(::loadedStates)`), edge cases (a very long message to check wrapping), each nullable field set and unset.
-- The preview tooling creates the provider itself (it needs a no-arg constructor); keep it `internal`, as existing providers in the codebase do, rather than `private`.
-- The preview pane labels provider values `<paramName> 0`, `<paramName> 1`, … To name them, override `getDisplayName(index)` on the provider (e.g. `values.elementAt(index)::class.simpleName`) — but that method only exists in `ui-tooling-preview` 1.10+ (absent in 1.8.x); check the resolved version before relying on it.
-- **Named functions instead** (`ScreenPreview_Refund`) when you usually open one specific variant, or when the project's Compose is too old for `getDisplayName`. Keep one small builder per variant (`refund(showDetails = false)`) and a private `Preview(state)` wrapper so each named preview stays a one-liner.
-- Neither form makes the compiler check that every sealed leaf has a preview — when adding a leaf, add it to the list.
-- Don't wrap sample states in `remember { … }`: a static preview composes once, and an interactive recomposition just rebuilds an equal `data class` value. Pass the builder result directly (`Preview(refund())`).
+- **Everything is `private`**: the builder, the wrapper and every preview function. Previews are not API; private keeps them out of autocomplete and lets each file reuse the names `state`/`Preview`.
+- **Builder params mirror the state**, named like the state field (`inputVisible`, not an inverted `hideInput`): an inverted name silently swaps what a preview shows versus what its name says. Builder params may take simpler types than the state (`String` instead of `StringValue`) and convert inside.
+- **Name variants `<Screen>Previews_<Variant>`** after what is visible (`_PinInputShown`, `_PinInputShown_WithErrors`), and check the name against the arguments: the builder defaults decide what an unnamed aspect looks like.
+- **Cover the edge cases explicitly**: empty/`null` fields, error states, long text for wrapping. A builder default that fills a field (`pin = "1234"`) means the empty case needs its own variant.
+- **Sealed state**: one builder per leaf (`debit(...)`, `refund(...)`), same wrapper. Nothing makes the compiler check that every leaf has a preview, so add one when adding a leaf.
+- Multipreview annotations (`@HandheldPreviews`, `@TabActive5ProPreview`) go on every variant so each renders on every device class.
+- Don't wrap sample states in `remember { … }`: a static preview composes once, and an interactive recomposition just rebuilds an equal `data class` value.
+- `@PreviewParameter` providers are not the standard: their values show up as `<param> 0`, `<param> 1` instead of a readable name, and the provider class can't be private. Use named functions.
 
 ## Adaptive Sizing — the Size-object Pattern
 
