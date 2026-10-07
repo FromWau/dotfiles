@@ -10,10 +10,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd "playerctld daemon"
     hl.exec_cmd "mpDris2 --use-journal"
 
-    hl.exec_cmd "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE XDG_SESSION_TYPE && systemctl --user start hyprland-session.target ags.service"
-
-    -- Polkit
-    hl.exec_cmd "systemctl --user start plasma-polkit-agent.service"
+    hl.exec_cmd "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE XDG_SESSION_TYPE && systemctl --user start hyprland-session.target kortex-polkit-agent.service"
 
     -- KDE Connect
     hl.exec_cmd "kdeconnectd"
