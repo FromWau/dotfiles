@@ -287,6 +287,17 @@ init order, heisenbugs) via full-tree concurrent execution.
   specifics against `infix-de.github.io/testBalloon` when you upgrade.
 - **Robolectric / host tests are not device tests.** Keep real emulator and device
   runs for anything near the OS or hardware.
+- **A JUnit test with an expression body can silently never run.** JUnit Jupiter
+  only runs `@Test` methods that return nothing. `@Test fun x() = runBlocking { … }`
+  takes the type of the block's last expression, so a test ending in
+  `assertIs<T>(…)`, a flow's `first { … }` or any other value-returning call is
+  not a `Unit` method, and the run skips it with no failure and nothing in the
+  report. Write `runBlocking<Unit> { … }` (or use a block body). `runTest` is safe
+  on the JVM, since its result type is `Unit` there. The cheap audit: compare each
+  class's `@Test` count with the `tests=` count in its result XML. The same trap
+  fakes a mutation check: a `--tests` filter that matches no executed test fails
+  with "No tests found", which reads as a caught mutation, so confirm the target
+  test actually ran before counting the failure.
 
 ---
 
