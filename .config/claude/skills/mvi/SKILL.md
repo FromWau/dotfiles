@@ -1,6 +1,6 @@
 ---
 name: mvi
-description: Presentation-architecture tier for Android/KMP apps (KMP-shared, not Android-only — ViewModel and Koin both run in Compose Multiplatform). The **MVI pattern** (Model-View-Intent): ViewModel exposes `StateFlow<State>`, UI sends `Action`, ViewModel reduces state; State vs Actions vs Events and why one-time signals (snackbars, navigation) go through a `Channel` + `observeAsEvents` rather than State; **Koin** dependency injection (`singleOf(::Impl) bind Interface::class`, constructor injection); **ViewModel lifecycle** (`onCleared`, a `Session` singleton only for app-wide shared state); **getting a screen's inputs into a ViewModel**, ranked by app shape (Navigation 3 route → Fragment `arguments` + `SavedStateHandle` → `Fragment.init(...)` + `ViewModel.init()` with an `Initializing` state when a callback param forces it; idempotent re-init across recreation); and **composable-scoped ViewModels** (`rememberViewModelStoreOwner` + `LocalViewModelStoreOwner`, one VM per list item/card/sheet — `references/viewmodel-scoping.md`). Load whenever the work touches ViewModels, `SavedStateHandle`, fragment arguments or a VM `init` function, MVI state/actions/events, a `StateFlow` state machine, one-time UI events, Koin modules, or scoping a ViewModel — even when the user doesn't name the skill. Pair with `compose` (the UI this drives), `kotlin` (the `Result<D, E>` type these return), and `software-design` (the layering/dependency-direction rules MVI sits inside). For building the Compose UI itself — `remember`, state hoisting, Styles, adaptive layout — load `compose`, not this.
+description: Presentation-architecture tier for Android/KMP apps (KMP-shared, not Android-only — ViewModel and Koin both run in Compose Multiplatform). The **MVI pattern** (Model-View-Intent): ViewModel exposes `StateFlow<State>`, UI sends `Action`, ViewModel reduces state; **exclusive actions** for work that must not run twice (pay a cart, log in, submit, confirm a payment: `Action.Exclusive` + `runExclusive` + `ActionOutcome`; double tap/click/submit, duplicate navigation, debounce, `isProcessing`/`submitJob`/`Mutex` guards, stale action data, `references/exclusive-actions.md`); State vs Actions vs Events and why one-time signals (snackbars, navigation) go through a `Channel` + `observeAsEvents` rather than State; **Koin** dependency injection (`singleOf(::Impl) bind Interface::class`, constructor injection); **ViewModel lifecycle** (`onCleared`, a `Session` singleton only for app-wide shared state); **getting a screen's inputs into a ViewModel**, ranked by app shape (Navigation 3 route → Fragment `arguments` + `SavedStateHandle` → `Fragment.init(...)` + `ViewModel.init()` with an `Initializing` state when a callback param forces it; idempotent re-init across recreation); and **composable-scoped ViewModels** (`rememberViewModelStoreOwner` + `LocalViewModelStoreOwner`, one VM per list item/card/sheet — `references/viewmodel-scoping.md`). Load whenever the work touches ViewModels, `SavedStateHandle`, fragment arguments or a VM `init` function, MVI state/actions/events, a `StateFlow` state machine, one-time UI events, Koin modules, or scoping a ViewModel — even when the user doesn't name the skill. Pair with `compose` (the UI this drives), `kotlin` (the `Result<D, E>` type these return), and `software-design` (the layering/dependency-direction rules MVI sits inside). For building the Compose UI itself — `remember`, state hoisting, Styles, adaptive layout — load `compose`, not this.
 ---
 
 # MVI / Presentation Architecture
@@ -12,6 +12,7 @@ The **presentation-architecture tier**: the ViewModel/state-machine side of an A
 
 ## When to read references
 
+- **`references/exclusive-actions.md`**: actions that do real work and must not run twice (pay, log in, submit, confirm): `Action.Exclusive`, `runExclusive` with `isProcessing` as the lock, `ActionOutcome.Continue`/`Finished`, validating stale action data, terminal navigation (`toAndClearAll`), the UI rules, failure handling, measured pitfalls, and the click-spam test. Read before adding any guard against repeated input or reviewing one.
 - **`references/viewmodel-scoping.md`** — composable-scoped ViewModels (lifecycle 2.11 `rememberViewModelStoreOwner`/`LocalViewModelStoreOwner`), one VM per list item/card/sheet, state ownership across multiple VMs, keeping many scoped VMs + per-item flows cheap, KMP/CMP availability. Read when scoping a VM to anything smaller than a screen.
 
 ## Architecture — MVI
@@ -27,6 +28,15 @@ The **presentation-architecture tier**: the ViewModel/state-machine side of an A
 - **Events** (`sealed interface`): one-time signals sent **ViewModel → UI** (`ShowSnackbar(message)`, `NavigateToHome`). Use `Channel(UNLIMITED)` + `receiveAsFlow()` — consumed exactly once, not re-fired after config changes
 - **Never put one-time things in State** (snackbar messages, navigation triggers) — they re-fire on every config change because State is re-collected. Use Events instead
 - Collect events via a lifecycle-aware `observeAsEvents` utility function, not `LaunchedEffect` on a state field
+
+## Exclusive actions (work that must not run twice)
+
+- Actions that do real work (pay, log in, submit) live in a nested `sealed interface Exclusive`; local UI actions (toggles, typing) stay outside and are never locked.
+- One lock per screen: `runExclusive` drops the action if `_state.value.isProcessing` (never `state.value`), otherwise sets it and launches `handle(action)`, a sequential `suspend fun` returning `ActionOutcome`. `Continue` unlocks (also on exception/cancellation via `finally`); `Finished` (navigated away) stays locked and the screen leaves the back stack.
+- The ViewModel decides: `onClick` only forwards; `enabled = !state.isProcessing` is a UX hint, never the guard. No debounce, no `if` in `onClick`, no `LaunchedEffect` reset hooks.
+- Validate the action's data against the source of truth before acting; a click can arrive carrying values from the previous frame.
+- Back/cancel during the work: if the work can be undone, cancel its job; if not (login, payment), Back is `Exclusive` too.
+- Full pattern, measurements, and the spam test: `references/exclusive-actions.md`.
 
 ## Dependency Injection
 
