@@ -147,10 +147,33 @@ Prefer the repository over the screen's copy of its data (`_state.users` reaches
 asynchronously). Let repository writes report whether they applied (`renameUser(...): Boolean`)
 and make them atomic with `MutableStateFlow.update { }` instead of read-copy-write.
 
-This is also the answer for **multi-step screens** (enter amount, then confirm): the late second
-"OK" of step 1 must not confirm step 2. Make the action say which step it was issued for and
-ignore it when `_state.value` is on a different step (`OnConfirm(step = EnterGiven)` while the
-state is already `Confirm` → `Continue`). Derived from the same mechanism; not separately measured.
+**Multi-step screens** (enter amount, then confirm): the late second "OK" of step 1 must not
+confirm step 2. Don't fix it by putting the step in the action (`OnConfirm(step)`): an action
+carries the user's intent, never a copy of UI state the ViewModel already owns. Name what each
+button does instead, so a stale tap can only match the step it belongs to:
+
+```kotlin
+sealed interface Exclusive : CashAction {
+    data object OnBack : Exclusive
+    data object OnConfirmGiven : Exclusive    // OK on the amount step
+    data object OnConfirmPayment : Exclusive  // OK on the confirm step
+}
+
+private fun handle(action: CashAction.Exclusive): ActionOutcome {
+    val step = _state.value.step
+    return when (action) {
+        CashAction.Exclusive.OnBack -> back(step)
+        CashAction.Exclusive.OnConfirmGiven ->
+            if (step is Step.EnterGiven) submitGiven(step) else ActionOutcome.Continue
+        CashAction.Exclusive.OnConfirmPayment ->
+            if (step is Step.Confirm) confirmPayment() else ActionOutcome.Continue
+    }
+}
+```
+
+The state keeps its sealed `Step` (`data class CashState(val step: Step, val isProcessing: Boolean)`),
+and the screen picks which action its OK button sends from the step it renders. Derived from the
+same mechanism; not separately measured.
 
 **Stale data in local actions.** The same frame lag hits local actions that send a *whole value*
 built in the UI. A keypad that sends `OnChanged(lastDrawnValue + digit)` loses a digit when two
@@ -280,5 +303,5 @@ example the `kmp-ui-harness` skill's control server):
 |---|---|---|---|
 | Login | `OnLogInClicked(name)`, `OnBack` (login can't be undone) | `Finished` (navigate, clear stack) | toggle password visibility, typing |
 | Cart | `Pay(type)`, `ApplyVoucher(code)` | `Pay` → `Finished`; voucher → `Continue` | quantity input, expand details |
-| Cash payment (multi-step) | `OnConfirm(step)`, `OnBack(step)` | final confirm → `Finished`; step change → `Continue` + step check | amount input |
+| Cash payment (multi-step) | `OnConfirmGiven`, `OnConfirmPayment`, `OnBack` | `OnConfirmPayment`/`OnBack` → `Finished`; `OnConfirmGiven` → `Continue` (next step); intent not matching the step → `Continue` | amount input |
 | Rename / edit | `Rename(old, new)` | `Continue` (stays on screen), validate `old` still exists | text field input |

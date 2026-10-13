@@ -80,6 +80,8 @@ Dedup across reviewers, then ground the strongest findings yourself (grep, read,
 before presenting anything. Subagents are sometimes confidently wrong, and this step is where you catch
 false positives: in practice it has caught an "inconsistency" that was actually intended behavior pinned
 by an existing test, and a "cross-platform divergence" whose two paths in fact converge by design.
+Each finding that goes on to a fix runs through the `bug-proofing` skill: reproduce or refute it, pin the
+correct behaviour in a test seen failing, then fix test-first.
 Present a ranked triage that:
 - separates production bugs from test-coverage gaps,
 - gives each finding a concrete repro, and

@@ -20,6 +20,7 @@ training-data recall.
 
 - `software-design` — language-agnostic architecture & design (layering, abstractions, typed errors, composition over inheritance)
 - `deslop` — file-by-file review-and-cleanup loop for hardening existing code without churn
+- `bug-proofing` — prove a found or suspected bug before fixing it: reproduce or refute, pin the correct behaviour in a failing test, fix test-first
 - `code-comments` — self-documenting code; what actually earns a comment
 - `kotlin` — Kotlin language idioms + formatting conventions
 - `compose` — Compose UI layer (state, Styles API, UiText, adaptive layout)

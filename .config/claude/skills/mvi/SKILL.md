@@ -35,6 +35,7 @@ The **presentation-architecture tier**: the ViewModel/state-machine side of an A
 - One lock per screen: `runExclusive` drops the action if `_state.value.isProcessing` (never `state.value`), otherwise sets it and launches `handle(action)`, a sequential `suspend fun` returning `ActionOutcome`. `Continue` unlocks (also on exception/cancellation via `finally`); `Finished` (navigated away) stays locked and the screen leaves the back stack.
 - The ViewModel decides: `onClick` only forwards; `enabled = !state.isProcessing` is a UX hint, never the guard. No debounce, no `if` in `onClick`, no `LaunchedEffect` reset hooks.
 - Validate the action's data against the source of truth before acting; a click can arrive carrying values from the previous frame.
+- Actions carry intent, never UI state the ViewModel owns: no `OnConfirm(step)`. On multi-step screens name each button's intent (`OnConfirmGiven`, `OnConfirmPayment`) and ignore it when `_state.value` is on another step.
 - Back/cancel during the work: if the work can be undone, cancel its job; if not (login, payment), Back is `Exclusive` too.
 - Full pattern, measurements, and the spam test: `references/exclusive-actions.md`.
 
