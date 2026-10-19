@@ -107,6 +107,9 @@ this complementary lens: reviewers who never read the implementation build somet
 report the consumer's experience. This surfaces the friction the author is blind to. White-box finds
 "this is wrong"; black-box finds "this is hard to use" and "this should be shaped differently".
 
+For a rated, repeated version of this pass (tiers F to S, docs-only reviewers, a user step-through and re-QA
+rounds until high A or S), use the **tier-qa-loop** skill.
+
 ### How it runs
 1. **Give each reviewer a realistic task, not the source.** For example "build a small CLI that parses
    these flags and subcommands with this library" or "port this argparse script to it". Tell them how to
