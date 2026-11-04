@@ -1,6 +1,6 @@
 ---
 name: mvi
-description: Presentation-architecture tier for Android/KMP apps (KMP-shared, not Android-only — ViewModel and Koin both run in Compose Multiplatform). The **MVI pattern** (Model-View-Intent): ViewModel exposes `StateFlow<State>`, UI sends `Action`, ViewModel reduces state; **exclusive actions** for work that must not run twice (pay a cart, log in, submit, confirm a payment: `Action.Exclusive` + `runExclusive` + `ActionOutcome`; double tap/click/submit, duplicate navigation, debounce, `isProcessing`/`submitJob`/`Mutex` guards, stale action data, `references/exclusive-actions.md`); State vs Actions vs Events and why one-time signals (snackbars, navigation) go through a `Channel` + `observeAsEvents` rather than State; **Koin** dependency injection (`singleOf(::Impl) bind Interface::class`, constructor injection); **ViewModel lifecycle** (`onCleared`, a `Session` singleton only for app-wide shared state); **getting a screen's inputs into a ViewModel**, ranked by app shape (Navigation 3 route → Fragment `arguments` + `SavedStateHandle` → `Fragment.init(...)` + `ViewModel.init()` with an `Initializing` state when a callback param forces it; idempotent re-init across recreation); and **composable-scoped ViewModels** (`rememberViewModelStoreOwner` + `LocalViewModelStoreOwner`, one VM per list item/card/sheet — `references/viewmodel-scoping.md`). Load whenever the work touches ViewModels, `SavedStateHandle`, fragment arguments or a VM `init` function, MVI state/actions/events, a `StateFlow` state machine, one-time UI events, Koin modules, or scoping a ViewModel — even when the user doesn't name the skill. Pair with `compose` (the UI this drives), `kotlin` (the `Result<D, E>` type these return), and `software-design` (the layering/dependency-direction rules MVI sits inside). For building the Compose UI itself — `remember`, state hoisting, Styles, adaptive layout — load `compose`, not this.
+description: Presentation-architecture tier for Android/KMP apps (KMP-shared, not Android-only — ViewModel and Koin both run in Compose Multiplatform). The **MVI pattern** (Model-View-Intent): ViewModel exposes `StateFlow<State>`, UI sends `Action`, ViewModel reduces state; **exclusive actions** for work that must not run twice (pay a cart, log in, submit, confirm a payment: `Action.Exclusive` + `runExclusive` + `ActionOutcome`; double tap/click/submit, duplicate navigation, debounce, `isProcessing`/`submitJob`/`Mutex` guards, stale action data, `references/exclusive-actions.md`); State vs Actions vs Events and why one-time signals (snackbars, navigation) go through a `Channel` + `observeAsEvents` rather than State; **Koin** dependency injection (`singleOf(::Impl) bind Interface::class`, constructor injection); **ViewModel lifecycle** (`onCleared`, a `Session` singleton only for app-wide shared state, and one fixed hook set for route ViewModels: `RouteLifecycle` with `onEnter`/`onStart`/`onStop`/`onLeave` driven by a `RouteLifecycleEffect`, legacy Fragment method names kept private behind it); **getting a screen's inputs into a ViewModel**, ranked by app shape (Navigation 3 route → Fragment `arguments` + `SavedStateHandle` → `Fragment.init(...)` + `ViewModel.init()` with an `Initializing` state when a callback param forces it; idempotent re-init across recreation); and **composable-scoped ViewModels** (`rememberViewModelStoreOwner` + `LocalViewModelStoreOwner`, one VM per list item/card/sheet — `references/viewmodel-scoping.md`). Load whenever the work touches ViewModels, `SavedStateHandle`, fragment arguments or a VM `init` function, MVI state/actions/events, a `StateFlow` state machine, one-time UI events, Koin modules, or scoping a ViewModel — even when the user doesn't name the skill. Pair with `compose` (the UI this drives), `kotlin` (the `Result<D, E>` type these return), and `software-design` (the layering/dependency-direction rules MVI sits inside). For building the Compose UI itself — `remember`, state hoisting, Styles, adaptive layout — load `compose`, not this.
 ---
 
 # MVI / Presentation Architecture
@@ -32,6 +32,7 @@ The **presentation-architecture tier**: the ViewModel/state-machine side of an A
 ## Exclusive actions (work that must not run twice)
 
 - Actions that do real work (pay, log in, submit) live in a nested `sealed interface Exclusive`; local UI actions (toggles, typing) stay outside and are never locked.
+- With only **one** exclusive action, keep the `Exclusive` interface as the marker but skip `runExclusive`/`handle`/`ActionOutcome`: the action's own function guards with `if (_state.value.isProcessing) return` and sets the lock. Build the full mechanism once a second exclusive action arrives; the marker is what tells you it is needed.
 - One lock per screen: `runExclusive` drops the action if `_state.value.isProcessing` (never `state.value`), otherwise sets it and launches `handle(action)`, a sequential `suspend fun` returning `ActionOutcome`. `Continue` unlocks (also on exception/cancellation via `finally`); `Finished` (navigated away) stays locked and the screen leaves the back stack.
 - The ViewModel decides: `onClick` only forwards; `enabled = !state.isProcessing` is a UX hint, never the guard. No debounce, no `if` in `onClick`, no `LaunchedEffect` reset hooks.
 - Validate the action's data against the source of truth before acting; a click can arrive carrying values from the previous frame.
@@ -54,6 +55,25 @@ The **presentation-architecture tier**: the ViewModel/state-machine side of an A
   independently-stateful subcomponents, not plain lists. For the pattern, state-ownership
   rules, the "one hot source / cheap per-item slices" performance rule, and KMP/CMP
   availability, read `references/viewmodel-scoping.md`
+- **Route ViewModels share one fixed hook set** instead of each screen inventing public `onStart`/`onCreateView`/`onViewShown` names. A small interface with no-op defaults, driven by one effect every route calls:
+
+  ```kotlin
+  interface RouteLifecycle {
+      fun onEnter() {}  // page shown: arrival + return from a later route, NOT after a screen lock
+      fun onStart() {}  // visible, also again after a screen lock
+      fun onStop() {}
+      fun onLeave() {}  // page gone: a later route is on top, or the route was popped
+  }
+
+  @Composable
+  fun RouteLifecycleEffect(viewModel: RouteLifecycle) {
+      DisposableEffect(viewModel) { viewModel.onEnter(); onDispose { viewModel.onLeave() } }
+      LifecycleStartEffect(viewModel) { viewModel.onStart(); onStopOrDispose { viewModel.onStop() } }
+  }
+  ```
+
+  `init` (route pushed) and `onCleared` (route popped) complete the set; don't add `onInit`/`onTeardown`, they would be second names for those. `onEnter`/`onLeave` mean "page shown/gone" only when the host composes just the top back-stack entry. Pick the hook by *when* the work must rerun: view-setup work that a screen lock must not redo (clearing a cart, reloading a list, restarting a selection timer) goes in `onEnter`; visibility work (NFC/listeners on, side menu closed) in `onStart`/`onStop`.
+- **Porting a legacy Fragment:** keep its method names (`onCreateView`, `onViewCreated`, `onDestroyView`, `refreshUI`…) as *private* VM functions and call them from the hooks (`override fun onEnter() { onCreateView(); onViewCreated() }`). The public surface stays fixed, and the port still reads side by side with the old fragment.
 
 ## Getting data into a ViewModel — pick by app shape, best first
 

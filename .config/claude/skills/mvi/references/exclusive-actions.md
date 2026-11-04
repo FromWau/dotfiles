@@ -52,6 +52,12 @@ sealed interface CartAction {
 Different exclusive actions share **one** lock: a voucher must not be applied while the payment
 is running, and vice versa (verified: rename and login blocked each other in both directions).
 
+A screen with a single exclusive action keeps the `Exclusive` interface but not the machinery:
+its `onAction` branch calls the action's function, which drops a repeat with
+`if (_state.value.isProcessing) return` and then sets the lock. The marker is the important part.
+It tells the next person (and the compiler) that the action must not run twice, so whoever adds a
+second exclusive action knows to introduce `runExclusive` + `handle` + `ActionOutcome` then.
+
 ## 3. The ViewModel: `runExclusive` + `ActionOutcome`
 
 `ActionOutcome` is shared by all screens (put it in a common `core` package):
