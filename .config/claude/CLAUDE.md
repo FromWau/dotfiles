@@ -22,6 +22,7 @@ training-data recall.
 - `deslop` — file-by-file review-and-cleanup loop for hardening existing code without churn
 - `bug-proofing` — prove a found or suspected bug before fixing it: reproduce or refute, pin the correct behaviour in a failing test, fix test-first
 - `code-comments` — self-documenting code; what actually earns a comment
+- `benchmarking` — measure performance honestly on an idle machine: hyperfine, flame graphs, scoped benchmarks (JMH), scaling tests; Kotlin reference
 - `kotlin` — Kotlin language idioms + formatting conventions
 - `compose` — Compose UI layer (state, Styles API, UiText, adaptive layout)
 - `mvi` — presentation architecture (MVI, ViewModel scoping, Koin DI, events)
