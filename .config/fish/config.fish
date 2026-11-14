@@ -31,6 +31,7 @@ set -x PYTHON_HISTORY "$XDG_STATE_HOME"/python_history
 
 set -x XAUTHORITY "$XDG_RUNTIME_DIR"/Xauthority
 set -x SSH_AUTH_SOCK "$XDG_RUNTIME_DIR"/ssh-agent.socket
+set -x QT_QPA_PLATFORM "wayland;xcb"
 
 set -x MPD_HOST "$XDG_RUNTIME_DIR"/mpd/socket
 
