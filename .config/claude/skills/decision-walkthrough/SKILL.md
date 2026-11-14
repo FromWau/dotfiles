@@ -92,6 +92,11 @@ spacing, comments and ordering that usually decide it. When the options differ i
 short enough that the full blocks stay easy to compare. Once the user picks, the chosen result is the expected
 value of the test that pins the behaviour.
 
+In both shapes, show a document as the document: the whole file before, in a block of its own language (`toml`,
+`json`), then the whole file after. Never build the input inline with `printf '…\n…'` or a heredoc one-liner, and
+never show only the changed lines: escaped `\n` has to be decoded in the head before the example can be judged,
+and a partial After hides what stayed. The command block then holds only the command, run against that file.
+
 ## When the user steps outside the format
 
 - **A question or a design tangent** ("what if we declared shorts and longs separately?"): answer it properly,
