@@ -171,10 +171,10 @@ nohup sudo -n setsid bash -c "
         echo 'WARNING: Failed to enable persistence mode for remaining GPUs' >> \"\$LOG_FILE\" 2>&1
     fi
 
-    echo 'GPU $GPU_PCI disabled successfully at \$(date)' >> \"\$LOG_FILE\" 2>&1
-    echo 'Restarting SDDM to reinitialize display on remaining GPU...' >> \"\$LOG_FILE\" 2>&1
-    systemctl restart sddm >> \"\$LOG_FILE\" 2>&1
-    echo 'SDDM restarted successfully' >> \"\$LOG_FILE\" 2>&1
+    echo \"GPU $GPU_PCI disabled successfully at \$(date)\" >> \"\$LOG_FILE\" 2>&1
+    echo 'Restarting the display manager to reinitialize display on remaining GPU...' >> \"\$LOG_FILE\" 2>&1
+    systemctl restart display-manager.service >> \"\$LOG_FILE\" 2>&1
+    echo 'Display manager restarted successfully' >> \"\$LOG_FILE\" 2>&1
 " >> "$LOG_FILE" 2>&1 &
 
 echo "Background process started. Exiting Hyprland..."
