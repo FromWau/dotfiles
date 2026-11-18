@@ -74,6 +74,14 @@ function link_and_backup() {
     done
 }
 
+function link_home() {
+    source_dir="$SOURCE_HOME/"
+    target_dir="$TARGET_HOME/"
+    items=(.profile)
+
+    link_and_backup "$source_dir" "$target_dir" "${items[@]}"
+}
+
 function link_config() {
     source_dir="$SOURCE_HOME/.config/"
     target_dir="$TARGET_HOME/.config/"
@@ -162,6 +170,7 @@ mkdir -p "$TARGET_HOME/.local/bin"
 mkdir -p "$TARGET_HOME/.local/share"
 mkdir -p "$TARGET_HOME/.claude/plugins"
 
+link_home
 link_config
 link_claude
 link_local_bin
