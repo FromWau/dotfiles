@@ -3,7 +3,6 @@
 hl.on("hyprland.start", function()
     -- Wallpaper
     hl.exec_cmd "awww-daemon"
-    hl.exec_cmd "sleep 2 && awww restore"
 
     -- Notifications / players
     hl.exec_cmd "battery-notify"
