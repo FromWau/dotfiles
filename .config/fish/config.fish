@@ -1,51 +1,11 @@
-# Env variables
-set -x EDITOR nvim
-set -x BROWSER firefox
-
-set -x XDG_CONFIG_HOME "$HOME/.config"
-set -x XDG_DATA_HOME "$HOME/.local/share"
-set -x XDG_STATE_HOME "$HOME/.local/state"
-set -x XDG_CACHE_HOME "$HOME/.cache"
-
-set -x ANSIBLE_HOME "$XDG_DATA_HOME"/ansible
-set -x PASSWORD_STORE_DIR "$XDG_DATA_HOME"/password-store
-set -x GOPATH "$XDG_DATA_HOME"/go
-set -x GNUPGHOME "$XDG_DATA_HOME"/gnupg
-set -x CARGO_HOME "$XDG_DATA_HOME"/cargo
-set -x RUSTUP_HOME "$XDG_DATA_HOME"/rustup
-set -x KONAN_DATA_DIR "$XDG_DATA_HOME"/konan
-set -x WINEPREFIX "$XDG_DATA_HOME"/wineprefixes/default
-set -x TERMINFO "$XDG_DATA_HOME"/terminfo
-set -x TERMINFO_DIRS "$XDG_DATA_HOME"/terminfo:/usr/share/terminfo
-
-set -x DOCKER_CONFIG "$XDG_CONFIG_HOME"/docker
-set -x NPM_CONFIG_USERCONFIG "$XDG_CONFIG_HOME"/npm/npmrc
-set -x XINITRC "$XDG_CONFIG_HOME"/X11/xinitrc
-set -x WGETRC "$XDG_CONFIG_HOME"/wget/wgetrc
-set -x ZDOTDIR "$XDG_CONFIG_HOME"/zsh
-set -x GTK2_RC_FILES "$XDG_CONFIG_HOME"/gtk-2.0/gtkrc
-set -x _JAVA_OPTIONS -Djava.util.prefs.userRoot="$XDG_CONFIG_HOME"/java
-
-set -x HISTFILE "$XDG_STATE_HOME"/bash/history
-set -x PYTHON_HISTORY "$XDG_STATE_HOME"/python_history
-
-set -x XAUTHORITY "$XDG_RUNTIME_DIR"/Xauthority
-set -x SSH_AUTH_SOCK "$XDG_RUNTIME_DIR"/ssh-agent.socket
-set -x QT_QPA_PLATFORM "wayland;xcb"
-
-set -x MPD_HOST "$XDG_RUNTIME_DIR"/mpd/socket
-
-set -x ANDROID_USER_HOME "$XDG_DATA_HOME"/android
-set -x ANDROID_HOME "$XDG_DATA_HOME"/android/sdk
-set -x GRADLE_USER_HOME "$XDG_DATA_HOME"/gradle
-
-set -x CUDA_CACHE_PATH "$XDG_CACHE_HOME"/nv
-set -x SQLITE_HISTORY "$XDG_CACHE_HOME"/sqlite_history
-
-set -x MANPAGER "sh -c 'bat -l man -p'"
-set -x LESSHISTFILE -
-set -x FZF_DEFAULT_COMMAND "fd --type f --strip-cwd-prefix --hidden --follow --exclude .git"
-set -x DELTA_FEATURES "+side-by-side +dark +syntax-theme base16-256 +true-color +navigate"
+# The environment lives in ~/.config/environment.d, the one source for every login. A fish login (TTY, ssh) imports
+# it here; sh resolves systemd's quoting, and only the keys defined there are taken.
+set -l env_gen /usr/lib/systemd/user-environment-generators/30-systemd-environment-d-generator
+set -l env_keys ($env_gen | string replace -r '=.*' '')
+for kv in (sh -c "set -a; eval \"\$($env_gen)\"; exec env -0" | string split0)
+    set -l pair (string split -m1 = -- $kv)
+    contains -- $pair[1] $env_keys; and set -gx $pair[1] $pair[2]
+end
 
 set -U fish_greeting
 
