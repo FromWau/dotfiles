@@ -89,6 +89,7 @@
 - `StateFlow` / `MutableStateFlow` for observable state
 - `Channel(UNLIMITED)` with `receiveAsFlow()` for one-shot events (toasts, navigation)
 - `SharedFlow` for one-to-many event streams
+- **Never send events through a `MutableStateFlow`.** It conflates: a collector only sees the latest value, so a quick event in between is skipped, and a value equal to the current one is never emitted at all. Seen on a device: a "chip removed" event set and overwritten before the collector ran left the screen waiting forever. Events go through a `Channel` or a `SharedFlow` with a buffer.
 - Observe `_state` (MutableStateFlow) in internal flows, not `state` (public StateFlow) to avoid circular dependencies
 - Use `launchIn(scope)` for flow collection in ViewModels, `stateIn()` for exposing state
 - Use `viewModelScope.launch {}` for fire-and-forget operations (e.g. sending a message)

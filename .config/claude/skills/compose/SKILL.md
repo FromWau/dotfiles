@@ -20,6 +20,13 @@ The **UI-rendering tier**: how to build, structure, and theme Compose UI (Androi
 ## Composables are stateless
 
 - **Never inject services or repositories into composables** — composables receive only `state` and an `onAction: (Action) -> Unit` lambda. All side effects (navigation, API calls, DB writes, service calls) go through `onAction` → ViewModel. Pass a single `onAction` lambda rather than many individual callbacks. The ViewModel is the only place that holds dependencies and orchestrates work — that side lives in **`mvi`**.
+- **A value the UI shows must reach it through State, or the screen never redraws when it changes.** A theme-level helper (the `stringResource` kind, the one place a composable may read an app-wide service) that reads the current value directly (`languageService.active.value.getString(id)`) renders once and goes stale when the value changes. Read it through `collectAsState()` (or `collectAsStateWithLifecycle()`) inside the helper so every caller recomposes:
+  ```kotlin
+  @Composable
+  fun eventStringResource(@StringRes id: Int): String =
+      eventLanguageService().active.collectAsState().value.getString(id)
+  ```
+  Seen on a device: switching the language left every string built by the non-State helper in the old language until the page was left.
 
 ## Theming: set the scheme, don't paint the color
 

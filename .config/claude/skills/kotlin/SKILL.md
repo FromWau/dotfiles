@@ -1,6 +1,6 @@
 ---
 name: kotlin
-description: Kotlin language conventions — idioms and formatting for `.kt`/`.kts`. Idioms: Kotlin-first libraries (`kotlinx.*`), the `Result<D, E>` sealed error type, ranked domain types via sealed interface, mappers as extension functions, `inline`/`value class`, coroutines & flows. Testing: KMP test strategy and TestBalloon (also load for Kotest, kotlin.test, JUnit-in-Kotlin, fixtures, flaky/parameterized/property tests, or "how do I test my KMP library"). Formatting: trailing commas, string templates, Compose/lambda/`when` layout — conventions ktlint/detekt defaults don't enforce. Scripting: running `.kts`/`.main.kts` files, inline Maven dependencies via `@file:DependsOn`, and shebang-run scripts. Load whenever writing, editing, reviewing, testing, or scripting Kotlin. For the language-agnostic architecture principles behind these idioms load `software-design`; for Android/KMP framework specifics load the relevant tier — `compose` (UI), `mvi` (MVI/ViewModel/Koin), `android` (Gradle/platform), `kmp` (multiplatform structure).
+description: Kotlin language conventions — idioms and formatting for `.kt`/`.kts`. Idioms: Kotlin-first libraries (`kotlinx.*`), the `Result<D, E>` sealed error type, atomics over `@Volatile` for fields shared across threads (`AtomicReference`, `compareAndSet`, check-then-act races), ranked domain types via sealed interface, mappers as extension functions, `inline`/`value class`, coroutines & flows. Testing: KMP test strategy and TestBalloon (also load for Kotest, kotlin.test, JUnit-in-Kotlin, fixtures, flaky/parameterized/property tests, or "how do I test my KMP library"). Formatting: trailing commas, string templates, Compose/lambda/`when` layout — conventions ktlint/detekt defaults don't enforce. Scripting: running `.kts`/`.main.kts` files, inline Maven dependencies via `@file:DependsOn`, and shebang-run scripts. Load whenever writing, editing, reviewing, testing, or scripting Kotlin. For the language-agnostic architecture principles behind these idioms load `software-design`; for Android/KMP framework specifics load the relevant tier — `compose` (UI), `mvi` (MVI/ViewModel/Koin), `android` (Gradle/platform), `kmp` (multiplatform structure).
 ---
 
 # Kotlin
@@ -86,6 +86,26 @@ A parse/construct helper's name must tell the caller, at the call site, whether 
 - **Total factory → `from`/`of`/`valueOf`** — returns `T`, throws on bad input (like `enumValueOf`). Reserve the bare name for the total form; calling a nullable parse `of` misleads, since the caller can't tell from the name whether to expect null or a throw.
 - **For user input, prefer `fromOrNull` and map the null to a typed error at the boundary** — a typo is an *expected* failure, so a throwing `of` turns it into a crash instead of a clean error (see the `Result<D, E>` idiom above).
 - Put it on the type's **companion**, not a free `parseShell()` helper: the type owns parsing itself, so `Shell.fromOrNull(raw)` is more discoverable than a function floating in a file.
+
+## Shared Fields Across Threads — Atomics, Not `@Volatile`
+
+When a field is read and written from more than one thread (a callback thread and the main thread, say), use an atomic (`AtomicReference`, `AtomicBoolean`, `AtomicInteger`), never `@Volatile`.
+
+- `@Volatile` only makes each single read or write visible. Any check-then-act (`if (x === a) x = null`, `count++`) still races, and nothing in the code warns you; the field *looks* protected.
+- An atomic gives the same visibility for plain `get()`/`set()`, plus `compareAndSet`/`getAndSet`/`updateAndGet` for the moment the code grows a check-then-act. It stays correct after the next edit, whereas `@Volatile` silently stops being enough the first time someone adds an `if`.
+- `compareAndSet(expected, new)` compares by identity, which is exactly "is it still this instance?":
+
+```kotlin
+private val task = AtomicReference<LoginWork?>(null)
+
+val started = LoginWork()
+task.set(started)
+onFinished = { if (task.compareAndSet(started, null)) handleOutcome() }   // a stale task's callback does nothing
+```
+
+- In KMP common code use `kotlin.concurrent.atomics` (`AtomicReference`, `AtomicInt`; opt in to `@ExperimentalAtomicApi`; the swap is `exchange`, not `getAndSet`) or `kotlinx-atomicfu`; `java.util.concurrent.atomic` is JVM/Android only. On JS/Wasm the common atomics are plain fields, since there is only one thread.
+- Several flags describing one lifecycle (`isStarted`, `isEnded`) become one `AtomicReference<Enum>`: `compareAndSet(NotStarted, Running)` checks and claims the transition in one step, and impossible combinations can't exist. Example in `mvi` (ViewModel lifecycle).
+- Not needed when every access is on one thread (most ViewModel state on main), and several fields that must change together need a lock or a single owner instead (see `references/concurrent-service.md`).
 
 ## Formatting & Linting
 

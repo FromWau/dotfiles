@@ -58,6 +58,25 @@ its `onAction` branch calls the action's function, which drops a repeat with
 It tells the next person (and the compiler) that the action must not run twice, so whoever adds a
 second exclusive action knows to introduce `runExclusive` + `handle` + `ActionOutcome` then.
 
+Without `runExclusive` there is no `finally` to unlock, so the function owns every exit. A check
+that keeps the screen (an invalid configuration, a service that answers "busy") goes *before*
+the lock; a caught exception that stays on the screen sets `isProcessing = false` again:
+
+```kotlin
+private fun buttonBuy() {
+    if (!config.isLoginEnabled) {          // stays on the page: check before locking
+        showConfigError()
+        return
+    }
+    if (_state.value.isProcessing) return
+    _state.update { it.copy(isProcessing = true) }
+    nav.to(Route.TapToTopUp)               // leaves: the lock stays
+}
+```
+
+Found on a device: the config check ran after the lock, so after one tap the button and every
+chip read on the start page stayed dead until the app restarted.
+
 ## 3. The ViewModel: `runExclusive` + `ActionOutcome`
 
 `ActionOutcome` is shared by all screens (put it in a common `core` package):
