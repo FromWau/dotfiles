@@ -133,13 +133,19 @@ Timber.w(e, "failed to clear session/KV after $reason")
 
 ### Function Parameters
 - **1 param** — can stay on one line if short: `fun foo(bar: String): Int`
-- **2+ params** — each on its own line:
+- **2+ params** — each on its own line (every function, however short):
 ```kotlin
 fun createEntity(
     name: String,
     path: Path,
     cover: Path? = null,
 ): ArtistEntity
+```
+- **Exception: short data classes and error types** may keep their properties on one line when it fits. They read as
+  a record, not a call, and splitting a two-field type triples its height for nothing:
+```kotlin
+data class Span(val start: Int, val end: Int)
+data class NotAFunction(val name: String, val span: Span) : KlafterError
 ```
 
 ### Compose Composables
